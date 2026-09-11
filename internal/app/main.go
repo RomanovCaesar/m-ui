@@ -38,12 +38,13 @@ import (
 var webFS = webassets.FS
 
 const (
-	appVersion       = "0.1.0"
 	defaultListen    = "127.0.0.1:2053"
 	defaultCoreAPI   = "127.0.0.1:9093"
 	defaultCorePort  = 12080
 	defaultConfigDir = "data"
 )
+
+var appVersion = "dev"
 
 // 面板行为设置的默认值。除了 expireDiff / trafficDiff 之外都和 3x-ui 一致；
 // 这两个阈值 3x-ui 默认是 0（不提醒），m-ui 一直有"即将到期 / 流量将尽"的橙色角标，
@@ -627,8 +628,13 @@ type apiResponse struct {
 	Data    any    `json:"data,omitempty"`
 }
 
-// Run starts the m-ui command-line entry point or web panel.
-func Run() {
+// Run starts the m-ui command-line entry point or web panel. buildVersion is
+// supplied by the tiny root command, whose version variable can be set with
+// Go's -X linker option without coupling release tooling to an internal path.
+func Run(buildVersion string) {
+	if value := strings.TrimSpace(buildVersion); value != "" {
+		appVersion = value
+	}
 	if handled, err := runCLI(os.Args[1:]); handled {
 		if err != nil {
 			log.Fatal(err)

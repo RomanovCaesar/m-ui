@@ -72,6 +72,8 @@ m-ui uninstall
 .\scripts\build-release.ps1
 ```
 
+构建脚本优先使用环境变量 `MUI_VERSION`，否则读取当前提交的精确 Git tag；当前提交没有 tag 时生成 `dev-<commit>`。Release 自动化应将 GitHub tag 传入，例如 `MUI_VERSION=v0.2.0`。版本通过 `-X main.version=...` 写入二进制，因此 `m-ui version`、面板状态和备份清单都会显示实际 Release 版本，不再依赖源码中的固定版本号。
+
 源码构建使用 Go modules；YAML 导入依赖 `gopkg.in/yaml.v3`。Windows 脚本将模块缓存保存在项目的 `.gomodcache`，构建缓存保存在 `.gocache`。
 
 ## 当前能力

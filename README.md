@@ -10,6 +10,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/RomanovCaesar/m-ui/release.yml.svg)](https://github.com/RomanovCaesar/m-ui/actions)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/go.mod)
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
+[![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
 A server management panel powered by Mihomo. Its interface follows the information density and workflow of 3x-ui 2.9.3 while using Mihomo's native YAML configuration model.
 
@@ -242,3 +243,7 @@ Sharing-link conversion reuses code derived from Mihomo's `common/convert`; sour
 * [MetaCubeX/mihomo](https://github.com/MetaCubeX/mihomo) — the proxy core and configuration model used by m-ui
 * [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui) — interface density and workflow inspiration
 * [Sub-Store](https://github.com/sub-store-org/Sub-Store) — reference behavior for several client subscription formats
+
+## License
+
+m-ui is licensed under the [GNU General Public License version 3](LICENSE). The Mihomo sharing-link conversion code retains its GPL-3.0 attribution in [`internal/mihomoconvert/NOTICE.md`](internal/mihomoconvert/NOTICE.md).

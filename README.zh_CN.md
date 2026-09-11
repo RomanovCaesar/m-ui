@@ -10,6 +10,7 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/RomanovCaesar/m-ui/release.yml.svg)](https://github.com/RomanovCaesar/m-ui/actions)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/go.mod)
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
+[![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
 一个使用 Mihomo 作为代理内核的服务端管理面板，界面设计参考 3x-ui 2.9.3 的信息密度和工作流。
 
@@ -178,3 +179,7 @@ Panel Settings → Subscription 的 `Cross Panel Subscription Path` 独立于普
 在 Inbounds → General Actions → `Export All Subscriptions (Cross Panel)` 打开聚合窗口。点击“拉取全体 Inbound 信息”后，面板会通过已配对的 P2P 节点逐台读取入站和 Username token，显示拉取进度，并把结果按来源节点缓存到 `data/cross-panel-subscriptions.json`。网络暂时失败时保留该节点的上一份缓存；“清除远端缓存”才会删除所有非本机缓存。本机入站始终直接读取当前状态，不依赖缓存。
 
 窗口中的地址按 Username 生成裸跨面板订阅页面地址，例如 `https://example.com:port/isub.../<Username Token>`。地址页面包含聚合后的节点列表，节点按 Inbound Name 排序；页面中的 Clash 地址会在同一地址后追加 `/clash`。远端节点和 token 只通过已配对节点的签名、加密 P2P 通道传输；只存在于远端的 Username 也会使用远端缓存中的 token 出现在地址列表中。
+
+## 许可证
+
+m-ui 使用 [GNU General Public License version 3](LICENSE) 授权。Mihomo 分享链接转换代码的 GPL-3.0 来源和本地修改说明见 [`internal/mihomoconvert/NOTICE.md`](internal/mihomoconvert/NOTICE.md)。

@@ -1,5 +1,6 @@
 This package is adapted from the bundled MetaCubeX/mihomo common/convert
-source (mihomo-1.19.30). It is licensed under GPL-3.0, included in LICENSE.
+source (mihomo-1.19.30). It is licensed under GPL-3.0. The license text is
+included both next to this package and in the repository root LICENSE file.
 
 Local changes remove core logging (which included credentials) and random
 User-Agent generation, use the existing multi-alphabet Base64 decoder for SS,

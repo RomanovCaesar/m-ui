@@ -1,5 +1,9 @@
 [English](/README.md) | [中文](/README.zh_CN.md)
 
+<p align="center">
+  <img src="./media/m-ui_logo.png" alt="m-ui logo" width="420">
+</p>
+
 # m-ui
 
 [![Release](https://img.shields.io/github/v/release/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/releases)

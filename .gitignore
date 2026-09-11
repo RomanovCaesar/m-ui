@@ -1,0 +1,9 @@
+data/
+dist/
+*.log
+m-ui.exe
+m-ui.exe~
+mihomo.exe
+.gocache/
+.gomodcache/
+.runtime-*/

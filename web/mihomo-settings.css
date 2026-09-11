@@ -1,0 +1,168 @@
+/* ===== Mihomo 分流设置页 =====
+   度量全部对齐 3x-ui 2.9.3 的 Ant Design Vue 1.x（@border-radius-base:1rem）：
+   卡片 1.5rem、控件 1rem、菜单/标签项 .5rem、复选框 6px、开关 100px；控件高 32px；
+   表头 500/14px、rgba(0,0,0,.85)、底色 #fafafa；表格行 hover var(--table-hover)。
+   颜色一律走 ant-theme.css 的令牌，本文件不写死任何 hex。 */
+
+.mihomo-settings-page{display:grid;gap:16px}
+
+/* ---- 顶部动作条：等同 Ant 卡片（无阴影，只有 1px 边框 + 1.5rem 圆角） ---- */
+.mihomo-actionbar{display:flex;align-items:center;gap:10px;padding:24px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
+.mihomo-actionbar button:disabled{cursor:not-allowed;opacity:.48}
+.mihomo-actionbar .danger-btn{color:#fff;background:var(--danger);border-color:var(--danger)}
+.mihomo-actionbar .danger-btn:hover{background:var(--danger-hover);border-color:var(--danger-hover)}
+
+/* ---- 未保存提示条：3x-ui 的 .settings-page .alert-msg + settings-page-signal 呼吸光 ---- */
+.mihomo-actionbar .mihomo-warning{display:block;margin:0 0 0 auto;padding:.5rem 1rem;border:0;border-radius:var(--radius-sm);color:#c27512;background:rgb(255 145 0 / 15%);font-size:16px;font-weight:400;text-align:center;cursor:default;transition:all .5s var(--ease);animation:settings-page-signal 3s cubic-bezier(.18,.89,.32,1.28) infinite}
+.mihomo-actionbar .mihomo-warning:hover{transition-duration:.3s;animation:settings-page-signal .9s ease infinite}
+.mihomo-warning::before{content:none}
+
+.mihomo-delay-result{display:block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---- WARP 弹窗 ---- */
+.modal-panel.warp-modal{width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto}
+.warp-modal .modal-content{padding:24px}
+.warp-info{width:100%;table-layout:fixed;margin:16px 0;border-collapse:collapse}
+.warp-info th,.warp-info td{display:table-cell!important;padding:8px 12px;border:0;background:transparent;text-align:left;vertical-align:top;text-transform:none;font-size:14px;letter-spacing:0}
+.warp-info th{width:32%;font-weight:400;color:var(--muted)}
+.warp-info td{overflow-wrap:anywhere;white-space:normal;color:var(--text)}
+.warp-info tr:nth-child(odd){background:var(--surface-2)}
+.warp-divider{display:flex;align-items:center;gap:16px;margin:24px 0 16px;font-size:16px;font-weight:500;color:var(--text-strong);text-align:center}
+.warp-divider::before,.warp-divider::after{content:'';flex:1;border-top:1px solid var(--line)}
+.warp-license{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+#warp-license-form{display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;padding:20px}
+#warp-license-input{min-width:0;width:100%;height:var(--ctl);padding:4px 11px;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);color:var(--text);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+#warp-license-input:hover{border-color:var(--teal-3)}
+#warp-license-input:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft);outline:0}
+#warp-license-update{grid-column:2;justify-self:start}
+.warp-outbound-status{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.warp-note,#warp-pending,#warp-loading{color:var(--muted);font-size:14px}
+.warp-note a{color:var(--teal)}
+#warp-error,#warp-config-error{margin:12px 0;color:var(--danger);overflow-wrap:anywhere}
+.warp-modal button:disabled{opacity:.5;cursor:not-allowed}
+.warp-modal .danger-btn{color:#fff;background:var(--danger);border-color:var(--danger)}
+@media(max-width:600px){.warp-modal .modal-content{padding:16px}.warp-info th{width:37%}.warp-info th,.warp-info td{font-size:13px;padding:5px 4px}#warp-license-form{grid-template-columns:1fr;padding:14px}#warp-license-update{grid-column:1}}
+
+/* ---- 卡片与标签页 ---- */
+.mihomo-card{padding:24px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
+/* Ant .ant-tabs：bar 有 1px 下边框，ink-bar 由 JS 定位（bottom:1px;height:2px;background:#008771） */
+.mihomo-tabs{position:relative;display:flex;flex-wrap:wrap;gap:0;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.mihomo-tab{display:flex;align-items:center;gap:10px;height:auto;margin:0 32px 0 0;padding:12px 16px;border:0;border-radius:0;background:transparent;color:var(--text);font-size:14px;box-shadow:none;transition:color .3s var(--ease)}
+.mihomo-tab:hover{color:var(--teal-3)}
+.mihomo-tab.active{color:var(--teal);font-weight:500;text-shadow:0 0 .25px currentColor}
+.mihomo-tab-icon{display:inline-flex;font-size:14px;line-height:1}
+.mihomo-pane{display:none}.mihomo-pane.active{display:block;animation:mui-fade-in .3s var(--ease)}
+
+/* ---- 工具条与主要按钮（Ant .ant-btn：32px / 0 15px / 1rem） ---- */
+.mihomo-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px}
+.mihomo-toolbar .mihomo-spacer{flex:1}
+.mihomo-primary,.mihomo-tool{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:var(--ctl);padding:0 15px;border:1px solid var(--teal);border-radius:var(--radius);color:#fff;background:var(--teal);font-size:14px;font-weight:400;line-height:1.5;white-space:nowrap;cursor:pointer;text-shadow:0 -1px 0 rgba(0,0,0,.12);box-shadow:var(--shadow-btn-primary);transition:all .3s var(--ease)}
+.mihomo-primary:hover,.mihomo-tool:hover{background:var(--teal-3);border-color:var(--teal-3)}
+.mihomo-tool{color:var(--text);background:var(--surface);border-color:var(--stroke);text-shadow:none;box-shadow:var(--shadow-btn)}
+.mihomo-tool:hover{color:var(--teal);background:var(--surface);border-color:var(--teal)}
+.mihomo-tool.placeholder{border-color:var(--stroke);color:var(--muted);background:var(--surface-2)}
+
+/* ---- 表格 ---- */
+.mihomo-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
+.mihomo-table{width:100%;min-width:820px;margin:0;border:0;border-collapse:collapse;border-radius:0}
+.mihomo-table th,.mihomo-table td{padding:16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;vertical-align:middle;transition:background .3s var(--ease)}
+.mihomo-table th:last-child,.mihomo-table td:last-child{border-right:0}
+.mihomo-table tbody tr:last-child td{border-bottom:0}
+.mihomo-table th{color:var(--text-strong);background:var(--surface-2);font-weight:500;font-size:14px;letter-spacing:0;text-transform:none;white-space:nowrap}
+.mihomo-table td:first-child{width:auto;background:transparent}
+.mihomo-table tbody tr:hover > td{background:var(--table-hover)}
+.mihomo-name{font-weight:500;color:var(--text-strong)}.mihomo-muted{color:var(--muted)}
+
+/* ---- Ant tag：0 7px / 12px / line-height 20px / 1rem ---- */
+.mihomo-pill{display:inline-flex;align-items:center;padding:0 7px;border:1px solid var(--tag-purple-border);border-radius:var(--radius);color:var(--tag-purple-color);background:var(--tag-purple-bg);font-size:12px;line-height:20px}
+body.dark .mihomo-pill{color:var(--tag-purple-color);border-color:var(--tag-purple-border);background:var(--tag-purple-bg)}
+.mihomo-pill.group{color:var(--tag-green-color);border-color:var(--tag-green-border);background:var(--tag-green-bg)}
+
+/* ---- 行内图标按钮：Ant .ant-btn-icon-only.ant-btn-sm（24×24 / 1rem） ---- */
+.mihomo-actions{display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.mihomo-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:1px solid var(--stroke);border-radius:var(--radius);color:var(--text);background:var(--surface);font-size:14px;cursor:pointer;box-shadow:var(--shadow-btn);transition:all .3s var(--ease)}
+.mihomo-icon:hover{color:var(--teal);border-color:var(--teal)}
+.mihomo-icon.danger:hover{color:var(--danger);border-color:var(--danger)}
+.mihomo-icon:disabled{cursor:not-allowed;opacity:.35}
+.mihomo-empty{padding:48px 16px;color:var(--muted-2);text-align:center}
+.mihomo-empty strong{display:block;margin-bottom:8px;color:var(--text);font-size:16px}
+
+/* ---- Outbound / Rule 弹窗 ---- */
+.mihomo-modal{width:min(820px,calc(100vw - 32px));max-height:calc(100vh - 34px);overflow:auto}
+.mihomo-modal .modal-content{padding:24px}
+.mihomo-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.mihomo-field{display:grid;gap:6px}.mihomo-field.full{grid-column:1/-1}
+.mihomo-field>span{font-weight:500;color:var(--text-strong)}.mihomo-field small{color:var(--muted)}
+.mihomo-field input,.mihomo-field select,.mihomo-field textarea{width:100%;height:var(--ctl);padding:4px 11px;border:1px solid var(--stroke);border-radius:var(--radius);color:var(--text);background:var(--surface);outline:none;transition:border-color .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease)}
+.mihomo-field textarea{height:auto;min-height:76px;resize:vertical}
+.mihomo-field select[multiple]{height:auto;min-height:140px}
+.mihomo-field input:hover,.mihomo-field select:hover,.mihomo-field textarea:hover{border-color:var(--teal-3)}
+.mihomo-field input:focus,.mihomo-field select:focus,.mihomo-field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
+.mihomo-checks{display:flex;flex-wrap:wrap;gap:10px 20px;padding:10px 0}
+.mihomo-check{display:flex;align-items:center;gap:8px;color:var(--text)}
+.mihomo-check input{width:16px;height:16px;accent-color:var(--teal)}
+/* Ant .ant-alert（info）：8px 15px、1rem、1px 边框、淡蓝底 */
+.mihomo-form-note{margin-bottom:16px;padding:8px 15px;border:1px solid var(--tag-blue-border);border-radius:var(--radius);color:var(--text);background:var(--tag-blue-bg);line-height:1.5}
+.mihomo-member-summary{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mihomo-rule-payload{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono)}
+.mihomo-dirty-dot{display:none;width:6px;height:6px;border-radius:50%;background:var(--orange)}
+.mihomo-dirty .mihomo-dirty-dot{display:inline-block;animation:runningAnimation 2s infinite}
+
+/* ---- Basics 折叠面板（Ant Collapse：#fafafa 底、1rem 外框、header 10px 16px 10px 40px + left 16px 箭头） ---- */
+.basics-sections{border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface-2);overflow:hidden}
+.basics-section+ .basics-section{border-top:1px solid var(--stroke)}
+.basics-section>summary{position:relative;list-style:none;cursor:pointer;padding:10px 16px 10px 40px;font-size:14px;line-height:22px;color:var(--text-strong);background:transparent}
+.basics-section>summary::-webkit-details-marker{display:none}
+/* Ant Collapse 的箭头：left 16px 垂直居中，折叠指向右，展开转 90° 指向下 */
+.basics-section>summary::before{content:'';position:absolute;top:50%;left:16px;width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-50%) rotate(-45deg);transition:transform .24s var(--ease)}
+.basics-section[open]>summary::before{transform:translateY(-50%) rotate(45deg)}
+.basics-section-body{padding:16px;border-top:1px solid var(--stroke);background:var(--surface);overflow-x:auto;animation:collfade .3s var(--ease)}
+.basics-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:24px;padding:12px 0;border-bottom:1px solid var(--line)}
+.basics-row:last-child{border-bottom:0}
+.basics-row label,.basics-row span{font-size:14px;color:var(--text-strong)}
+.basics-row p{margin:4px 0 0;font-size:14px;color:var(--muted);line-height:1.5}
+.basics-control{min-width:0}
+.basics-control>input,.basics-control>select{width:100%;height:var(--ctl);padding:4px 11px;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);color:var(--text);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.basics-control>input:hover,.basics-control>select:hover{border-color:var(--teal-3)}
+.basics-control>input:focus,.basics-control>select:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft);outline:0}
+.basics-control.switch-control{display:flex;justify-content:flex-start}
+.basics-control input:disabled{cursor:not-allowed}
+.basics-control .switch:has(input:disabled){opacity:.6;cursor:not-allowed}
+.basics-mode-warning{padding:8px 15px;border:1px solid var(--tag-orange-border);border-radius:var(--radius);color:var(--tag-orange-color);background:var(--tag-orange-bg)}
+.basics-reset{padding:24px}
+.basics-tags{display:flex;flex-wrap:wrap;gap:6px;padding:3px 7px;min-height:var(--ctl);border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.basics-tags:hover{border-color:var(--teal-3)}
+.basics-tags:focus-within{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
+.basics-tags [data-tag-items]{display:contents}
+.basics-tags input{flex:1;min-width:100px;max-width:100%;height:24px;padding:0 4px;outline:0;border:0;color:var(--text);background:transparent}
+/* Ant .ant-tag：0 7px / 12px / line-height 20px / 1rem */
+.basics-tag{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:0 7px;border:1px solid var(--tag-border);border-radius:var(--radius);background:var(--tag-bg);color:var(--tag-color);font-size:12px;line-height:20px;overflow-wrap:anywhere}
+.basics-tag button{flex:none;display:inline-flex;align-items:center;padding:0;border:0;color:var(--muted);background:transparent;font-size:12px;cursor:pointer;transition:color .3s var(--ease)}
+.basics-tag button:hover{color:var(--danger)}
+
+@media(max-width:760px){.basics-section-body{padding:8px 14px 14px}.basics-row{grid-template-columns:1fr;gap:9px}.basics-row p{font-size:13px}.mihomo-tabs{gap:0}.mihomo-tab{margin-right:16px;padding:12px 8px;font-size:14px}}
+
+/* ---- Form / YAML 编辑器标签页 ---- */
+.mihomo-editor-tabs{position:relative;display:flex;gap:0;margin:0 0 16px;border-bottom:1px solid var(--line)}
+.mihomo-editor-tabs button{margin:0 32px 0 0;padding:12px 16px;border:0;border-bottom:0;background:transparent;color:var(--text);font-size:14px;cursor:pointer;transition:color .3s var(--ease)}
+.mihomo-editor-tabs button:hover{color:var(--teal-3)}
+.mihomo-editor-tabs button[aria-selected="true"]{color:var(--teal);font-weight:500;text-shadow:0 0 .25px currentColor}
+
+/* ---- Link 解析行（Ant Input.Group 观感：32px 高、1rem 圆角） ---- */
+.outbound-link-row{display:flex;align-items:center;width:100%;height:var(--ctl);margin-bottom:16px;overflow:hidden;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.outbound-link-row:hover{border-color:var(--teal-3)}
+.outbound-link-row:focus-within{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
+.outbound-link-row label{flex:none;padding:0 11px;border-right:1px solid var(--line);color:var(--muted);font-size:14px}
+.outbound-link-row input{flex:1;min-width:0;height:100%;padding:4px 11px;border:0;background:transparent;color:var(--text);outline-offset:-2px}
+.outbound-link-row button{flex:none;display:inline-flex;align-items:center;justify-content:center;width:40px;height:100%;border:0;border-left:1px solid var(--line);background:var(--surface-2);color:var(--teal);font-size:14px;cursor:pointer;transition:background .3s var(--ease)}
+.outbound-link-row button:hover{background:var(--surface-3)}
+.outbound-link-row button:disabled{opacity:.5;cursor:wait}
+
+/* ---- YAML 编辑器 ---- */
+.outbound-yaml-editor{display:grid;grid-template-columns:48px minmax(0,1fr);height:360px;max-height:52vh;overflow:hidden;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--code-bg)}
+.outbound-yaml-editor pre,.outbound-yaml-editor textarea{margin:0;padding:12px;font:14px/22px var(--font-mono);tab-size:2;letter-spacing:0}
+.outbound-yaml-editor pre{overflow:hidden;text-align:right;color:var(--muted);background:var(--surface-2);border-right:1px solid var(--line);user-select:none}
+.outbound-yaml-editor textarea{width:100%;height:100%;min-width:0;resize:none;overflow:auto;border:0;border-radius:0;outline-offset:-2px;white-space:pre;color:var(--code-color);background:transparent}
+#outbound-import-error{margin-top:16px;color:var(--danger);white-space:pre-wrap;overflow-wrap:anywhere}
+#outbound-yaml-panel[hidden],#outbound-form-panel[hidden]{display:none!important}
+@media(max-width:760px){.mihomo-actionbar{align-items:flex-start;flex-wrap:wrap;padding:16px}.mihomo-actionbar .mihomo-warning{width:100%;margin:8px 0 0;font-size:14px}.mihomo-card{padding:14px}.mihomo-tabs .mihomo-tab{margin-right:12px}.mihomo-form-grid{grid-template-columns:1fr}.mihomo-field.full{grid-column:auto}}

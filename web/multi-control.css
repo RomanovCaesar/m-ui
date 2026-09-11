@@ -1,0 +1,44 @@
+/* ===== Multi-control（联机）设置页 =====
+   度量对齐 Ant Design Vue 1.x（@border-radius-base:1rem）：控件 1rem / 6px 复选框、
+   控件高 32px、表头 500/14px、行 hover var(--table-hover)。颜色全走 ant-theme.css 令牌。 */
+
+/* Ant .ant-alert（info）：8px 15px、1rem、淡蓝底 */
+.mc-notice{padding:8px 15px;margin-bottom:16px;border:1px solid var(--tag-blue-border);border-radius:var(--radius);background:var(--tag-blue-bg);color:var(--text);line-height:1.5}
+.mc-node-id{font-family:var(--font-mono);overflow-wrap:anywhere}
+.mc-local-footer,.mc-modal-actions,.mc-token-box,.mc-blocked-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mc-local-footer{justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+.mc-local-footer span,.mc-note{color:var(--muted);font-size:14px}
+.mc-summary{padding:10px 0;color:var(--teal)}
+.modal-panel.mc-modal{width:min(650px,calc(100vw - 32px));max-height:calc(100vh - 36px);overflow:auto}
+.modal-panel.mc-wide{width:min(1050px,calc(100vw - 32px))}
+.mc-modal .modal-content{padding:24px}
+.mc-modal p{margin:0 0 16px;line-height:1.5}
+.mc-modal-actions{margin:16px 0}
+.mc-token-box input{flex:1;min-width:160px;font:16px/1.5 var(--font-mono);letter-spacing:1px}
+.mc-modal input,.mc-modal select{height:var(--ctl);padding:4px 11px;border:1px solid var(--stroke);border-radius:var(--radius);color:var(--text);background:var(--surface);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.mc-modal input:hover,.mc-modal select:hover{border-color:var(--teal-3)}
+.mc-modal input:focus,.mc-modal select:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft);outline:0}
+.mc-connect-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin:16px 0}
+.mc-connect-grid label{display:grid;gap:6px;min-width:0;font-size:14px;color:var(--text-strong)}
+.mc-connect-grid input,.mc-connect-grid select{width:100%;min-width:0}
+.mc-connect-token{grid-column:1/-1}
+#mc-connect-form{padding:0 0 16px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.mc-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
+.mc-peer-table{width:100%;min-width:700px;margin:0;border-collapse:collapse}
+.mc-peer-table td,.mc-peer-table th{padding:16px;border-bottom:1px solid var(--line);text-align:left;transition:background .3s var(--ease)}
+.mc-peer-table tbody tr:last-child td{border-bottom:0}
+.mc-peer-table tbody tr:hover > td{background:var(--table-hover)}
+.mc-peer-table th{color:var(--text-strong);font-weight:500;font-size:14px;background:var(--surface-2)}
+.mc-peer-table th:nth-child(n),.mc-peer-table td:nth-child(n){display:table-cell}
+.mc-peer-table small{display:block;margin-top:4px;color:var(--muted);font-size:12px;max-width:260px;overflow-wrap:anywhere}
+/* Ant tag 观感：在线绿色、离线默认灰 */
+.mc-status{display:inline-flex;align-items:center;padding:0 7px;border:1px solid var(--tag-border);border-radius:var(--radius);background:var(--tag-bg);color:var(--tag-color);font-size:12px;line-height:20px}
+.mc-status.online{border-color:var(--tag-green-border);background:var(--tag-green-bg);color:var(--tag-green-color)}
+.mc-empty{padding:32px 12px;text-align:center;color:var(--muted-2)}
+#mc-error,.mc-modal-error{color:var(--danger);padding:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.mc-modal button:disabled{opacity:.5;cursor:not-allowed}
+.mc-blocked-row{padding:10px 0;border-bottom:1px solid var(--line)}
+.mc-blocked-row code{overflow-wrap:anywhere;padding:2px 6px;border-radius:var(--radius-xs);background:var(--code-bg);color:var(--code-color);font-family:var(--font-mono)}
+#mc-blocked-section{margin-top:16px}
+#mc-blocked-section summary{cursor:pointer;color:var(--muted);padding:8px 0}
+@media(max-width:680px){.mc-connect-grid{grid-template-columns:1fr}.mc-connect-token{grid-column:auto}.mc-modal .modal-content{padding:16px}.mc-peer-table td,.mc-peer-table th{padding:12px}}

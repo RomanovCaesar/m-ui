@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="zh-CN" data-default-language="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>m-ui | 登录</title>
+  <link rel="stylesheet" href="static/ant-theme.css">
+  <style>
+    /* Palette mirrors 3x-ui's login theme: an upper band (--wave-top) separated
+       from the page background (--wave-under) by the animated wave, whose last
+       layer is filled with --wave-crest so it melts into the lower band. */
+    :root {
+      color-scheme: light;
+      /* 3x-ui：.waves-header 底色 #dbf5ed、.under 底色 #c7ebe2、#login 底色 #fff、
+         主色 --color-primary-100 #008771、hover #006655、流光高光 #009980。 */
+      --wave-top: #dbf5ed;
+      --wave-under: #c7ebe2;
+      --wave-fill: rgba(0, 135, 113, .08);
+      --wave-crest: #c7ebe2;
+      --card: #fff;
+      --card-hover-shadow: 0 2px 8px rgb(0 0 0 / .09);
+      --text: rgba(0, 0, 0, .65);
+      --text-strong: rgba(0, 0, 0, .85);
+      --muted: rgba(0, 0, 0, .45);
+      --line: #d9d9d9;
+      --input: #fff;
+      --primary: #008771;
+      --primary-deep: #006655;
+      --primary-sheen: #009980;
+      --menu-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+      --autofill: #f8f8f8;
+      --autofill-focus: #e8f4f2;
+      --checkbox-bg: #fff;
+      --switch-off: rgba(0, 0, 0, .25);
+    }
+
+    /* Dark：--dark-color-login-background #0a1222 / -login-wave = surface-200 #222d42 /
+       #login = surface-100 #151f31 / stroke #2c3950 / text-primary rgba(255,255,255,.75) /
+       .dark .wave-btn-bg 底色 #0a7557 / autofill surface-200、hover 边框 surface-300。 */
+    html.dark {
+      color-scheme: dark;
+      --wave-top: #0a1222;
+      --wave-under: #222d42;
+      --wave-fill: #222d42;
+      --wave-crest: #222d42;
+      --card: #151f31;
+      --card-hover-shadow: 0 2px 8px rgb(0 0 0 / .09);
+      --text: rgba(255, 255, 255, .75);
+      --text-strong: rgba(255, 255, 255, .85);
+      --muted: rgba(255, 255, 255, .45);
+      --line: #2c3950;
+      --input: #222d42;
+      --primary: #0a7557;
+      --primary-deep: #006655;
+      --primary-sheen: #009980;
+      --menu-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+      --autofill: #222d42;
+      --autofill-focus: #2c3950;
+      --checkbox-bg: rgb(0 135 113 / .3);
+      --switch-off: rgb(0 135 113 / .3);
+    }
+
+    /* Ultra Dark：3x-ui 的中性灰一套，登录页背景 #0a2227、波浪 #0f2d32。
+       只在 Dark 之上叠加，选择器 (0,2,1) 压过 html.dark (0,1,1)。 */
+    html.dark[data-theme="ultra-dark"] {
+      --wave-top: #0a2227;
+      --wave-under: #0f2d32;
+      --wave-fill: #0f2d32;
+      --wave-crest: #0f2d32;
+      --card: #0c0e12;
+      --text: rgb(255 255 255 / 85%);
+      --text-strong: rgb(255 255 255 / 92%);
+      --muted: rgb(255 255 255 / 50%);
+      --line: #202025;
+      --input: #222327;
+      --menu-shadow: 0 2px 8px rgba(0, 0, 0, .45);
+      --autofill: #222327;
+      --autofill-focus: #32353b;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--text);
+      background: var(--wave-under);
+      font: 14px/1.5 var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: color .2s ease, background-color .2s ease;
+    }
+
+    .waves-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      background-color: var(--wave-top);
+      transition: background-color .2s ease;
+      pointer-events: none;
+    }
+
+    .waves-inner-header { height: 50vh; width: 100%; margin: 0; padding: 0; }
+
+    .waves {
+      display: block;
+      position: relative;
+      width: 100%;
+      height: 15vh;
+      min-height: 100px;
+      max-height: 150px;
+      margin-bottom: -8px;
+    }
+
+    /* Four copies of the same crest drift at different speeds; the offset pairs
+       (delay/duration) and opacities are 3x-ui's, which in turn come from the
+       original "gentle wave" parallax. */
+    .parallax > use {
+      fill: var(--wave-fill);
+      animation: move-forever 25s cubic-bezier(.55, .5, .45, .5) infinite;
+    }
+
+    .parallax > use:nth-child(1) { animation-delay: -2s; animation-duration: 4s; opacity: .2; }
+    .parallax > use:nth-child(2) { animation-delay: -3s; animation-duration: 7s; opacity: .4; }
+    .parallax > use:nth-child(3) { animation-delay: -4s; animation-duration: 10s; opacity: .6; }
+    .parallax > use:nth-child(4) { animation-delay: -5s; animation-duration: 13s; fill: var(--wave-crest); }
+
+    @keyframes move-forever {
+      0% { transform: translate3d(-90px, 0, 0); }
+      100% { transform: translate3d(85px, 0, 0); }
+    }
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: min(420px, calc(100vw - 36px));
+      padding: 4rem 3rem 2.5rem;
+      border-radius: 2rem;
+      background: var(--card);
+      animation: charge .5s both;
+      transition: box-shadow .3s, background-color .2s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .login-card:hover { box-shadow: var(--card-hover-shadow); }
+
+    @keyframes charge {
+      from { transform: translateY(5rem); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Ant .ant-btn-circle：32px 灰边圆钮，只有 hover 才变主色 */
+    .settings-button {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 1px solid var(--stroke);
+      border-radius: 50%;
+      color: var(--text);
+      background: var(--card);
+      cursor: pointer;
+      transition: color .3s var(--ease), border-color .3s var(--ease);
+    }
+
+    .settings-button:hover { color: var(--primary); border-color: var(--primary); }
+    .settings-button svg { width: 16px; height: 16px; }
+
+    /* Ant .ant-popover：无描边、1rem 圆角、0 2px 8px 阴影 */
+    .settings-menu {
+      position: absolute;
+      z-index: 4;
+      top: 62px;
+      right: 22px;
+      width: 245px;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius);
+      background: var(--card);
+      box-shadow: var(--menu-shadow);
+      transform: translateY(-8px) scale(.98);
+      transform-origin: top right;
+      opacity: 0;
+      visibility: hidden;
+      transition: .16s ease;
+    }
+    .settings-menu.open { transform: translateY(0) scale(1); opacity: 1; visibility: visible; }
+
+    .settings-menu::before {
+      position: absolute;
+      top: -7px;
+      right: 25px;
+      width: 15px;
+      height: 15px;
+      background: var(--card);
+      transform: rotate(45deg);
+      content: "";
+    }
+
+    /* Ant .ant-popover-title：min-height 32 / 5px 16px 4px / 500 / 16px / 1px #f0f0f0 */
+    .settings-title { position: relative; min-height: 32px; padding: 5px 16px 4px; border-bottom: 1px solid var(--table-ring); font-size: 16px; font-weight: 500; }
+    /* Ant .ant-popover-inner-content 12px 16px + a-space vertical size 10 */
+    .settings-body { display: grid; gap: 10px; padding: 12px 16px; }
+    /* a-space horizontal size="small"：开关在前、文案在后 */
+    .settings-row { display: flex; align-items: center; gap: 8px; }
+    /* Ant .ant-switch-small：min-width 28 / height 16 / 滑块 12px / transition all .36s cubic-bezier(.78,.14,.15,.86)；
+       未选 rgba(0,0,0,.25)（暗色 rgb(0 135 113/.3)），选中 #008771。 */
+    .theme-switch { position: relative; width: 28px; height: 16px; flex: none; }
+    .theme-switch input { position: absolute; opacity: 0; }
+    .theme-switch span { position: absolute; inset: 0; border-radius: var(--radius-pill); background: var(--switch-off); cursor: pointer; transition: all .36s cubic-bezier(.78, .14, .15, .86); }
+    .theme-switch span::after { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 12px; background: #fff; box-shadow: 0 2px 4px 0 rgba(0, 35, 11, .2); content: ""; transition: all .36s cubic-bezier(.78, .14, .15, .86); }
+    .theme-switch input:checked + span { background: var(--primary); }
+    .theme-switch input:checked + span::after { left: 100%; margin-left: -2px; transform: translateX(-100%); }
+    .theme-switch input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    /* Ultra Dark 行：Ant .ant-checkbox —— 16×16、1px #d9d9d9、6px 圆角，
+       选中 #008771 实底 + 2px 白色对勾（rotate(45deg)）。 */
+    .ultra-check { position: relative; display: inline-flex; width: 16px; height: 16px; flex: none; }
+    .ultra-check input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+    .ultra-check span { position: absolute; inset: 0; border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--checkbox-bg); pointer-events: none; transition: all .3s var(--ease); }
+    .ultra-check span::after { position: absolute; top: 50%; left: 50%; width: 5px; height: 9px; border: 2px solid #fff; border-top: 0; border-left: 0; transform: rotate(45deg) scale(0) translate(-50%, -50%); transform-origin: center; opacity: 0; content: ""; transition: all .2s cubic-bezier(.12, .4, .29, 1.46) .1s; }
+    .ultra-check input:checked + span { border-color: var(--primary); background: var(--primary); }
+    .ultra-check input:checked + span::after { transform: rotate(45deg) scale(1) translate(-50%, -50%); opacity: 1; }
+    .ultra-check input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .ultra-row[hidden] { display: none; }
+    .language-label { color: var(--text); font-size: 14px; }
+    /* 选择框观感由 static/ant-select.js 提供，这里只管宽度 */
+    .language-select { width: 100%; }
+
+    /* Rotating headline, transplanted from 3x-ui: the visible word keeps the
+       flow height while its siblings are stacked absolutely on top of it. */
+    .headline { display: flex; justify-content: center; align-items: center; margin: .5rem 0 2rem; font-size: 2rem; line-height: 1.2; letter-spacing: -.02em; }
+    .headline b { font-weight: 700; }
+    .words-wrapper { width: 100%; display: inline-block; position: relative; text-align: center; }
+    .words-wrapper b { width: 100%; display: inline-block; position: absolute; left: 0; top: 0; }
+    .words-wrapper b.is-visible { position: relative; }
+    .headline.zoom .words-wrapper { perspective: 300px; }
+    .headline.zoom b { opacity: 0; }
+    .headline.zoom b.is-visible { opacity: 1; animation: cubic-bezier(.215, .61, .355, 1) zoom-in .8s; }
+    .headline.zoom b.is-hidden { animation: cubic-bezier(.215, .61, .355, 1) zoom-out .4s; }
+
+    @keyframes zoom-in {
+      0% { opacity: 0; transform: translateZ(100px); }
+      100% { opacity: 1; transform: translateZ(0); }
+    }
+
+    @keyframes zoom-out {
+      0% { opacity: 1; transform: translateZ(0); }
+      100% { opacity: 0; transform: translateZ(-100px); }
+    }
+    form { width: 100%; }
+    .input-wrap { position: relative; margin-bottom: 20px; }
+    .input-wrap > svg { position: absolute; top: 50%; left: 23px; width: 20px; height: 20px; color: var(--muted); transform: translateY(-50%); pointer-events: none; }
+
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      height: 50px;
+      padding: 0 48px 0 50px;
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      color: var(--text);
+      background: var(--input);
+      outline: none;
+      font: inherit;
+      font-size: 16px;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+
+    input::placeholder { color: var(--muted); }
+    input:hover { border-color: var(--primary); }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0, 135, 113, .2); }
+
+    /* Kill the browser's autofill wash the same way 3x-ui does, otherwise Chrome
+       paints its own yellow over the rounded inputs. */
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 100px var(--autofill) inset;
+      box-shadow: 0 0 0 100px var(--autofill) inset;
+      -webkit-text-fill-color: var(--text);
+      caret-color: var(--text);
+      transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
+      background-clip: text;
+    }
+
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 100px var(--autofill-focus) inset;
+      box-shadow: 0 0 0 100px var(--autofill-focus) inset;
+    }
+
+    .password-toggle { position: absolute; top: 50%; right: 17px; width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; color: var(--muted); background: transparent; transform: translateY(-50%); cursor: pointer; }
+    .password-toggle svg { width: 20px; height: 20px; }
+
+    .centered { display: flex; text-align: center; align-items: center; justify-content: center; width: 100%; margin-top: 1rem; }
+    .wave-btn-bg {
+      position: relative;
+      width: 100%;
+      height: 50px;
+      border-radius: 25px;
+      transition: all .3s cubic-bezier(.645, .045, .355, 1);
+    }
+
+    .login-button {
+      display: block;
+      margin: 0 auto;
+      width: 100%;
+      height: 50px;
+      border: 1px solid var(--primary);
+      border-radius: 30px;
+      color: #fff;
+      background-color: var(--primary);
+      font: inherit;
+      font-size: 16px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: all .3s cubic-bezier(.645, .045, .355, 1);
+    }
+
+    /* Hover narrows the button and sweeps a highlight across it — 3x-ui's
+       ma-bg-move sheen, which idles for half of every cycle. */
+    .login-button:hover:not(:disabled),
+    .login-button:focus-visible:not(:disabled) {
+      width: 95%;
+      color: #fff;
+      background-color: var(--primary-deep);
+      border-color: var(--primary-deep);
+      background-image: linear-gradient(270deg, transparent 30%, var(--primary-sheen), transparent 100%);
+      background-repeat: no-repeat;
+      background-position-x: -500px;
+      animation: ma-bg-move ease-in-out 5s infinite;
+      animation-delay: -.5s;
+      box-shadow: 0 2px 0 rgb(0 0 0 / .045);
+    }
+
+    .login-button:active:not(:disabled) { background-color: var(--primary-deep); border-color: var(--primary-deep); }
+    .login-button:disabled { cursor: wait; opacity: .68; }
+
+    @keyframes ma-bg-move {
+      0% { background-position: -500px 0; }
+      50% { background-position: 1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+    /* Dark mode swaps the sheen for 3x-ui's gradient-border treatment: the
+       wrapper carries a moving radial gradient and a blurred copy of itself,
+       while the button sits on top as a translucent dark pane. */
+    html.dark .wave-btn-bg {
+      z-index: 1;
+      color: #fff;
+      background-color: var(--primary);
+      background-image: linear-gradient(transparent, transparent), radial-gradient(circle at left top, var(--primary-deep), var(--primary-sheen), var(--primary-deep));
+      background-origin: border-box;
+      background-clip: padding-box, border-box;
+      background-size: 300%;
+      border: 2px double transparent;
+      border-radius: 3em;
+    }
+
+    html.dark .wave-btn-bg::before {
+      position: absolute;
+      inset: -5px;
+      z-index: -1;
+      border-radius: 4em;
+      background: inherit;
+      background-size: inherit;
+      opacity: 0;
+      transition: .5s;
+      content: "";
+    }
+
+    html.dark .wave-btn-bg:hover,
+    html.dark .wave-btn-bg:focus-within { width: 95%; animation: wave-btn-tara 4s ease infinite; }
+    html.dark .wave-btn-bg:hover::before,
+    html.dark .wave-btn-bg:focus-within::before { opacity: 1; filter: blur(20px); animation: wave-btn-tara 8s linear infinite; }
+
+    html.dark .login-button,
+    html.dark .login-button:hover:not(:disabled),
+    html.dark .login-button:focus-visible:not(:disabled) {
+      width: 100%;
+      height: 46px;
+      border: none;
+      border-radius: 2rem;
+      background-color: transparent;
+      background-image: linear-gradient(rgb(13 14 33 / .45), rgb(13 14 33 / .35));
+      animation: none;
+      background-position-x: 0;
+      box-shadow: none;
+    }
+
+    @keyframes wave-btn-tara {
+      to { background-position: 300%; }
+    }
+
+    .error { min-height: 22px; margin-top: 18px; text-align: center; color: #d84d5a; font-size: 13px; }
+    @media (max-width: 768px) {
+      .waves { height: 40px; min-height: 40px; }
+    }
+
+    @media (max-width: 620px) {
+      body { overflow: auto; padding: 24px 0; }
+      .login-card { padding: 3rem 1.75rem 2rem; border-radius: 28px; }
+      .headline { margin-bottom: 1.75rem; font-size: 1.75rem; }
+      .settings-menu { right: 18px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .parallax > use,
+      .login-button:hover:not(:disabled),
+      .login-button:focus-visible:not(:disabled),
+      html.dark .wave-btn-bg:hover,
+      html.dark .wave-btn-bg:focus-within,
+      html.dark .wave-btn-bg:hover::before,
+      html.dark .wave-btn-bg:focus-within::before { animation: none; }
+      .login-card { animation: none; }
+      .headline.zoom b.is-visible,
+      .headline.zoom b.is-hidden { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="waves-header" aria-hidden="true">
+    <div class="waves-inner-header"></div>
+    <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+      viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+      <defs>
+        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+      </defs>
+      <g class="parallax">
+        <use xlink:href="#gentle-wave" x="48" y="0" />
+        <use xlink:href="#gentle-wave" x="48" y="3" />
+        <use xlink:href="#gentle-wave" x="48" y="5" />
+        <use xlink:href="#gentle-wave" x="48" y="7" />
+      </g>
+    </svg>
+  </div>
+  <main class="login-card">
+    <button class="settings-button" id="settings-button" type="button" aria-label="面板设置" aria-expanded="false">
+      <svg class="anticon" aria-hidden="true"><use href="#ai-setting"></use></svg>
+    </button>
+
+    <section class="settings-menu" id="settings-menu" aria-hidden="true">
+      <div class="settings-title">面板设置</div>
+      <div class="settings-body">
+        <div class="settings-row"><label class="theme-switch"><input id="dark-mode" type="checkbox" aria-label="暗色"><span></span></label><span>暗色</span></div>
+        <div class="settings-row ultra-row" id="ultra-row" hidden><label class="ultra-check"><input id="ultra-dark" type="checkbox" aria-label="超暗色"><span></span></label><span>超暗色</span></div>
+        <span class="language-label">语言</span>
+        <select class="language-select" id="language-select" aria-label="语言"><option value="zh-CN">🇨🇳 简体中文</option><option value="en">🇺🇸 English</option></select>
+      </div>
+    </section>
+
+    <h1 class="headline zoom">
+      <span class="words-wrapper">
+        <b class="is-visible" data-word="hello">你好</b>
+        <b data-word="title">欢迎</b>
+      </span>
+    </h1>
+
+    <form id="login-form">
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <input id="username" name="username" type="text" autocomplete="username" placeholder="用户名" aria-label="用户名" required autofocus>
+      </div>
+      <div class="input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="密码" aria-label="密码" required>
+        <button class="password-toggle" id="password-toggle" type="button" aria-label="显示密码"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="m4 4 16 16"></path></svg></button>
+      </div>
+      <div class="centered">
+        <div class="wave-btn-bg">
+          <button class="login-button" id="login-button" type="submit">登录</button>
+        </div>
+      </div>
+      <div class="error" id="error" role="alert"></div>
+    </form>
+  </main>
+  <script src="static/ant-icons.js"></script>
+  <script src="static/ant-select.js"></script>
+  <script>
+    const root = document.documentElement;
+    const settingsButton = document.getElementById('settings-button');
+    const settingsMenu = document.getElementById('settings-menu');
+    const darkMode = document.getElementById('dark-mode');
+    const ultraDark = document.getElementById('ultra-dark');
+    const ultraRow = document.getElementById('ultra-row');
+    const languageSelect = document.getElementById('language-select');
+    const passwordInput = document.getElementById('password');
+    const passwordToggle = document.getElementById('password-toggle');
+    const loginButton = document.getElementById('login-button');
+    const messages = {
+      'zh-CN': { pageTitle:'m-ui | 登录', hello:'你好', title:'欢迎', username:'用户名', password:'密码', login:'登录', logging:'登录中…', settings:'面板设置', dark:'暗色', ultra:'超暗色', language:'语言', show:'显示密码', hide:'隐藏密码', failed:'登录失败' },
+      en: { pageTitle:'m-ui | Log In', hello:'Hello', title:'Welcome', username:'Username', password:'Password', login:'Log In', logging:'Logging in…', settings:'Panel Settings', dark:'Dark', ultra:'Ultra Dark', language:'Language', show:'Show password', hide:'Hide password', failed:'Login failed' }
+    };
+
+    /* 3x-ui 的三套主题（Light / Dark / Ultra Dark）。Ultra Dark 只在 Dark 打开时出现，
+       切换期间打上 data-theme-animations="off" 抑制所有 transition。
+       旧签名照旧可用：applyTheme('light'|'dark')；第三个参数缺省时读 localStorage。 */
+    function applyTheme(theme, ultra) {
+      const dark = theme === 'dark' || theme === 'ultra';
+      const wantUltra = ultra === undefined ? (theme === 'ultra' || localStorage.getItem('mui-is-ultra-dark') === 'true') : !!ultra;
+      root.setAttribute('data-theme-animations', 'off');
+      root.classList.toggle('dark', dark);
+      if (dark && wantUltra) root.setAttribute('data-theme', 'ultra-dark');
+      else root.removeAttribute('data-theme');
+      darkMode.checked = dark;
+      ultraDark.checked = wantUltra;
+      ultraRow.hidden = !dark;
+      localStorage.setItem('mui-theme', dark ? 'dark' : 'light');
+      localStorage.setItem('mui-is-ultra-dark', wantUltra ? 'true' : 'false');
+      clearTimeout(applyTheme.timer);
+      applyTheme.timer = setTimeout(() => root.removeAttribute('data-theme-animations'), 80);
+    }
+
+    function applyLanguage(language) {
+      const lang = messages[language] ? language : 'zh-CN';
+      const text = messages[lang];
+      root.lang = lang;
+      document.title = text.pageTitle;
+      languageSelect.value = lang;
+      document.querySelectorAll('.words-wrapper b').forEach(word => { word.textContent = text[word.dataset.word]; });
+      document.getElementById('username').placeholder = text.username;
+      passwordInput.placeholder = text.password;
+      // placeholder 和 aria-label 得一起换，否则读屏软件在英文界面下仍念中文。
+      document.getElementById('username').setAttribute('aria-label', text.username);
+      passwordInput.setAttribute('aria-label', text.password);
+      loginButton.textContent = loginButton.disabled ? text.logging : text.login;
+      document.querySelector('.settings-title').textContent = text.settings;
+      document.querySelector('.settings-row > span').textContent = text.dark;
+      document.querySelector('.ultra-row > span').textContent = text.ultra;
+      document.querySelector('.language-label').textContent = text.language;
+      settingsButton.setAttribute('aria-label', text.settings);
+      darkMode.setAttribute('aria-label', text.dark);
+      ultraDark.setAttribute('aria-label', text.ultra);
+      languageSelect.setAttribute('aria-label', text.language);
+      passwordToggle.setAttribute('aria-label', passwordInput.type === 'password' ? text.show : text.hide);
+      localStorage.setItem('mui-language', lang);
+    }
+
+    // 3x-ui cycles the greeting every 2s by moving the is-visible class along the
+    // sibling list, which is what drives the zoom-in/zoom-out animations.
+    function rotateHeadline(word, delay) {
+      const next = word.nextElementSibling || word.parentElement.firstElementChild;
+      word.classList.replace('is-visible', 'is-hidden');
+      next.classList.remove('is-hidden');
+      next.classList.add('is-visible');
+      setTimeout(() => rotateHeadline(next, delay), delay);
+    }
+    function closeSettings() {
+      settingsMenu.classList.remove('open');
+      settingsMenu.setAttribute('aria-hidden', 'true');
+      settingsButton.setAttribute('aria-expanded', 'false');
+    }
+
+    settingsButton.addEventListener('click', () => {
+      const open = !settingsMenu.classList.contains('open');
+      settingsMenu.classList.toggle('open', open);
+      settingsMenu.setAttribute('aria-hidden', String(!open));
+      settingsButton.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', event => { if (!settingsMenu.contains(event.target) && !settingsButton.contains(event.target)) closeSettings(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape') closeSettings(); });
+    darkMode.addEventListener('change', () => applyTheme(darkMode.checked ? 'dark' : 'light'));
+    ultraDark.addEventListener('change', () => applyTheme('dark', ultraDark.checked));
+    /* 3x-ui 在主题控件上 mousedown 就关掉过渡、mouseleave/touchend 再打开，避免整页渐变闪一下 */
+    for (const control of [darkMode.closest('.settings-row'), ultraRow]) {
+      control.addEventListener('mousedown', () => root.setAttribute('data-theme-animations', 'off'));
+      control.addEventListener('mouseleave', () => root.removeAttribute('data-theme-animations'));
+      control.addEventListener('touchend', () => root.removeAttribute('data-theme-animations'));
+    }
+    languageSelect.addEventListener('change', () => applyLanguage(languageSelect.value));
+
+    passwordToggle.addEventListener('click', () => {
+      const visible = passwordInput.type === 'text';
+      passwordInput.type = visible ? 'password' : 'text';
+      const lang = messages[languageSelect.value] || messages['zh-CN'];
+      passwordToggle.setAttribute('aria-label', visible ? lang.show : lang.hide);
+      passwordInput.focus();
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const error = document.getElementById('error');
+      const lang = messages[languageSelect.value] || messages['zh-CN'];
+      error.textContent = '';
+      loginButton.disabled = true;
+      loginButton.textContent = lang.logging;
+      const body = { username: document.getElementById('username').value.trim(), password: passwordInput.value };
+      try {
+        // 登录页可能被挂在自定义 URI 路径下，用相对地址请求，别写死站点根。
+        const base = window.location.pathname.replace(/[^/]*$/, '');
+        const response = await fetch(base + 'api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || lang.failed);
+        window.location.href = (data.data && data.data.redirect) || base;
+      } catch (exception) {
+        error.textContent = exception.message;
+        loginButton.disabled = false;
+        loginButton.textContent = lang.login;
+      }
+    });
+
+    applyTheme(localStorage.getItem('mui-theme') || 'light', localStorage.getItem('mui-is-ultra-dark') === 'true');
+    // 面板设置里的 Language 通过 data-default-language 注进来，作为没访问过本面板的
+    // 浏览器的初始语言；本机手动选过的话以 localStorage 为准。
+    applyLanguage(localStorage.getItem('mui-language') || document.documentElement.dataset.defaultLanguage || 'zh-CN');
+    setTimeout(() => rotateHeadline(document.querySelector('.words-wrapper b.is-visible'), 2000), 2000);
+  </script>
+</body>
+</html>

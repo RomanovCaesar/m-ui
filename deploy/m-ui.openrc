@@ -1,0 +1,15 @@
+#!/sbin/openrc-run
+
+name="m-ui"
+description="m-ui Mihomo Control Panel"
+command="/usr/local/m-ui/m-ui"
+directory="/usr/local/m-ui"
+command_background="yes"
+pidfile="/run/m-ui.pid"
+output_log="/var/log/m-ui.log"
+error_log="/var/log/m-ui.log"
+
+depend() {
+    need net
+    after firewall
+}

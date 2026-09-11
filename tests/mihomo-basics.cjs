@@ -1,0 +1,75 @@
+const assert = require('node:assert/strict');
+const { chromium } = require(process.env.MUI_PLAYWRIGHT || 'playwright');
+
+(async()=>{
+  const browser=await chromium.launch({headless:true,executablePath:process.env.MUI_CHROMIUM});
+  try {
+    const page=await browser.newPage({viewport:{width:1440,height:1050}}),errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    await page.goto(process.env.MUI_TEST_URL||'http://127.0.0.1:21530/');
+    await page.locator('#username').fill('admin');await page.locator('#password').fill('admin');await page.locator('#login-button').click();
+    await page.locator('[data-view="mihomo"]').click();
+    await page.locator('#mihomo-basics-form').waitFor({state:'visible'});
+    assert.equal(await page.locator('.mihomo-tabs button').first().getAttribute('data-mihomo-tab'),'basics');
+    assert.deepEqual(await page.locator('.basics-section').evaluateAll(sections=>sections.map(section=>section.open)),[true,false,false,false,false]);
+    if(await page.locator('#basics-directIpVersion').inputValue()!=='dual'){
+      await page.locator('.basics-section>summary').filter({hasText:'Reset to Default'}).click();
+      page.once('dialog',dialog=>dialog.accept());await page.locator('#basics-reset').click();
+      await page.locator('#mihomo-save').click();await page.waitForFunction(()=>document.querySelector('#mihomo-save').disabled);
+      await page.locator('.basics-section>summary').filter({hasText:'Reset to Default'}).click();
+    }
+    assert.equal(await page.locator('#basics-mode').inputValue(),'rule');
+    await page.screenshot({path:'.runtime-import/basics-desktop.png',fullPage:true});
+    const addTag=async(name,value)=>{const field=page.locator('#basics-'+name+'-input');await field.fill(value);await field.press('Enter');};
+    await page.locator('#basics-directIpVersion').selectOption('ipv4-prefer');
+    await page.locator('label[for="basics-tcpConcurrent"]').click();
+    await page.locator('label[for="basics-unifiedDelay"]').click();
+    await page.locator('#basics-outboundTestUrl').fill('https://example.com/probe');
+    await page.locator('.basics-section>summary').filter({hasText:'Statistics'}).click();
+    await page.locator('label[for="basics-outboundUploadStatistics"]').click();
+    await page.locator('label[for="basics-outboundDownloadStatistics"]').click();
+    assert.equal(await page.locator('#basics-inbound-upload').isEnabled(),false);
+    await page.locator('.basics-section>summary').filter({hasText:'Log',exact:true}).click();
+    await page.locator('#basics-logLevel').selectOption('debug');
+    assert.equal(await page.locator('#basics-dns-log').isChecked(),true);
+    await page.locator('label[for="basics-maskLogAddress"]').click();
+    await page.locator('.basics-section>summary').filter({hasText:'Basic Routing'}).click();
+    await addTag('blockIps','private');await addTag('blockDomains','blocked.example.com');await addTag('ipv4Domains','example.net');
+    assert.equal(await page.locator('#basics-warp').isEnabled(),true);
+    assert.equal(await page.locator('#basics-block-torrent').isEnabled(),false);
+    await page.locator('#mihomo-save').click();
+    await page.waitForFunction(()=>document.querySelector('#mihomo-save').disabled);
+    const cfg=await page.request.get(new URL('/api/raw-config',page.url()).href);const text=(await cfg.json()).data.config;
+    for(const expected of ['MUI-IPV4','MUI-DIRECT','GEOIP,LAN,REJECT','DOMAIN-SUFFIX,blocked.example.com,REJECT','DOMAIN-SUFFIX,example.net,MUI-IPV4','tcp-concurrent: true','unified-delay: true'])assert.ok(text.includes(expected),expected);
+    await page.reload();await page.locator('[data-view="mihomo"]').click();
+    await page.waitForFunction(()=>document.querySelector('#basics-directIpVersion').value==='ipv4-prefer');
+    assert.equal(await page.locator('#basics-logLevel').inputValue(),'debug');
+    await page.locator('[data-mihomo-tab="routing"]').click();
+    assert.equal(await page.locator('#mihomo-rule-table tbody tr').filter({hasText:'Basics'}).count(),3);
+    await page.locator('[data-mihomo-tab="outbounds"]').click();
+    assert.ok((await page.locator('#mihomo-outbound-table').textContent()).includes('Upload / Download'));
+    const nodeCount=await page.locator('#mihomo-outbound-table [data-outbound-edit]').count();
+    await page.locator('#mihomo-add-outbound').click();
+    await page.locator('#mihomo-outbound-form [name="kind"]').selectOption('group');
+    await page.locator('#mihomo-outbound-form [name="type"]').selectOption('url-test');
+    assert.equal(await page.locator('#mihomo-outbound-form [name="testUrl"]').inputValue(),'https://example.com/probe');
+    await page.locator('#mihomo-outbound-modal [data-mihomo-close]').first().click();
+    await page.locator('[data-mihomo-tab="basics"]').click();
+    await page.locator('.basics-section>summary').filter({hasText:'Basic Routing'}).click();
+    await page.setViewportSize({width:390,height:844});
+    await page.locator('#basics-blockIps-input').scrollIntoViewIfNeeded();
+    await page.screenshot({path:'.runtime-import/basics-mobile.png'});
+    const bounds=await page.locator('#basics-blockIps-input').boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=390);
+    await page.setViewportSize({width:1440,height:1050});
+    await page.locator('.basics-section>summary').filter({hasText:'Reset to Default'}).click();
+    page.once('dialog',dialog=>dialog.accept());await page.locator('#basics-reset').click();
+    assert.equal(await page.locator('#basics-logLevel').inputValue(),'info');
+    assert.equal(await page.locator('#basics-directIpVersion').inputValue(),'dual');
+    assert.equal(await page.locator('[data-basics-tags="blockIps"] .basics-tag').count(),0);
+    await page.locator('[data-mihomo-tab="outbounds"]').click();
+    assert.equal(await page.locator('#mihomo-outbound-table [data-outbound-edit]').count(),nodeCount);
+    await page.locator('#mihomo-save').click();await page.waitForFunction(()=>document.querySelector('#mihomo-save').disabled);
+    assert.deepEqual(errors,[]);
+    console.log('PASS: Basics first/default accordions, controls, save/reload, compiled rules, custom test URL, statistics, scoped reset, mobile layout');
+  } finally {await browser.close();}
+})().catch(error=>{console.error(error);process.exitCode=1;});

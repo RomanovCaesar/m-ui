@@ -1,0 +1,30 @@
+/* ===== Cross-panel Subscriptions（跨面板订阅）弹窗 =====
+   度量对齐 Ant Design Vue 1.x（@border-radius-base:1rem）：卡片/文本域 1rem、
+   列表行 1rem、控件高 32px。颜色全部走 ant-theme.css 令牌。 */
+
+#cross-subscriptions-modal{z-index:80}
+.modal-panel.cs-modal{width:min(1080px,calc(100vw - 32px));max-height:calc(100dvh - 34px);overflow:auto}
+.cs-modal .modal-content{padding:24px}
+.cs-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.cs-actions .cs-spacer{flex:1}
+.cs-progress{display:grid;gap:8px;padding:16px;margin:0 0 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2)}
+.cs-progress[hidden]{display:none}
+.cs-progress progress{width:100%;height:8px;accent-color:var(--teal);border-radius:var(--radius-pill)}
+.cs-status{color:var(--muted);font-size:14px;line-height:1.5}
+.cs-status.success{color:var(--teal)}.cs-status.failed{color:var(--danger)}
+.cs-cache{margin-top:16px;border-top:1px solid var(--line);padding-top:16px}
+.cs-cache h3{margin:0 0 12px;font-size:14px;font-weight:500;color:var(--text-strong)}
+.cs-cache-list{display:grid;gap:8px}
+.cs-cache-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface-2);font-size:14px;transition:border-color .3s var(--ease),background .3s var(--ease)}
+.cs-cache-row:hover{border-color:var(--teal-3);background:var(--surface-3)}
+.cs-cache-row small{display:block;color:var(--muted);margin-top:4px;font-size:12px;overflow-wrap:anywhere}
+.cs-cache-row .success{color:var(--teal)}.cs-cache-row .failed{color:var(--danger)}
+.cs-url-section{margin-top:16px}
+.cs-url-section h3{margin:0 0 8px;font-size:14px;font-weight:500;color:var(--text-strong)}
+.cs-url-section p{margin:0 0 9px;color:var(--muted);font-size:14px}
+.cs-url-box{width:100%;min-height:180px;resize:vertical;padding:12px;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--code-bg);color:var(--code-color);font:12px/1.6 var(--font-mono);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.cs-url-box:hover{border-color:var(--teal-3)}
+.cs-url-box:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft);outline:0}
+.cs-empty{padding:32px 12px;border:1px dashed var(--stroke);border-radius:var(--radius);color:var(--muted-2);text-align:center}
+.cs-error{margin-top:12px;color:var(--danger);white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:680px){.cs-modal .modal-content{padding:16px}.cs-cache-row{grid-template-columns:1fr;gap:4px}.cs-actions .cs-spacer{display:none}.cs-actions button{flex:1}.cs-url-box{min-height:150px}}

@@ -1,0 +1,16 @@
+[Unit]
+Description=m-ui Mihomo Control Panel
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/local/m-ui
+ExecStart=/usr/local/m-ui/m-ui
+Restart=on-failure
+RestartSec=5s
+LimitNOFILE=1048576
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,180 @@
+name: Build and publish Linux release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Validate release tag
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: $GITHUB_REF_NAME"
+            echo "Expected a tag such as v0.1.0 or v0.1.0-rc.1"
+            exit 1
+          fi
+
+          echo "Release version: $GITHUB_REF_NAME"
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Run Go vet
+        run: go vet ./...
+
+      - name: Build Linux release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+
+          export GOOS=linux
+          export CGO_ENABLED=0
+
+          build_one() {
+            local asset="$1"
+            local goarch="$2"
+            local goarm="${3:-}"
+            local output="m-ui-linux-${asset}"
+            local archive="${GITHUB_WORKSPACE}/dist/${output}.tar.gz"
+
+            export GOARCH="$goarch"
+
+            if [[ -n "$goarm" ]]; then
+              export GOARM="$goarm"
+            else
+              unset GOARM || true
+            fi
+
+            echo "Building ${output}..."
+
+            go build \
+              -trimpath \
+              -ldflags="-s -w -X main.version=${GITHUB_REF_NAME}" \
+              -o "dist/${output}" \
+              .
+
+            chmod 0755 "dist/${output}"
+
+            tar \
+              -C "${GITHUB_WORKSPACE}/dist" \
+              -czf "$archive" \
+              "$output"
+          }
+
+          build_one "386"   "386"
+          build_one "amd64" "amd64"
+          build_one "arm64" "arm64"
+          build_one "armv5" "arm" "5"
+          build_one "armv6" "arm" "6"
+          build_one "armv7" "arm" "7"
+          build_one "s390x" "s390x"
+
+      - name: Verify release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          assets=(
+            "m-ui-linux-386"
+            "m-ui-linux-amd64"
+            "m-ui-linux-arm64"
+            "m-ui-linux-armv5"
+            "m-ui-linux-armv6"
+            "m-ui-linux-armv7"
+            "m-ui-linux-s390x"
+          )
+
+          for asset in "${assets[@]}"; do
+            archive="dist/${asset}.tar.gz"
+
+            if [[ ! -s "$archive" ]]; then
+              echo "Missing or empty archive: $archive"
+              exit 1
+            fi
+
+            contents="$(tar -tzf "$archive")"
+
+            if [[ "$contents" != "$asset" ]]; then
+              echo "Unexpected contents in $archive:"
+              echo "$contents"
+              exit 1
+            fi
+          done
+
+          reported_version="$(./dist/m-ui-linux-amd64 version)"
+
+          if [[ "$reported_version" != "$GITHUB_REF_NAME" ]]; then
+            echo "Incorrect embedded version."
+            echo "Expected: $GITHUB_REF_NAME"
+            echo "Actual:   $reported_version"
+            exit 1
+          fi
+
+          echo "Embedded version: $reported_version"
+          echo
+          sha256sum dist/*.tar.gz
+
+      - name: Create or update GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          release_files=(dist/m-ui-linux-*.tar.gz)
+
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release already exists; replacing its Linux assets."
+
+            gh release upload \
+              "$GITHUB_REF_NAME" \
+              "${release_files[@]}" \
+              --clobber
+          else
+            release_options=(
+              --verify-tag
+              --generate-notes
+              --title "m-ui ${GITHUB_REF_NAME}"
+            )
+
+            if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+              release_options+=(--prerelease)
+            fi
+
+            gh release create \
+              "$GITHUB_REF_NAME" \
+              "${release_files[@]}" \
+              "${release_options[@]}"
+          fi

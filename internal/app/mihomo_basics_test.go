@@ -176,6 +176,36 @@ func TestMihomoBasicsDelayUsesConfiguredURL(t *testing.T) {
 	}
 }
 
+func TestMihomoBasicsDelayRejectsRejectOutbounds(t *testing.T) {
+	b := defaultMihomoBasics()
+	m := &CoreManager{state: State{
+		Settings:     Settings{Language: defaultLanguage},
+		MihomoBasics: &b,
+		Outbounds: []MihomoOutbound{
+			{Name: "reject-custom", Kind: "proxy", Type: "reject"},
+			{Name: "reject-drop-custom", Kind: "proxy", Type: "reject-drop"},
+		},
+	}}
+	a := &App{manager: m, session: "session"}
+	for _, name := range []string{"reject-custom", "reject-drop-custom"} {
+		request := httptest.NewRequest(http.MethodPost, "/api/mihomo/outbound/delay", strings.NewReader(`{"name":"`+name+`"}`))
+		request.AddCookie(&http.Cookie{Name: "mui_session", Value: "session"})
+		response := httptest.NewRecorder()
+		a.routes().ServeHTTP(response, request)
+		if response.Code != http.StatusBadRequest || !strings.Contains(response.Body.String(), "Outbound 不存在或不支持测试") {
+			t.Fatalf("%s delay response: %d %s", name, response.Code, response.Body.String())
+		}
+	}
+
+	script, err := os.ReadFile("web/mihomo-settings.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(script), "['reject','reject-drop']") || !strings.Contains(string(script), "!outboundSupportsDelay(item)") {
+		t.Fatal("the outbound table must disable delay testing for reject types")
+	}
+}
+
 func TestMihomoBasicsNativeCoreConfig(t *testing.T) {
 	core := os.Getenv("MUI_TEST_CORE")
 	if core == "" {

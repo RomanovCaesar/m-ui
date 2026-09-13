@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -45,6 +46,25 @@ func (m *CoreManager) lang() string {
 	language := m.state.Settings.Language
 	m.mu.Unlock()
 	return normalizeLanguage(language)
+}
+
+func (m *CoreManager) updateLanguage(raw string) error {
+	language := strings.TrimSpace(raw)
+	if !containsString(supportedLanguages, language) {
+		return fmt.Errorf("界面语言无效")
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.state.Settings.Language == language {
+		return nil
+	}
+	previous := m.state
+	m.state.Settings.Language = language
+	if err := m.saveLocked(); err != nil {
+		m.state = previous
+		return err
+	}
+	return nil
 }
 
 // tr 按当前界面语言翻译一条给用户看的提示。
@@ -212,6 +232,7 @@ var messagePatternsEN = []struct {
 	{regexp.MustCompile(`^不支持代理类型 (.+)$`), "Unsupported proxy type $1"},
 	{regexp.MustCompile(`^不支持策略组类型 (.+)$`), "Unsupported proxy group type $1"},
 	{regexp.MustCompile(`^不支持的类型 (.+)$`), "Unsupported type $1"},
+	{regexp.MustCompile(`^OpenVPN Data Cipher (.+) 无效$`), "Invalid OpenVPN data cipher $1"},
 	{regexp.MustCompile(`^Routing Rule #(\d+) 类型 (.+) 不受支持$`), "Routing Rule #$1 has the unsupported type $2"},
 	{regexp.MustCompile(`^Routing Rule #(\d+) 引用了不存在的 Outbound (.+)$`), "Routing Rule #$1 references the missing outbound $2"},
 	{regexp.MustCompile(`^无效匹配项 (.+)$`), "Invalid entry $1"},
@@ -449,44 +470,70 @@ var messagesEN = map[string]string{
 	"Mihomo 配置测试失败":                                                        "The Mihomo config test failed",
 
 	// —— Mihomo 分流、Outbound 与工具 ——
-	"Mihomo 分流设置已保存":                           "Mihomo routing settings saved",
-	"GLOBAL 只能定义为策略组":                          "GLOBAL can only be defined as a proxy group",
-	"Server 必须是域名或 IP，且不能包含协议、路径或空格":           "Server must be a domain or an IP, without scheme, path or spaces",
-	"Port 必须在 1-65535 之间":                      "Port must be between 1 and 65535",
-	"Alter ID 不能为负数":                           "Alter ID cannot be negative",
-	"IP Version 无效":                            "Invalid IP Version",
-	"Network 首版仅支持 tcp、ws 和 grpc":              "Network currently supports only tcp, ws and grpc",
-	"gRPC Network 需要 Service Name":             "A gRPC network needs a Service Name",
-	"Shadowsocks 需要 Cipher 和 Password":         "Shadowsocks needs a Cipher and a Password",
-	"UUID 格式无效":                                "Invalid UUID format",
-	"TUIC 需要 Token，或同时填写 UUID 和 Password":      "TUIC needs a Token, or both a UUID and a Password",
-	"该协议不支持 Reality":                           "This protocol does not support Reality",
-	"Reality 需要 Public Key":                    "Reality needs a Public Key",
-	"至少需要一个代理或策略组成员":                           "At least one proxy or proxy group member is required",
-	"不能引用自身":                                   "It cannot reference itself",
-	"Test URL 必须是完整的 http:// 或 https:// 地址":    "The Test URL must be a complete http:// or https:// address",
-	"Interval、Timeout 和 Tolerance 不能为负数":       "Interval, Timeout and Tolerance cannot be negative",
-	"Load Balance Strategy 无效":                 "Invalid Load Balance Strategy",
-	"MATCH 规则不能包含 Payload 或 no-resolve":        "A MATCH rule cannot carry a Payload or no-resolve",
-	"MATCH 只能出现一次且必须是最后一条规则":                   "MATCH may appear only once, and only as the last rule",
-	"MATCH 后面不能再添加规则":                          "No rule may follow MATCH",
-	"no-resolve 只适用于目标 IP 类规则":                 "no-resolve only applies to destination-IP rules",
-	"Payload 不能包含逗号":                           "The Payload cannot contain commas",
-	"CIDR 格式无效":                                "Invalid CIDR format",
-	"NETWORK 只能是 tcp 或 udp":                    "NETWORK must be tcp or udp",
-	"正则表达式无效":                                  "Invalid regular expression",
-	"Payload 必须是非负整数":                          "The Payload must be a non-negative integer",
-	"端口必须是单个端口或 start-end":                     "The port must be a single port or start-end",
-	"端口范围起点不能大于终点":                             "The start of the port range cannot be greater than its end",
-	"Routing Mode 无效":                          "Invalid Routing Mode",
-	"Direct IP Version 无效":                     "Invalid Direct IP Version",
-	"Outbound Test URL 必须是完整的 HTTP / HTTPS 地址": "The Outbound Test URL must be a complete HTTP / HTTPS address",
-	"Traffic Sampling Interval 必须在 1-10 秒之间":   "The Traffic Sampling Interval must be between 1 and 10 seconds",
-	"Traffic Save Interval 必须在 1-300 秒之间":      "The Traffic Save Interval must be between 1 and 300 seconds",
-	"Log Level 无效":                             "Invalid Log Level",
-	"Log Buffer Size 必须在 100-10000 行之间":        "The Log Buffer Size must be between 100 and 10000 lines",
-	"GEOIP 需使用两位国家代码":                          "GEOIP needs a two-letter country code",
-	"Geosite 分类无效":                             "Invalid Geosite category",
+	"Mihomo 分流设置已保存":                                                  "Mihomo routing settings saved",
+	"GLOBAL 只能定义为策略组":                                                 "GLOBAL can only be defined as a proxy group",
+	"Server 必须是域名或 IP，且不能包含协议、路径或空格":                                  "Server must be a domain or an IP, without scheme, path or spaces",
+	"Port 必须在 1-65535 之间":                                             "Port must be between 1 and 65535",
+	"Routing Mark 不能为负数":                                              "Routing Mark cannot be negative",
+	"Interface Name 不能包含换行，且不能超过 256 个字符":                             "Interface Name cannot contain line breaks or exceed 256 characters",
+	"Alter ID 不能为负数":                                                  "Alter ID cannot be negative",
+	"IP Version 无效":                                                   "Invalid IP Version",
+	"Network 首版仅支持 tcp、ws 和 grpc":                                     "Network currently supports only tcp, ws and grpc",
+	"gRPC Network 需要 Service Name":                                    "A gRPC network needs a Service Name",
+	"Shadowsocks 需要 Cipher 和 Password":                                "Shadowsocks needs a Cipher and a Password",
+	"UUID 格式无效":                                                       "Invalid UUID format",
+	"TUIC 需要 Token，或同时填写 UUID 和 Password":                             "TUIC needs a Token, or both a UUID and a Password",
+	"Direct 不使用 Server 或 Port":                                        "Direct does not use a Server or Port",
+	"WireGuard 至少需要一个本地 IP 或 IPv6 地址":                                 "WireGuard needs at least one local IPv4 or IPv6 address",
+	"WireGuard IP 必须是有效的 IPv4 地址或 CIDR":                               "WireGuard IP must be a valid IPv4 address or CIDR",
+	"WireGuard IPv6 必须是有效的 IPv6 地址或 CIDR":                             "WireGuard IPv6 must be a valid IPv6 address or CIDR",
+	"WireGuard Private Key 必须是 32 字节 Base64":                          "The WireGuard Private Key must be 32 bytes of base64",
+	"WireGuard Public Key 必须是 32 字节 Base64":                           "The WireGuard Public Key must be 32 bytes of base64",
+	"WireGuard Pre-shared Key 必须是 32 字节 Base64":                       "The WireGuard Pre-shared Key must be 32 bytes of base64",
+	"WireGuard Reserved 必须留空或填写 3 个字节":                                "WireGuard Reserved must be empty or contain three bytes",
+	"WireGuard Reserved 每项必须在 0-255 之间":                               "Each WireGuard Reserved byte must be between 0 and 255",
+	"WireGuard MTU、Workers、Persistent Keepalive 和刷新间隔不能为负数":           "WireGuard MTU, Workers, Persistent Keepalive and refresh interval cannot be negative",
+	"WireGuard Remote DNS Resolve 开启时必须填写 DNS":                        "WireGuard DNS is required when Remote DNS Resolve is enabled",
+	"OpenVPN Proto 只能是 udp 或 tcp":                                     "OpenVPN Proto must be udp or tcp",
+	"OpenVPN 当前只支持 Dev tun":                                           "OpenVPN currently supports only Dev tun",
+	"OpenVPN Cipher 无效":                                               "Invalid OpenVPN Cipher",
+	"OpenVPN Auth 无效":                                                 "Invalid OpenVPN Auth",
+	"OpenVPN Comp LZO 只能是 yes、no 或 adaptive":                          "OpenVPN Comp LZO must be yes, no or adaptive",
+	"OpenVPN CA 必须是有效的内联 PEM 内容":                                      "OpenVPN CA must contain valid inline PEM data",
+	"OpenVPN Cert 和 Key 必须同时填写":                                       "OpenVPN Cert and Key must be set together",
+	"OpenVPN Cert 和 Key 必须是有效的内联 PEM 内容":                              "OpenVPN Cert and Key must contain valid inline PEM data",
+	"OpenVPN 需要 Cert + Key，或填写 Username 使用 auth-user-pass":            "OpenVPN needs Cert + Key, or a Username for auth-user-pass",
+	"OpenVPN TLS Auth、TLS Crypt 和 TLS Crypt v2 只能选择一种":                "Only one of OpenVPN TLS Auth, TLS Crypt and TLS Crypt v2 may be used",
+	"OpenVPN Key Direction 只能是 0 或 1":                                 "OpenVPN Key Direction must be 0 or 1",
+	"OpenVPN Ping、Ping Restart、Handshake Timeout 和 MTU 不能为负数":         "OpenVPN Ping, Ping Restart, Handshake Timeout and MTU cannot be negative",
+	"OpenVPN Remote DNS Resolve 开启时必须填写 DNS":                          "OpenVPN DNS is required when Remote DNS Resolve is enabled",
+	"该协议不支持 Reality":                                                  "This protocol does not support Reality",
+	"Reality 需要 Public Key":                                           "Reality needs a Public Key",
+	"至少需要一个代理或策略组成员":                                                  "At least one proxy or proxy group member is required",
+	"不能引用自身":                                                          "It cannot reference itself",
+	"Test URL 必须是完整的 http:// 或 https:// 地址":                           "The Test URL must be a complete http:// or https:// address",
+	"Interval、Timeout 和 Tolerance 不能为负数":                              "Interval, Timeout and Tolerance cannot be negative",
+	"Load Balance Strategy 无效":                                        "Invalid Load Balance Strategy",
+	"MATCH 规则不能包含 Payload 或 no-resolve":                               "A MATCH rule cannot carry a Payload or no-resolve",
+	"MATCH 只能出现一次且必须是最后一条规则":                                          "MATCH may appear only once, and only as the last rule",
+	"MATCH 后面不能再添加规则":                                                 "No rule may follow MATCH",
+	"no-resolve 只适用于目标 IP 类规则":                                        "no-resolve only applies to destination-IP rules",
+	"Payload 不能包含逗号":                                                  "The Payload cannot contain commas",
+	"CIDR 格式无效":                                                       "Invalid CIDR format",
+	"NETWORK 只能是 tcp 或 udp":                                           "NETWORK must be tcp or udp",
+	"正则表达式无效":                                                         "Invalid regular expression",
+	"Payload 必须是非负整数":                                                 "The Payload must be a non-negative integer",
+	"端口必须是单个端口或 start-end":                                            "The port must be a single port or start-end",
+	"端口范围起点不能大于终点":                                                    "The start of the port range cannot be greater than its end",
+	"Routing Mode 无效":                                                 "Invalid Routing Mode",
+	"Direct IP Version 无效":                                            "Invalid Direct IP Version",
+	"Outbound Test URL 必须是完整的 HTTP / HTTPS 地址":                        "The Outbound Test URL must be a complete HTTP / HTTPS address",
+	"Traffic Sampling Interval 必须在 1-10 秒之间":                          "The Traffic Sampling Interval must be between 1 and 10 seconds",
+	"Traffic Save Interval 必须在 1-300 秒之间":                             "The Traffic Save Interval must be between 1 and 300 seconds",
+	"Log Level 无效":                                                    "Invalid Log Level",
+	"Log Buffer Size 必须在 100-10000 行之间":                               "The Log Buffer Size must be between 100 and 10000 lines",
+	"GEOIP 需使用两位国家代码":                                                 "GEOIP needs a two-letter country code",
+	"Geosite 分类无效":                                                    "Invalid Geosite category",
 	"WARP Routing 需要有效的 WARP WireGuard Outbound，请先添加或清空 WARP Routing": "WARP Routing needs a valid WARP WireGuard outbound — add one or clear WARP Routing",
 	"Outbound 不存在或不支持测试":                                              "The outbound does not exist or cannot be tested",
 	"请先启动 Mihomo，并应用已保存的配置":                                           "Start Mihomo first and apply the saved config",

@@ -544,7 +544,9 @@
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&settingsMenu.classList.contains('open'))closeSettings(true);});
     darkMode.addEventListener('change',()=>applyTheme(darkMode.checked?'dark':'light'));
     ultraDark.addEventListener('change',()=>applyUltraDark());
-    languageSelect.addEventListener('change',()=>applyLanguage(languageSelect.value));
+    let languageSave=Promise.resolve();
+    function persistGlobalLanguage(language){languageSave=languageSave.catch(()=>{}).then(async()=>{const response=await fetch('/api/language',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({language})});if(!response.ok)throw new Error('failed to save language');});return languageSave;}
+    languageSelect.addEventListener('change',()=>{const language=languageSelect.value;applyLanguage(language);persistGlobalLanguage(language).catch(error=>console.error(error));});
     ultraDark.checked=storage.get('mui-is-ultra-dark')==='true';applyTheme(storage.get('mui-theme')||'light',false);applyLanguage(storage.get('mui-language')||root.dataset.defaultLanguage||'zh-CN');
     /* 3x-ui 的 aThemeSwitch：在主题控件上 mousedown 就关掉过渡，mouseleave/touchend 再打开 */
     for(const option of document.querySelectorAll('.theme-option')){

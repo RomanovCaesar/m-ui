@@ -304,7 +304,7 @@ func (a *App) handleMihomoOutboundDelay(w http.ResponseWriter, r *http.Request) 
 	a.manager.mu.Unlock()
 	valid := input.Name == "DIRECT"
 	for _, item := range state.Outbounds {
-		if item.Name == input.Name {
+		if item.Name == input.Name && !containsString([]string{"reject", "reject-drop"}, strings.ToLower(strings.TrimSpace(item.Type))) {
 			valid = true
 		}
 	}

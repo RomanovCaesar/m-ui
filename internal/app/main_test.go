@@ -1002,6 +1002,7 @@ func TestSubscriptionPageSettingsMenuWiring(t *testing.T) {
 	content := string(page)
 	for _, needle := range []string{
 		`id="settings-button"`, `id="settings-menu"`, `id="dark-mode"`, `id="ultra-dark"`, `id="language-select"`,
+		"persistGlobalLanguage", "'/api/language'",
 		`data-theme="dark"`, `data-ultra-dark="true"`, `html[data-theme="dark"]`, `html[data-theme="dark"][data-ultra-dark="true"]`,
 		"function toggleSettings()", "function closeSettings(", "function applyTheme(", "function applyUltraDark(", "function applyLanguage(",
 		"mui-theme", "mui-is-ultra-dark", "mui-language", "Panel Settings", "Ultra Dark", "面板设置", "超暗色",
@@ -4276,6 +4277,9 @@ func TestLoginPageCarriesTheConfiguredLanguage(t *testing.T) {
 	}
 	if !strings.Contains(string(login), "document.documentElement.dataset.defaultLanguage") {
 		t.Fatal("web/login.html must fall back to the injected language when localStorage is empty")
+	}
+	if !strings.Contains(string(login), "base + 'api/language'") || !strings.Contains(string(login), "persistGlobalLanguage") {
+		t.Fatal("the login page must persist a language selection globally before authentication")
 	}
 	manager := &CoreManager{dataDir: t.TempDir(), state: defaultState()}
 	app := &App{manager: manager}

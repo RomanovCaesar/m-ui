@@ -284,21 +284,21 @@ func nativeOutbound(mapping map[string]any) (MihomoOutbound, error) {
 		native[key] = strings.TrimSpace(value)
 	}
 	native["type"] = strings.ToLower(native["type"].(string))
-	for _, key := range []string{"server", "password", "uuid", "token", "username", "cipher", "dialer-proxy", "servername", "sni", "default-selected"} {
+	for _, key := range []string{"server", "password", "uuid", "token", "username", "cipher", "dialer-proxy", "servername", "sni", "default-selected", "interface-name", "proto", "dev", "auth", "comp-lzo", "ca", "cert", "key", "tls-auth", "key-direction", "tls-crypt", "tls-crypt-v2", "private-key", "public-key", "pre-shared-key", "ip", "ipv6"} {
 		if value, exists := native[key]; exists {
 			if _, ok := value.(string); !ok {
 				return MihomoOutbound{}, fmt.Errorf("%s 必须是字符串，纯数字值请加引号", key)
 			}
 		}
 	}
-	for _, key := range []string{"udp", "tls", "skip-cert-verify", "tfo", "mptcp", "lazy", "disable-udp"} {
+	for _, key := range []string{"udp", "tls", "skip-cert-verify", "tfo", "mptcp", "lazy", "disable-udp", "remote-dns-resolve"} {
 		if value, exists := native[key]; exists {
 			if _, ok := value.(bool); !ok {
 				return MihomoOutbound{}, fmt.Errorf("%s 必须是 true 或 false", key)
 			}
 		}
 	}
-	for _, key := range []string{"port", "alterId", "interval", "timeout", "tolerance"} {
+	for _, key := range []string{"port", "alterId", "interval", "timeout", "tolerance", "workers", "mtu", "persistent-keepalive", "refresh-server-ip-interval", "routing-mark", "ping", "ping-restart", "handshake-timeout"} {
 		if value, exists := native[key]; exists {
 			parsed, err := strconv.Atoi(outboundStringValue(value))
 			if err != nil || parsed < 0 {
@@ -464,6 +464,8 @@ func mihomoOutboundFromYAMLMap(mapping map[string]any, group bool) (MihomoOutbou
 	}
 	item.IPVersion = outboundStringValue(mapping["ip-version"])
 	item.DialerProxy = outboundStringValue(mapping["dialer-proxy"])
+	item.InterfaceName = outboundStringValue(mapping["interface-name"])
+	item.RoutingMark = intValue(mapping["routing-mark"])
 	item.TFO = boolValue(mapping["tfo"])
 	item.MPTCP = boolValue(mapping["mptcp"])
 	item.Up = outboundStringValue(mapping["up"])
@@ -481,6 +483,38 @@ func mihomoOutboundFromYAMLMap(mapping map[string]any, group bool) (MihomoOutbou
 	item.Strategy = outboundStringValue(mapping["strategy"])
 	item.DefaultSelected = outboundStringValue(mapping["default-selected"])
 	item.DisableUDP = boolValue(mapping["disable-udp"])
+	item.WireGuardIP = outboundStringValue(mapping["ip"])
+	item.WireGuardIPv6 = outboundStringValue(mapping["ipv6"])
+	item.WireGuardPrivateKey = outboundStringValue(mapping["private-key"])
+	item.WireGuardPublicKey = outboundStringValue(mapping["public-key"])
+	item.WireGuardPreSharedKey = outboundStringValue(mapping["pre-shared-key"])
+	item.WireGuardReserved = intList(mapping["reserved"])
+	item.WireGuardPersistentKeepalive = intValue(mapping["persistent-keepalive"])
+	item.WireGuardMTU = intValue(mapping["mtu"])
+	item.WireGuardWorkers = intValue(mapping["workers"])
+	item.WireGuardRemoteDNSResolve = boolValue(mapping["remote-dns-resolve"])
+	item.WireGuardDNS = stringList(mapping["dns"])
+	item.WireGuardRefreshServerIPInterval = intValue(mapping["refresh-server-ip-interval"])
+	item.OpenVPNProto = outboundStringValue(mapping["proto"])
+	item.OpenVPNDev = outboundStringValue(mapping["dev"])
+	item.OpenVPNCipher = outboundStringValue(mapping["cipher"])
+	item.OpenVPNDataCiphers = stringList(mapping["data-ciphers"])
+	item.OpenVPNDataCipherFallback = outboundStringValue(mapping["data-ciphers-fallback"])
+	item.OpenVPNAuth = outboundStringValue(mapping["auth"])
+	item.OpenVPNCompLZO = outboundStringValue(mapping["comp-lzo"])
+	item.OpenVPNCA = outboundStringValue(mapping["ca"])
+	item.OpenVPNCert = outboundStringValue(mapping["cert"])
+	item.OpenVPNKey = outboundStringValue(mapping["key"])
+	item.OpenVPNTLSAuth = outboundStringValue(mapping["tls-auth"])
+	item.OpenVPNKeyDirection = outboundStringValue(mapping["key-direction"])
+	item.OpenVPNTLSCrypt = outboundStringValue(mapping["tls-crypt"])
+	item.OpenVPNTLSCryptV2 = outboundStringValue(mapping["tls-crypt-v2"])
+	item.OpenVPNPing = intValue(mapping["ping"])
+	item.OpenVPNPingRestart = intValue(mapping["ping-restart"])
+	item.OpenVPNHandshakeTimeout = intValue(mapping["handshake-timeout"])
+	item.OpenVPNMTU = intValue(mapping["mtu"])
+	item.OpenVPNRemoteDNSResolve = boolValue(mapping["remote-dns-resolve"])
+	item.OpenVPNDNS = stringList(mapping["dns"])
 	if ws := mapValue(mapping["ws-opts"]); ws != nil {
 		item.WSPath = outboundStringValue(ws["path"])
 		if headers := mapValue(ws["headers"]); headers != nil {
@@ -578,6 +612,33 @@ func stringList(value any) []string {
 	for _, entry := range list {
 		if text := outboundStringValue(entry); text != "" {
 			result = append(result, text)
+		}
+	}
+	return result
+}
+
+func intList(value any) []int {
+	if value == nil {
+		return nil
+	}
+	if text, ok := value.(string); ok {
+		parts := strings.FieldsFunc(text, func(r rune) bool { return r == ',' || r == ' ' })
+		result := make([]int, 0, len(parts))
+		for _, part := range parts {
+			if number, err := strconv.Atoi(part); err == nil {
+				result = append(result, number)
+			}
+		}
+		return result
+	}
+	list, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+	result := make([]int, 0, len(list))
+	for _, entry := range list {
+		if number, err := strconv.Atoi(outboundStringValue(entry)); err == nil {
+			result = append(result, number)
 		}
 	}
 	return result

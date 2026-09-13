@@ -495,8 +495,8 @@
     const passwordToggle = document.getElementById('password-toggle');
     const loginButton = document.getElementById('login-button');
     const messages = {
-      'zh-CN': { pageTitle:'m-ui | 登录', hello:'你好', title:'欢迎', username:'用户名', password:'密码', login:'登录', logging:'登录中…', settings:'面板设置', dark:'暗色', ultra:'超暗色', language:'语言', show:'显示密码', hide:'隐藏密码', failed:'登录失败' },
-      en: { pageTitle:'m-ui | Log In', hello:'Hello', title:'Welcome', username:'Username', password:'Password', login:'Log In', logging:'Logging in…', settings:'Panel Settings', dark:'Dark', ultra:'Ultra Dark', language:'Language', show:'Show password', hide:'Hide password', failed:'Login failed' }
+      'zh-CN': { pageTitle:'m-ui | 登录', hello:'你好', title:'欢迎', username:'用户名', password:'密码', login:'登录', logging:'登录中…', settings:'面板设置', dark:'暗色', ultra:'超暗色', language:'语言', show:'显示密码', hide:'隐藏密码', failed:'登录失败', languageFailed:'语言设置保存失败' },
+      en: { pageTitle:'m-ui | Log In', hello:'Hello', title:'Welcome', username:'Username', password:'Password', login:'Log In', logging:'Logging in…', settings:'Panel Settings', dark:'Dark', ultra:'Ultra Dark', language:'Language', show:'Show password', hide:'Hide password', failed:'Login failed', languageFailed:'Failed to save the language setting' }
     };
 
     /* 3x-ui 的三套主题（Light / Dark / Ultra Dark）。Ultra Dark 只在 Dark 打开时出现，
@@ -574,7 +574,23 @@
       control.addEventListener('mouseleave', () => root.removeAttribute('data-theme-animations'));
       control.addEventListener('touchend', () => root.removeAttribute('data-theme-animations'));
     }
-    languageSelect.addEventListener('change', () => applyLanguage(languageSelect.value));
+    let languageSave = Promise.resolve();
+    function persistGlobalLanguage(language) {
+      const base = window.location.pathname.replace(/[^/]*$/, '');
+      languageSave = languageSave.catch(() => {}).then(async () => {
+        const response = await fetch(base + 'api/language', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({language}) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || (messages[language] || messages['zh-CN']).languageFailed);
+      });
+      return languageSave;
+    }
+    languageSelect.addEventListener('change', () => {
+      const language = languageSelect.value;
+      applyLanguage(language);
+      persistGlobalLanguage(language).catch(exception => {
+        if (languageSelect.value === language) document.getElementById('error').textContent = exception.message || (messages[language] || messages['zh-CN']).languageFailed;
+      });
+    });
 
     passwordToggle.addEventListener('click', () => {
       const visible = passwordInput.type === 'text';

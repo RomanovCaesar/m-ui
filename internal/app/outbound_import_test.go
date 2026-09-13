@@ -74,6 +74,55 @@ func TestOutboundImportNativeRoundTrip(t *testing.T) {
 	}
 }
 
+func TestOutboundFormTypesDirectWireGuardAndOpenVPN(t *testing.T) {
+	key := "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+	ca := "-----BEGIN CERTIFICATE-----\neA==\n-----END CERTIFICATE-----"
+	items := []MihomoOutbound{
+		{ID: "direct-1", Kind: "proxy", Name: "VPN interface", Type: "direct", InterfaceName: "Ethernet 2", RoutingMark: 100},
+		{ID: "wg-1", Kind: "proxy", Name: "WireGuard", Type: "wireguard", Server: "198.51.100.1", Port: 51820, WireGuardIP: "10.0.0.2/24", WireGuardPrivateKey: key, WireGuardPublicKey: key, WireGuardReserved: []int{1, 2, 3}, UDP: true},
+		{ID: "ovpn-1", Kind: "proxy", Name: "OpenVPN", Type: "openvpn", Server: "vpn.example.com", Port: 1194, Username: "user", Password: "pass", OpenVPNCA: ca, OpenVPNProto: "udp", OpenVPNCipher: "AES-128-GCM", OpenVPNAuth: "SHA256"},
+	}
+	var err error
+	items, err = normalizeMihomoOutbounds(items)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, item := range items {
+		data, err := mihomoOutboundYAML([]MihomoOutbound{item})
+		if err != nil {
+			t.Fatalf("%s render: %v", item.Type, err)
+		}
+		parsed, err := parseMihomoOutboundYAML(string(data))
+		if err != nil {
+			t.Fatalf("%s parse: %v\n%s", item.Type, err, data)
+		}
+		if len(parsed) != 1 || parsed[0].Type != item.Type {
+			t.Fatalf("%s round trip: %#v", item.Type, parsed)
+		}
+	}
+	config, err := renderStateConfig(State{Settings: defaultState().Settings, Outbounds: items, RoutingRules: []MihomoRoutingRule{{ID: "match", Type: "MATCH", Target: "DIRECT"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range []string{"interface-name: \"Ethernet 2\"", "routing-mark: 100", "type: \"wireguard\"", "private-key: \"" + key + "\"", "type: \"openvpn\"", "BEGIN CERTIFICATE"} {
+		if !strings.Contains(string(config), expected) {
+			t.Fatalf("generated config missing %q:\n%s", expected, config)
+		}
+	}
+}
+
+func TestOutboundOpenVPNAliasesNormalize(t *testing.T) {
+	ca := "-----BEGIN CERTIFICATE-----\neA==\n-----END CERTIFICATE-----"
+	source := "name: OpenVPN aliases\ntype: openvpn\nserver: vpn.example.com\nport: 1194\nproto: tcp-client\ncipher: AES-CBC\nauth: SHA-1\nusername: user\nca: |\n  " + strings.ReplaceAll(ca, "\n", "\n  ") + "\n"
+	items, _, err := convertOutboundInput(mihomoYAMLParseRequest{YAML: source})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || items[0].OpenVPNProto != "tcp" || items[0].OpenVPNCipher != "AES-128-CBC" || items[0].OpenVPNAuth != "SHA1" {
+		t.Fatalf("OpenVPN aliases were not normalized: %#v", items)
+	}
+}
+
 func TestOutboundImportGroupsAndDraftReferences(t *testing.T) {
 	context, _, err := convertOutboundInput(mihomoYAMLParseRequest{YAML: nativeImportFixture})
 	if err != nil {

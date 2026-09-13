@@ -258,7 +258,9 @@ var proxyYAMLOrder = func() map[string]int {
 		"name", "type", "server", "port", "username", "uuid", "password", "token", "alterId", "cipher", "flow", "encryption",
 		"udp", "network", "ws-opts", "grpc-opts", "tls", "servername", "sni", "alpn", "skip-cert-verify", "client-fingerprint",
 		"up", "down", "obfs", "obfs-password", "congestion-controller", "udp-relay-mode",
-		"ip-version", "dialer-proxy", "tfo", "mptcp", "interface-name", "routing-mark",
+		"ip-version", "dialer-proxy", "interface-name", "routing-mark", "tfo", "mptcp",
+		"ip", "ipv6", "private-key", "public-key", "pre-shared-key", "reserved", "persistent-keepalive", "workers", "mtu",
+		"proto", "dev", "data-ciphers", "data-ciphers-fallback", "auth", "comp-lzo", "ca", "cert", "key", "tls-auth", "key-direction", "tls-crypt", "tls-crypt-v2", "ping", "ping-restart", "handshake-timeout", "remote-dns-resolve", "dns", "refresh-server-ip-interval",
 	}
 	result := make(map[string]int, len(ordered))
 	for index, key := range ordered {

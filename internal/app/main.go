@@ -874,6 +874,10 @@ func (a *App) withPanelPath(next http.Handler) http.Handler {
 // live outside PanelPath, matching 3x-ui's independent subscription path.
 func (a *App) withSubscriptions(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/language" {
+			a.handleLanguage(w, r)
+			return
+		}
 		if a.handleSubscriptionRequest(w, r) {
 			return
 		}
@@ -894,6 +898,7 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/login", a.handleLoginPage)
 	mux.HandleFunc("/static/", a.handleStatic)
 	mux.HandleFunc("/api/auth/login", a.handleLogin)
+	mux.HandleFunc("/api/language", a.handleLanguage)
 	mux.HandleFunc("/api/auth/logout", a.handleLogout)
 	mux.HandleFunc("/api/auth/credentials", a.auth(a.handleCredentials))
 	mux.HandleFunc("/api/panel/restart", a.auth(a.handlePanelRestart))
@@ -942,6 +947,10 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 
 func (a *App) subscriptionRoutes() http.Handler {
 	return logging(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/language" {
+			a.handleLanguage(w, r)
+			return
+		}
 		if !a.handleSubscriptionRequest(w, r) {
 			http.NotFound(w, r)
 		}
@@ -1106,6 +1115,29 @@ func (m *CoreManager) updateCredentials(oldUsername, oldPassword, newUsername, n
 func (a *App) handleLogout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{Name: "mui_session", Value: "", Path: a.manager.panelPath(), MaxAge: -1, HttpOnly: true})
 	writeJSON(w, http.StatusOK, apiResponse{OK: true})
+}
+
+// handleLanguage is intentionally public: both the login page and token-based
+// subscription page can change the panel-wide language before authentication.
+// It only updates this one low-risk preference; the normal settings endpoint
+// remains authenticated and continues to require an explicit Save.
+func (a *App) handleLanguage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, apiResponse{Message: "method not allowed"})
+		return
+	}
+	var input struct {
+		Language string `json:"language"`
+	}
+	if err := decodeJSON(r, &input); err != nil {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Message: "invalid language request"})
+		return
+	}
+	if err := a.manager.updateLanguage(input.Language); err != nil {
+		writeJSON(w, http.StatusBadRequest, apiResponse{Message: a.tr(err.Error())})
+		return
+	}
+	writeJSON(w, http.StatusOK, apiResponse{OK: true, Data: map[string]string{"language": a.manager.lang()}})
 }
 
 func (a *App) handleState(w http.ResponseWriter, r *http.Request) {

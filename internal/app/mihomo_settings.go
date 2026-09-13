@@ -1,6 +1,8 @@
 package app
 
 import (
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,7 +15,7 @@ import (
 const defaultMihomoTestURL = "https://www.gstatic.com/generate_204"
 
 var (
-	mihomoProxyTypes = []string{"ss", "socks5", "http", "vmess", "vless", "trojan", "hysteria2", "tuic"}
+	mihomoProxyTypes = []string{"direct", "ss", "socks5", "http", "vmess", "vless", "trojan", "hysteria2", "tuic", "wireguard", "openvpn"}
 	mihomoGroupTypes = []string{"select", "url-test", "fallback", "load-balance"}
 	mihomoRuleTypes  = []string{
 		"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-WILDCARD", "DOMAIN-REGEX", "GEOSITE",
@@ -61,8 +63,47 @@ type MihomoOutbound struct {
 	RealityShortID    string `json:"realityShortId,omitempty"`
 	IPVersion         string `json:"ipVersion,omitempty"`
 	DialerProxy       string `json:"dialerProxy,omitempty"`
+	InterfaceName     string `json:"interfaceName,omitempty"`
+	RoutingMark       int    `json:"routingMark,omitempty"`
 	TFO               bool   `json:"tfo,omitempty"`
 	MPTCP             bool   `json:"mptcp,omitempty"`
+
+	// WireGuard fields. The form covers Mihomo's common single-peer form; the
+	// YAML editor remains available for multi-peer and AmneziaWG options.
+	WireGuardIP                      string   `json:"wireGuardIp,omitempty"`
+	WireGuardIPv6                    string   `json:"wireGuardIpv6,omitempty"`
+	WireGuardPrivateKey              string   `json:"wireGuardPrivateKey,omitempty"`
+	WireGuardPublicKey               string   `json:"wireGuardPublicKey,omitempty"`
+	WireGuardPreSharedKey            string   `json:"wireGuardPreSharedKey,omitempty"`
+	WireGuardReserved                []int    `json:"wireGuardReserved,omitempty"`
+	WireGuardPersistentKeepalive     int      `json:"wireGuardPersistentKeepalive,omitempty"`
+	WireGuardMTU                     int      `json:"wireGuardMtu,omitempty"`
+	WireGuardWorkers                 int      `json:"wireGuardWorkers,omitempty"`
+	WireGuardRemoteDNSResolve        bool     `json:"wireGuardRemoteDnsResolve,omitempty"`
+	WireGuardDNS                     []string `json:"wireGuardDns,omitempty"`
+	WireGuardRefreshServerIPInterval int      `json:"wireGuardRefreshServerIpInterval,omitempty"`
+
+	// OpenVPN fields map directly to Mihomo's in-process OpenVPN outbound.
+	OpenVPNProto              string   `json:"openVpnProto,omitempty"`
+	OpenVPNDev                string   `json:"openVpnDev,omitempty"`
+	OpenVPNCipher             string   `json:"openVpnCipher,omitempty"`
+	OpenVPNDataCiphers        []string `json:"openVpnDataCiphers,omitempty"`
+	OpenVPNDataCipherFallback string   `json:"openVpnDataCipherFallback,omitempty"`
+	OpenVPNAuth               string   `json:"openVpnAuth,omitempty"`
+	OpenVPNCompLZO            string   `json:"openVpnCompLzo,omitempty"`
+	OpenVPNCA                 string   `json:"openVpnCa,omitempty"`
+	OpenVPNCert               string   `json:"openVpnCert,omitempty"`
+	OpenVPNKey                string   `json:"openVpnKey,omitempty"`
+	OpenVPNTLSAuth            string   `json:"openVpnTlsAuth,omitempty"`
+	OpenVPNKeyDirection       string   `json:"openVpnKeyDirection,omitempty"`
+	OpenVPNTLSCrypt           string   `json:"openVpnTlsCrypt,omitempty"`
+	OpenVPNTLSCryptV2         string   `json:"openVpnTlsCryptV2,omitempty"`
+	OpenVPNPing               int      `json:"openVpnPing,omitempty"`
+	OpenVPNPingRestart        int      `json:"openVpnPingRestart,omitempty"`
+	OpenVPNHandshakeTimeout   int      `json:"openVpnHandshakeTimeout,omitempty"`
+	OpenVPNMTU                int      `json:"openVpnMtu,omitempty"`
+	OpenVPNRemoteDNSResolve   bool     `json:"openVpnRemoteDnsResolve,omitempty"`
+	OpenVPNDNS                []string `json:"openVpnDns,omitempty"`
 
 	// Hysteria2 / TUIC fields.
 	Up                   string `json:"up,omitempty"`
@@ -207,6 +248,28 @@ func normalizeMihomoOutbounds(input []MihomoOutbound) ([]MihomoOutbound, error) 
 		item.ClientFingerprint = strings.TrimSpace(item.ClientFingerprint)
 		item.IPVersion = strings.ToLower(strings.TrimSpace(item.IPVersion))
 		item.DialerProxy = strings.TrimSpace(item.DialerProxy)
+		item.InterfaceName = strings.TrimSpace(item.InterfaceName)
+		item.WireGuardIP = strings.TrimSpace(item.WireGuardIP)
+		item.WireGuardIPv6 = strings.TrimSpace(item.WireGuardIPv6)
+		item.WireGuardPrivateKey = strings.TrimSpace(item.WireGuardPrivateKey)
+		item.WireGuardPublicKey = strings.TrimSpace(item.WireGuardPublicKey)
+		item.WireGuardPreSharedKey = strings.TrimSpace(item.WireGuardPreSharedKey)
+		item.WireGuardDNS = normalizeOutboundStringList(item.WireGuardDNS)
+		item.OpenVPNProto = normalizeOpenVPNProto(item.OpenVPNProto)
+		item.OpenVPNDev = strings.ToLower(strings.TrimSpace(item.OpenVPNDev))
+		item.OpenVPNCipher = normalizeOpenVPNCipher(item.OpenVPNCipher)
+		item.OpenVPNDataCiphers = normalizeOpenVPNCipherList(item.OpenVPNDataCiphers)
+		item.OpenVPNDataCipherFallback = normalizeOpenVPNCipher(item.OpenVPNDataCipherFallback)
+		item.OpenVPNAuth = normalizeOpenVPNAuth(item.OpenVPNAuth)
+		item.OpenVPNCompLZO = strings.ToLower(strings.TrimSpace(item.OpenVPNCompLZO))
+		item.OpenVPNCA = strings.TrimSpace(item.OpenVPNCA)
+		item.OpenVPNCert = strings.TrimSpace(item.OpenVPNCert)
+		item.OpenVPNKey = strings.TrimSpace(item.OpenVPNKey)
+		item.OpenVPNTLSAuth = strings.TrimSpace(item.OpenVPNTLSAuth)
+		item.OpenVPNKeyDirection = strings.TrimSpace(item.OpenVPNKeyDirection)
+		item.OpenVPNTLSCrypt = strings.TrimSpace(item.OpenVPNTLSCrypt)
+		item.OpenVPNTLSCryptV2 = strings.TrimSpace(item.OpenVPNTLSCryptV2)
+		item.OpenVPNDNS = normalizeOutboundStringList(item.OpenVPNDNS)
 		item.Up = strings.TrimSpace(item.Up)
 		item.Down = strings.TrimSpace(item.Down)
 		item.Obfs = strings.ToLower(strings.TrimSpace(item.Obfs))
@@ -277,17 +340,23 @@ func validateMihomoProxy(item MihomoOutbound) error {
 	if !containsString(mihomoProxyTypes, item.Type) && !(item.Native != nil && containsString(nativeTypes, item.Type)) {
 		return fmt.Errorf("不支持代理类型 %q", item.Type)
 	}
-	if item.Native != nil && containsString([]string{"direct", "dns", "reject", "rematch", "openvpn", "tailscale", "zerotier"}, item.Type) {
+	if item.Native != nil && containsString([]string{"dns", "reject", "rematch", "tailscale", "zerotier"}, item.Type) {
 		return nil
 	}
 	if item.Native != nil && item.Type == "wireguard" && item.Native["peers"] != nil {
 		return nil
 	}
-	if item.Server == "" || strings.ContainsAny(item.Server, " \t/\r\n") {
+	if item.Type != "direct" && (item.Server == "" || strings.ContainsAny(item.Server, " \t/\r\n")) {
 		return fmt.Errorf("Server 必须是域名或 IP，且不能包含协议、路径或空格")
 	}
-	if item.Port < 1 || item.Port > 65535 {
+	if item.Type != "direct" && (item.Port < 1 || item.Port > 65535) {
 		return fmt.Errorf("Port 必须在 1-65535 之间")
+	}
+	if item.RoutingMark < 0 {
+		return fmt.Errorf("Routing Mark 不能为负数")
+	}
+	if len(item.InterfaceName) > 256 || strings.ContainsAny(item.InterfaceName, "\r\n") {
+		return fmt.Errorf("Interface Name 不能包含换行，且不能超过 256 个字符")
 	}
 	if item.AlterID < 0 {
 		return fmt.Errorf("Alter ID 不能为负数")
@@ -305,6 +374,10 @@ func validateMihomoProxy(item MihomoOutbound) error {
 		item.WSPath = "/"
 	}
 	switch item.Type {
+	case "direct":
+		if item.Server != "" || item.Port != 0 {
+			return fmt.Errorf("Direct 不使用 Server 或 Port")
+		}
 	case "ss":
 		if item.Password == "" || item.Cipher == "" {
 			return fmt.Errorf("Shadowsocks 需要 Cipher 和 Password")
@@ -321,6 +394,14 @@ func validateMihomoProxy(item MihomoOutbound) error {
 		if item.Token == "" && (item.UUID == "" || item.Password == "") {
 			return fmt.Errorf("TUIC 需要 Token，或同时填写 UUID 和 Password")
 		}
+	case "wireguard":
+		if err := validateWireGuardOutbound(item); err != nil {
+			return err
+		}
+	case "openvpn":
+		if err := validateOpenVPNOutbound(item); err != nil {
+			return err
+		}
 	}
 	if item.Reality {
 		if !containsString([]string{"vmess", "vless", "trojan"}, item.Type) {
@@ -329,6 +410,172 @@ func validateMihomoProxy(item MihomoOutbound) error {
 		if item.RealityPublicKey == "" {
 			return fmt.Errorf("Reality 需要 Public Key")
 		}
+	}
+	return nil
+}
+
+func normalizeOutboundStringList(values []string) []string {
+	result := make([]string, 0, len(values))
+	seen := map[string]bool{}
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" && !seen[value] {
+			seen[value] = true
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func normalizeOpenVPNProto(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "udp4":
+		return "udp"
+	case "tcp-client", "tcp4", "tcp4-client":
+		return "tcp"
+	default:
+		return strings.ToLower(strings.TrimSpace(value))
+	}
+}
+
+func normalizeOpenVPNCipher(value string) string {
+	value = strings.ToUpper(strings.TrimSpace(value))
+	if value == "AES-CBC" {
+		return "AES-128-CBC"
+	}
+	return value
+}
+
+func normalizeOpenVPNCipherList(values []string) []string {
+	result := make([]string, len(values))
+	for index, value := range values {
+		result[index] = normalizeOpenVPNCipher(value)
+	}
+	return normalizeOutboundStringList(result)
+}
+
+func normalizeOpenVPNAuth(value string) string {
+	value = strings.ToUpper(strings.TrimSpace(value))
+	if value == "SHA-1" {
+		return "SHA1"
+	}
+	return value
+}
+
+func validWireGuardKey(value string) bool {
+	decoded, err := base64.StdEncoding.DecodeString(value)
+	return err == nil && len(decoded) == 32
+}
+
+func validWireGuardAddress(value string, ipv4 bool) bool {
+	if value == "" {
+		return true
+	}
+	host := value
+	if strings.Contains(value, "/") {
+		ip, _, err := net.ParseCIDR(value)
+		return err == nil && (ip.To4() != nil) == ipv4
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && (ip.To4() != nil) == ipv4
+}
+
+func validateWireGuardOutbound(item MihomoOutbound) error {
+	if item.WireGuardIP == "" && item.WireGuardIPv6 == "" {
+		return fmt.Errorf("WireGuard 至少需要一个本地 IP 或 IPv6 地址")
+	}
+	if !validWireGuardAddress(item.WireGuardIP, true) {
+		return fmt.Errorf("WireGuard IP 必须是有效的 IPv4 地址或 CIDR")
+	}
+	if !validWireGuardAddress(item.WireGuardIPv6, false) {
+		return fmt.Errorf("WireGuard IPv6 必须是有效的 IPv6 地址或 CIDR")
+	}
+	if !validWireGuardKey(item.WireGuardPrivateKey) {
+		return fmt.Errorf("WireGuard Private Key 必须是 32 字节 Base64")
+	}
+	if !validWireGuardKey(item.WireGuardPublicKey) {
+		return fmt.Errorf("WireGuard Public Key 必须是 32 字节 Base64")
+	}
+	if item.WireGuardPreSharedKey != "" && !validWireGuardKey(item.WireGuardPreSharedKey) {
+		return fmt.Errorf("WireGuard Pre-shared Key 必须是 32 字节 Base64")
+	}
+	if len(item.WireGuardReserved) != 0 && len(item.WireGuardReserved) != 3 {
+		return fmt.Errorf("WireGuard Reserved 必须留空或填写 3 个字节")
+	}
+	for _, value := range item.WireGuardReserved {
+		if value < 0 || value > 255 {
+			return fmt.Errorf("WireGuard Reserved 每项必须在 0-255 之间")
+		}
+	}
+	if item.WireGuardMTU < 0 || item.WireGuardWorkers < 0 || item.WireGuardPersistentKeepalive < 0 || item.WireGuardRefreshServerIPInterval < 0 {
+		return fmt.Errorf("WireGuard MTU、Workers、Persistent Keepalive 和刷新间隔不能为负数")
+	}
+	if item.WireGuardRemoteDNSResolve && len(item.WireGuardDNS) == 0 {
+		return fmt.Errorf("WireGuard Remote DNS Resolve 开启时必须填写 DNS")
+	}
+	return nil
+}
+
+var openVPNCiphers = []string{"AES-128-GCM", "AES-192-GCM", "AES-256-GCM", "AES-128-CBC", "AES-192-CBC", "AES-256-CBC", "CHACHA20-POLY1305"}
+var openVPNAuths = []string{"MD5", "SHA1", "SHA256", "SHA384", "SHA512"}
+
+func validPEM(value string) bool {
+	block, _ := pem.Decode([]byte(value))
+	return block != nil
+}
+
+func validateOpenVPNOutbound(item MihomoOutbound) error {
+	proto := valueOr(item.OpenVPNProto, "udp")
+	if !containsString([]string{"udp", "tcp"}, proto) {
+		return fmt.Errorf("OpenVPN Proto 只能是 udp 或 tcp")
+	}
+	if dev := valueOr(item.OpenVPNDev, "tun"); dev != "tun" {
+		return fmt.Errorf("OpenVPN 当前只支持 Dev tun")
+	}
+	cipher := valueOr(item.OpenVPNCipher, "AES-128-GCM")
+	if !containsString(openVPNCiphers, cipher) {
+		return fmt.Errorf("OpenVPN Cipher 无效")
+	}
+	for _, candidate := range append(append([]string{}, item.OpenVPNDataCiphers...), item.OpenVPNDataCipherFallback) {
+		if candidate != "" && !containsString(openVPNCiphers, candidate) {
+			return fmt.Errorf("OpenVPN Data Cipher %q 无效", candidate)
+		}
+	}
+	if auth := valueOr(item.OpenVPNAuth, "SHA256"); !containsString(openVPNAuths, auth) {
+		return fmt.Errorf("OpenVPN Auth 无效")
+	}
+	if item.OpenVPNCompLZO != "" && !containsString([]string{"yes", "no", "adaptive"}, item.OpenVPNCompLZO) {
+		return fmt.Errorf("OpenVPN Comp LZO 只能是 yes、no 或 adaptive")
+	}
+	if !validPEM(item.OpenVPNCA) {
+		return fmt.Errorf("OpenVPN CA 必须是有效的内联 PEM 内容")
+	}
+	if (item.OpenVPNCert == "") != (item.OpenVPNKey == "") {
+		return fmt.Errorf("OpenVPN Cert 和 Key 必须同时填写")
+	}
+	if item.OpenVPNCert != "" && (!validPEM(item.OpenVPNCert) || !validPEM(item.OpenVPNKey)) {
+		return fmt.Errorf("OpenVPN Cert 和 Key 必须是有效的内联 PEM 内容")
+	}
+	if item.OpenVPNCert == "" && item.Username == "" {
+		return fmt.Errorf("OpenVPN 需要 Cert + Key，或填写 Username 使用 auth-user-pass")
+	}
+	keyBlocks := 0
+	for _, value := range []string{item.OpenVPNTLSAuth, item.OpenVPNTLSCrypt, item.OpenVPNTLSCryptV2} {
+		if value != "" {
+			keyBlocks++
+		}
+	}
+	if keyBlocks > 1 {
+		return fmt.Errorf("OpenVPN TLS Auth、TLS Crypt 和 TLS Crypt v2 只能选择一种")
+	}
+	if item.OpenVPNKeyDirection != "" && item.OpenVPNKeyDirection != "0" && item.OpenVPNKeyDirection != "1" {
+		return fmt.Errorf("OpenVPN Key Direction 只能是 0 或 1")
+	}
+	if item.OpenVPNPing < 0 || item.OpenVPNPingRestart < 0 || item.OpenVPNHandshakeTimeout < 0 || item.OpenVPNMTU < 0 {
+		return fmt.Errorf("OpenVPN Ping、Ping Restart、Handshake Timeout 和 MTU 不能为负数")
+	}
+	if item.OpenVPNRemoteDNSResolve && len(item.OpenVPNDNS) == 0 {
+		return fmt.Errorf("OpenVPN Remote DNS Resolve 开启时必须填写 DNS")
 	}
 	return nil
 }
@@ -534,12 +781,21 @@ func mihomoProxyConfig(item MihomoOutbound) map[string]any {
 	if item.Native != nil {
 		return item.Native
 	}
-	result := map[string]any{"name": item.Name, "type": item.Type, "server": item.Server, "port": item.Port}
+	result := map[string]any{"name": item.Name, "type": item.Type}
+	if item.Type != "direct" {
+		result["server"], result["port"] = item.Server, item.Port
+	}
 	if item.IPVersion != "" {
 		result["ip-version"] = item.IPVersion
 	}
 	if item.DialerProxy != "" {
 		result["dialer-proxy"] = item.DialerProxy
+	}
+	if item.InterfaceName != "" {
+		result["interface-name"] = item.InterfaceName
+	}
+	if item.RoutingMark != 0 {
+		result["routing-mark"] = item.RoutingMark
 	}
 	if item.TFO {
 		result["tfo"] = true
@@ -586,6 +842,7 @@ func mihomoProxyConfig(item MihomoOutbound) map[string]any {
 		}
 	}
 	switch item.Type {
+	case "direct":
 	case "ss":
 		result["cipher"], result["password"] = item.Cipher, item.Password
 		if item.UDP {
@@ -649,6 +906,87 @@ func mihomoProxyConfig(item MihomoOutbound) map[string]any {
 		}
 		if item.UDPRelayMode != "" {
 			result["udp-relay-mode"] = item.UDPRelayMode
+		}
+	case "wireguard":
+		result["ip"], result["private-key"], result["public-key"] = item.WireGuardIP, item.WireGuardPrivateKey, item.WireGuardPublicKey
+		if item.WireGuardIPv6 != "" {
+			result["ipv6"] = item.WireGuardIPv6
+		}
+		if item.WireGuardPreSharedKey != "" {
+			result["pre-shared-key"] = item.WireGuardPreSharedKey
+		}
+		if len(item.WireGuardReserved) > 0 {
+			reserved := make([]any, len(item.WireGuardReserved))
+			for index, value := range item.WireGuardReserved {
+				reserved[index] = value
+			}
+			result["reserved"] = reserved
+		}
+		if item.WireGuardPersistentKeepalive != 0 {
+			result["persistent-keepalive"] = item.WireGuardPersistentKeepalive
+		}
+		if item.WireGuardMTU != 0 {
+			result["mtu"] = item.WireGuardMTU
+		}
+		if item.WireGuardWorkers != 0 {
+			result["workers"] = item.WireGuardWorkers
+		}
+		if item.UDP {
+			result["udp"] = true
+		}
+		if item.WireGuardRemoteDNSResolve {
+			result["remote-dns-resolve"] = true
+			result["dns"] = append([]string(nil), item.WireGuardDNS...)
+		}
+		if item.WireGuardRefreshServerIPInterval != 0 {
+			result["refresh-server-ip-interval"] = item.WireGuardRefreshServerIPInterval
+		}
+	case "openvpn":
+		writeAuth()
+		result["ca"] = item.OpenVPNCA
+		if item.OpenVPNProto != "" {
+			result["proto"] = item.OpenVPNProto
+		}
+		if item.OpenVPNDev != "" {
+			result["dev"] = item.OpenVPNDev
+		}
+		if item.OpenVPNCipher != "" {
+			result["cipher"] = item.OpenVPNCipher
+		}
+		if len(item.OpenVPNDataCiphers) > 0 {
+			result["data-ciphers"] = append([]string(nil), item.OpenVPNDataCiphers...)
+		}
+		if item.OpenVPNDataCipherFallback != "" {
+			result["data-ciphers-fallback"] = item.OpenVPNDataCipherFallback
+		}
+		if item.OpenVPNAuth != "" {
+			result["auth"] = item.OpenVPNAuth
+		}
+		if item.OpenVPNCompLZO != "" {
+			result["comp-lzo"] = item.OpenVPNCompLZO
+		}
+		for key, value := range map[string]string{
+			"cert": item.OpenVPNCert, "key": item.OpenVPNKey, "tls-auth": item.OpenVPNTLSAuth,
+			"key-direction": item.OpenVPNKeyDirection, "tls-crypt": item.OpenVPNTLSCrypt, "tls-crypt-v2": item.OpenVPNTLSCryptV2,
+		} {
+			if value != "" {
+				result[key] = value
+			}
+		}
+		for key, value := range map[string]int{
+			"ping": item.OpenVPNPing, "ping-restart": item.OpenVPNPingRestart,
+			"handshake-timeout": item.OpenVPNHandshakeTimeout, "mtu": item.OpenVPNMTU,
+		} {
+			if value != 0 {
+				result[key] = value
+			}
+		}
+		if item.UDP {
+			result["udp"] = true
+		}
+		if item.OpenVPNRemoteDNSResolve {
+			result["remote-dns-resolve"] = true
+			result["dns"] = append([]string(nil), item.OpenVPNDNS...)
 		}
 	}
 	if item.ClientFingerprint != "" && containsString([]string{"ss", "vmess", "vless", "trojan"}, item.Type) {

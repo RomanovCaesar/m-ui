@@ -171,14 +171,13 @@ ssl_set_paths() {
 
 install_acme_for_dns() {
     [[ -x /root/.acme.sh/acme.sh ]] && return 0
-    local installer; installer="$(mktemp /tmp/m-ui-acme.XXXXXX.sh)"
-    if ! curl -fsSL --retry 3 --connect-timeout 10 https://get.acme.sh -o "$installer"; then
-        rm -f -- "$installer"
+    info "Installing acme.sh for TLS certificate management..."
+    if ! (cd /root && curl -fsSL --retry 3 --connect-timeout 10 https://get.acme.sh | sh); then
+        warn "could not download or run the acme.sh installer"
         return 1
     fi
-    sh "$installer" email="" >/dev/null 2>&1 || true
-    rm -f -- "$installer"
-    [[ -x /root/.acme.sh/acme.sh ]]
+    [[ -x /root/.acme.sh/acme.sh ]] || { warn "acme.sh installation failed"; return 1; }
+    info "acme.sh installed successfully"
 }
 
 ssl_cloudflare() {

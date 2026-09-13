@@ -191,12 +191,15 @@ is_ipv4() {
 }
 
 install_acme() {
-    local acme="/root/.acme.sh/acme.sh" installer="${TEMP_DIR}/acme-install.sh"
+    local acme="/root/.acme.sh/acme.sh"
     [[ -x "$acme" ]] && return 0
     info "Installing acme.sh for TLS certificate management..."
-    curl -fsSL --retry 3 --connect-timeout 10 https://get.acme.sh -o "$installer" || { warn "could not download acme.sh"; return 1; }
-    sh "$installer" email="" >/dev/null 2>&1 || true
+    if ! (cd /root && curl -fsSL --retry 3 --connect-timeout 10 https://get.acme.sh | sh); then
+        warn "could not download or run the acme.sh installer"
+        return 1
+    fi
     [[ -x "$acme" ]] || { warn "acme.sh installation failed"; return 1; }
+    info "acme.sh installed successfully"
     "$acme" --set-default-ca --server letsencrypt --force >/dev/null 2>&1 || true
 }
 

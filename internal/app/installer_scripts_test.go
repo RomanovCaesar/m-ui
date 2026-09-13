@@ -51,6 +51,27 @@ func TestManagementScriptKeepsMenuChoicesLocal(t *testing.T) {
 	}
 }
 
+func TestAcmeInstallUsesNoEmailBootstrap(t *testing.T) {
+	for _, name := range []string{"install.sh", "scripts/m-ui.sh"} {
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		content := string(data)
+		if strings.Contains(content, `sh "$installer" email=""`) {
+			t.Fatalf("%s still passes an empty email to get.acme.sh", name)
+		}
+		for _, required := range []string{
+			`cd /root && curl -fsSL --retry 3 --connect-timeout 10 https://get.acme.sh | sh`,
+			`acme.sh installed successfully`,
+		} {
+			if !strings.Contains(content, required) {
+				t.Fatalf("%s is missing the no-email acme.sh bootstrap %q", name, required)
+			}
+		}
+	}
+}
+
 func TestBashScriptsParse(t *testing.T) {
 	bash, err := exec.LookPath("bash")
 	if err != nil {

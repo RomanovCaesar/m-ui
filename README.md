@@ -128,7 +128,7 @@ m-ui uninstall
 * Runtime logs, controller state, and active connections
 * System CPU, memory, disk, uptime, and traffic information
 * Raw configuration preview, copy, and download
-* Panel-state backup and restore
+* Full panel backup and restore: settings, inbounds, Multi-control identity, and the cross-panel subscription cache (TLS certificates are not packaged; reissue them with `m-ui ssl` after a restore)
 * Mihomo version download and switching from official MetaCubeX Releases
 * Official GeoIP, GeoSite, and MetaDB updates
 * Configurable core path, controller address/secret, mixed port, mode, logging, panel TLS, and credentials
@@ -199,7 +199,7 @@ The hidden panel path is not part of peer handshakes. Peer endpoints are fixed o
 
 A dedicated subscription port does not expose those paths. Pairing tokens and private keys are not returned by the ordinary state API or propagated through the mesh. Disconnecting a peer is a local block rather than a global removal; allowing rediscovery lets a common online member introduce it again.
 
-`multi-control.json` is intentionally omitted from normal portable panel backups so restoring a backup on another server cannot clone a node identity. Securely migrate that file only when moving the same server; do not copy it when creating a new peer.
+`multi-control.json` is included in panel backups, but restoring it is opt-in. Leave **Also restore the Multi-control identity** unchecked (the default) and the restore keeps the local peer ID and private key while merging only the peer list, the blocked list, and the pairing token. Check it only when migrating a whole server, because two panels restored from the same backup with the identity replaced would claim the same peer ID and conflict on the mesh.
 
 ### Sync Inbound
 

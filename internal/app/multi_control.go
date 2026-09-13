@@ -192,43 +192,51 @@ func verifyPeerNode(node PeerNode) error {
 }
 
 func (p *PeerNetwork) validateDisk() error {
-	key, err := base64.StdEncoding.DecodeString(p.disk.PrivateKey)
+	return validatePeerDisk(&p.disk)
+}
+
+// validatePeerDisk checks any peerDisk, not just the live one, so a disk read
+// back from a backup gets exactly the same scrutiny as one read from disk at
+// startup. Skipping these checks on an imported file would let a crafted
+// backup inject arbitrary peers. Normalizes the nil maps on success.
+func validatePeerDisk(disk *peerDisk) error {
+	key, err := base64.StdEncoding.DecodeString(disk.PrivateKey)
 	if err != nil || len(key) != ed25519.PrivateKeySize {
 		return fmt.Errorf("Multi-control 私钥无效")
 	}
-	if !bytes.Equal(ed25519.NewKeyFromSeed(key[:32]), key) || p.disk.Self.PublicKey != base64.StdEncoding.EncodeToString(key[32:]) {
+	if !bytes.Equal(ed25519.NewKeyFromSeed(key[:32]), key) || disk.Self.PublicKey != base64.StdEncoding.EncodeToString(key[32:]) {
 		return fmt.Errorf("Multi-control 身份与私钥不符")
 	}
-	if err := verifyPeerNode(p.disk.Self); err != nil {
+	if err := verifyPeerNode(disk.Self); err != nil {
 		return err
 	}
-	if p.disk.Token != "" && !validPairToken(p.disk.Token) {
+	if disk.Token != "" && !validPairToken(disk.Token) {
 		return fmt.Errorf("Multi-control 配对 token 无效")
 	}
-	if len(p.disk.Peers) > maxMeshPeers {
+	if len(disk.Peers) > maxMeshPeers {
 		return fmt.Errorf("Multi-control 节点数量超过限制")
 	}
-	for id, blocked := range p.disk.Blocked {
-		if !blocked || !peerIDPattern.MatchString(id) || id == p.disk.Self.ID {
+	for id, blocked := range disk.Blocked {
+		if !blocked || !peerIDPattern.MatchString(id) || id == disk.Self.ID {
 			return fmt.Errorf("Multi-control 断开记录无效")
 		}
-		if _, exists := p.disk.Peers[id]; exists {
+		if _, exists := disk.Peers[id]; exists {
 			return fmt.Errorf("Multi-control 节点同时处于连接和断开状态")
 		}
 	}
-	for id, node := range p.disk.Peers {
-		if id != node.ID || id == p.disk.Self.ID {
+	for id, node := range disk.Peers {
+		if id != node.ID || id == disk.Self.ID {
 			return fmt.Errorf("Multi-control 节点记录无效")
 		}
 		if err := verifyPeerNode(node); err != nil {
 			return err
 		}
 	}
-	if p.disk.Peers == nil {
-		p.disk.Peers = map[string]PeerNode{}
+	if disk.Peers == nil {
+		disk.Peers = map[string]PeerNode{}
 	}
-	if p.disk.Blocked == nil {
-		p.disk.Blocked = map[string]bool{}
+	if disk.Blocked == nil {
+		disk.Blocked = map[string]bool{}
 	}
 	return nil
 }
@@ -270,6 +278,68 @@ func clonePeerDisk(disk peerDisk) peerDisk {
 		copy.Blocked[id] = value
 	}
 	return copy
+}
+
+// exportDisk returns a deep copy of the on-disk identity so a backup writer can
+// serialize it without holding the network lock while it does I/O.
+func (p *PeerNetwork) exportDisk() peerDisk {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return clonePeerDisk(p.disk)
+}
+
+// restoreDisk applies a peerDisk taken from a backup. With replaceIdentity the
+// whole identity is adopted (whole-machine migration); without it the local
+// private key and self node are kept and only the peer list, blocked list and
+// pairing token are merged, so restoring the same backup on a second machine
+// cannot produce two panels claiming the same peerID.
+func (p *PeerNetwork) restoreDisk(incoming peerDisk, replaceIdentity bool) error {
+	if err := validatePeerDisk(&incoming); err != nil {
+		return err
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	var next peerDisk
+	if replaceIdentity {
+		next = clonePeerDisk(incoming)
+	} else {
+		next = clonePeerDisk(p.disk)
+		next.Token = incoming.Token
+		for id, node := range incoming.Peers {
+			if id == next.Self.ID {
+				continue
+			}
+			next.Peers[id] = node
+			delete(next.Blocked, id)
+		}
+		for id := range incoming.Blocked {
+			if id == next.Self.ID {
+				continue
+			}
+			if _, exists := next.Peers[id]; exists {
+				continue
+			}
+			next.Blocked[id] = true
+		}
+		if len(next.Peers) > maxMeshPeers {
+			return fmt.Errorf("Multi-control 节点数量超过限制")
+		}
+		p.signSelf(&next)
+	}
+	if err := validatePeerDisk(&next); err != nil {
+		return err
+	}
+	if err := p.persist(next); err != nil {
+		return err
+	}
+	p.disk = next
+	for id := range p.status {
+		if _, exists := next.Peers[id]; !exists {
+			delete(p.status, id)
+		}
+	}
+	p.signal()
+	return nil
 }
 
 func (p *PeerNetwork) configure(name, endpoint string) error {

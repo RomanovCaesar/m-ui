@@ -138,7 +138,7 @@ m-ui uninstall
 - Mihomo Shadowsocks listener 本身只有一个核心密码；多个 SS 客户端密码仅作为分享链接/面板元数据保留，不能由 Mihomo 核心单独强制校验
 - 生成并校验原生 YAML 格式的 Mihomo `config.yaml`
   - m-ui 启动时自动启动 Mihomo，也可在面板中启动、停止、重启，并读取日志和 REST 控制器状态
-- 首页系统仪表盘、运行配置查看/复制/下载、数据备份恢复
+- 首页系统仪表盘、运行配置查看/复制/下载、完整数据备份恢复（面板设置、入口数据、Multi-control 身份、跨面板订阅缓存；TLS 证书不打包，恢复后用 `m-ui ssl` 重新签发）
 - 公开订阅页、Base64、Mihomo/Clash、Sing-box、Surge、Surfboard、Loon、Quantumult X、Stash、Egern 等订阅转换；可选独立订阅服务端口，留空则沿用面板端口
 - 从 MetaCubeX 官方 GitHub Releases 下载和切换 Mihomo 版本
 - 更新官方 GeoIP、GeoSite 和 MetaDB 文件
@@ -194,7 +194,7 @@ Panel Settings → Subscription 的 `Cross Panel Subscription Path` 独立于普
 
 “断开”是本机决定：该节点会从当前面板删除并加入本机阻止列表，避免被其他节点重新发现，但不会从整个网络中全局删除。允许重新发现后，可通过仍在线的共同成员恢复连接。
 
-`multi-control.json` 不包含在可导入到其他服务器的面板 ZIP 备份中，避免克隆出两个相同的节点身份。迁移同一台服务器时需要单独、安全地迁移该文件；复制为新服务器时不要复制它。
+`multi-control.json` 包含在面板 ZIP 备份中，但恢复时需要显式勾选。默认不勾选「同时恢复 Multi-control 身份」时，本机 peerID 和私钥保持不变，只合并对端列表、屏蔽列表和配对令牌；只有整机迁移才勾选，否则同一份备份在两台机器上还原会产生两个相同的 peerID，在 mesh 中互相顶掉。
 
 ### Sync Inbound
 

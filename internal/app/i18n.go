@@ -162,6 +162,7 @@ var messagePatternsEN = []struct {
 	to   string
 }{
 	{regexp.MustCompile(`^此用户没有 (.+) 可用节点$`), "This user has no available $1 nodes"},
+	{regexp.MustCompile(`^备份中的 (\S+) 超过大小限制$`), "$1 in the backup exceeds the size limit"},
 	{regexp.MustCompile(`^跨面板订阅路径不能使用保留路径 /(.+)$`), "The cross-panel subscription path cannot use the reserved path /$1"},
 	{regexp.MustCompile(`^订阅路径不能使用面板保留路径 /(.+)$`), "The subscription path cannot use the panel's reserved path /$1"},
 	{regexp.MustCompile(`^GitHub 返回状态 (\d+)$`), "GitHub returned status $1"},
@@ -587,6 +588,15 @@ var messagesEN = map[string]string{
 	"备份中的 Mihomo Routing Rules 无效": "The Mihomo Routing Rules in the backup are invalid",
 	"备份中的 Mihomo Basics 无效":        "The Mihomo Basics in the backup are invalid",
 	"备份中的 WARP 账户无效":               "The WARP account in the backup is invalid",
+	"manifest.json 无效":              "Invalid manifest.json",
+	"备份版本过新，请升级 m-ui":               "The backup format is newer than this build — upgrade m-ui",
+	"备份中的 Multi-control 数据无效":       "The multi-control data in the backup is invalid",
+	"备份中的跨面板订阅缓存无效":                "The cross-panel subscription cache in the backup is invalid",
+	"Multi-control 未启用，备份中的联机身份未恢复": "Multi-control is disabled — the linked-panel identity in the backup was not restored",
+	"跨面板订阅未启用，备份中的订阅缓存未恢复":         "Cross-panel subscriptions are disabled — the cache in the backup was not restored",
+	"Multi-control 恢复失败":            "Failed to restore multi-control",
+	"跨面板订阅缓存恢复失败":                  "Failed to restore the cross-panel subscription cache",
+	"TLS 证书文件缺失或无效，面板已回落 HTTP":     "The TLS certificate files are missing or invalid — the panel fell back to HTTP",
 	"下载文件 SHA-256 校验失败":            "SHA-256 verification of the downloaded file failed",
 	"新核心无法运行":                      "The new core failed to run",
 	"备份旧核心失败":                      "Failed to back up the old core",

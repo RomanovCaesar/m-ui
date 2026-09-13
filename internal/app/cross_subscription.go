@@ -92,9 +92,22 @@ func newCrossSubscriptionManager(dataDir string) (*CrossSubscriptionManager, err
 	if err := json.Unmarshal(data, &disk); err != nil {
 		return nil, fmt.Errorf("跨面板订阅缓存无效: %w", err)
 	}
+	sources, err := validateCrossSubscriptionDisk(disk)
+	if err != nil {
+		return nil, err
+	}
+	m.sources = sources
+	return m, nil
+}
+
+// validateCrossSubscriptionDisk checks any cache document, so one read back from
+// a backup is scrutinized exactly like one read from disk at startup. Returns a
+// non-nil source map on success.
+func validateCrossSubscriptionDisk(disk crossSubscriptionCacheDisk) (map[string]crossSubscriptionCacheSource, error) {
 	if disk.Version != 0 && disk.Version != crossSubscriptionCacheVersion {
 		return nil, fmt.Errorf("不支持的跨面板订阅缓存版本")
 	}
+	sources := make(map[string]crossSubscriptionCacheSource, len(disk.Sources))
 	for id, source := range disk.Sources {
 		if id != source.Node.ID || !peerIDPattern.MatchString(id) {
 			return nil, fmt.Errorf("跨面板订阅缓存节点身份无效")
@@ -110,9 +123,37 @@ func newCrossSubscriptionManager(dataDir string) (*CrossSubscriptionManager, err
 				return nil, fmt.Errorf("跨面板订阅缓存 token 无效")
 			}
 		}
-		m.sources[id] = source
+		sources[id] = source
 	}
-	return m, nil
+	return sources, nil
+}
+
+// exportDisk returns the cache in its on-disk shape for a backup writer.
+func (m *CrossSubscriptionManager) exportDisk() crossSubscriptionCacheDisk {
+	disk := crossSubscriptionCacheDisk{Version: crossSubscriptionCacheVersion, Sources: map[string]crossSubscriptionCacheSource{}}
+	for id, source := range m.snapshot() {
+		disk.Sources[id] = source
+	}
+	return disk
+}
+
+// restoreDisk replaces the cache with one taken from a backup. The cache is
+// derived data, so a wholesale replace is safe: anything stale is refreshed on
+// the next pull.
+func (m *CrossSubscriptionManager) restoreDisk(disk crossSubscriptionCacheDisk) error {
+	sources, err := validateCrossSubscriptionDisk(disk)
+	if err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	previous := m.sources
+	m.sources = sources
+	if err := m.persistLocked(); err != nil {
+		m.sources = previous
+		return err
+	}
+	return nil
 }
 
 func cloneInboundList(inbounds []Inbound) []Inbound {

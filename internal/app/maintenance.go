@@ -25,6 +25,13 @@ const (
 	githubAPIBase      = "https://api.github.com/repos/MetaCubeX/mihomo"
 	maximumDownload    = 160 << 20
 	maximumBackupInput = 32 << 20
+	// backupFormatVersion 2 adds multi-control.json and the cross-panel
+	// subscription cache. Format 1 archives (state.json only, on restore) are
+	// still accepted.
+	backupFormatVersion = 2
+	backupStateFile     = "state.json"
+	backupPeerFile      = "multi-control.json"
+	backupCrossFile     = crossSubscriptionCacheFile
 )
 
 type githubRelease struct {
@@ -84,7 +91,7 @@ func (a *App) handleLogsDownload(w http.ResponseWriter, r *http.Request) {
 func (a *App) handleBackup(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		a.manager.exportBackup(w)
+		a.exportBackup(w)
 	case http.MethodPost:
 		if err := r.ParseMultipartForm(maximumBackupInput); err != nil {
 			writeJSON(w, http.StatusBadRequest, apiResponse{Message: a.tr("无法读取备份文件")})
@@ -96,17 +103,31 @@ func (a *App) handleBackup(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
-		if err := a.manager.importBackup(file); err != nil {
+		outcome, err := a.importBackup(file, r.FormValue("replaceIdentity") == "1")
+		if err != nil {
 			writeJSON(w, http.StatusBadRequest, apiResponse{Message: a.tr(err.Error())})
 			return
 		}
-		writeJSON(w, http.StatusOK, apiResponse{OK: true, Message: a.tr("备份恢复成功，请按需重启核心")})
+		for index, warning := range outcome.Warnings {
+			outcome.Warnings[index] = a.tr(warning)
+		}
+		writeJSON(w, http.StatusOK, apiResponse{OK: true, Message: a.tr("备份恢复成功，请按需重启核心"), Data: outcome})
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, apiResponse{Message: "method not allowed"})
 	}
 }
 
-func (m *CoreManager) exportBackup(w http.ResponseWriter) {
+// restoreOutcome reports what a restore actually touched so the panel can show
+// more than a generic success message.
+type restoreOutcome struct {
+	Inbounds         int      `json:"inbounds"`
+	Peers            int      `json:"peers"`
+	IdentityReplaced bool     `json:"identityReplaced"`
+	Warnings         []string `json:"warnings,omitempty"`
+}
+
+func (a *App) exportBackup(w http.ResponseWriter) {
+	m := a.manager
 	m.mu.Lock()
 	state := m.state
 	m.mu.Unlock()
@@ -120,93 +141,221 @@ func (m *CoreManager) exportBackup(w http.ResponseWriter) {
 		writeJSON(w, http.StatusInternalServerError, apiResponse{Message: m.tr(err.Error())})
 		return
 	}
+	entries := []struct {
+		name string
+		data []byte
+	}{
+		{name: backupStateFile, data: stateData},
+		{name: "config.yaml", data: config},
+	}
+	if a.peers != nil {
+		if data, err := json.MarshalIndent(a.peers.exportDisk(), "", "  "); err == nil {
+			entries = append(entries, struct {
+				name string
+				data []byte
+			}{name: backupPeerFile, data: data})
+		}
+	}
+	if a.cross != nil {
+		if data, err := json.MarshalIndent(a.cross.exportDisk(), "", "  "); err == nil {
+			entries = append(entries, struct {
+				name string
+				data []byte
+			}{name: backupCrossFile, data: data})
+		}
+	}
+	contents := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		contents = append(contents, entry.name)
+	}
+	manifest, err := json.MarshalIndent(map[string]any{
+		"format":    backupFormatVersion,
+		"app":       "m-ui",
+		"version":   appVersion,
+		"createdAt": time.Now().Format(time.RFC3339),
+		"contents":  contents,
+	}, "", "  ")
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Message: m.tr(err.Error())})
+		return
+	}
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="m-ui-backup-%s.zip"`, time.Now().Format("20060102-150405")))
 	archive := zip.NewWriter(w)
-	stateFile, _ := archive.Create("state.json")
-	_, _ = stateFile.Write(stateData)
-	configFile, _ := archive.Create("config.yaml")
-	_, _ = configFile.Write(config)
-	manifestFile, _ := archive.Create("manifest.json")
-	manifest, _ := json.MarshalIndent(map[string]any{"format": 1, "app": "m-ui", "version": appVersion, "createdAt": time.Now().Format(time.RFC3339)}, "", "  ")
+	for _, entry := range entries {
+		writer, err := archive.Create(entry.name)
+		if err != nil {
+			_ = archive.Close()
+			return
+		}
+		if _, err = writer.Write(entry.data); err != nil {
+			_ = archive.Close()
+			return
+		}
+	}
+	manifestFile, err := archive.Create("manifest.json")
+	if err != nil {
+		_ = archive.Close()
+		return
+	}
 	_, _ = manifestFile.Write(manifest)
 	_ = archive.Close()
 }
 
-func (m *CoreManager) importBackup(source multipart.File) error {
+// readBackupEntry returns the named ZIP entry, or nil when it is absent. limit
+// caps the declared and the actual size so a compression bomb cannot be read
+// into memory.
+func readBackupEntry(reader *zip.ReadCloser, name string, limit uint64) ([]byte, error) {
+	for _, file := range reader.File {
+		if file.Name != name {
+			continue
+		}
+		if file.UncompressedSize64 > limit {
+			return nil, fmt.Errorf("备份中的 %s 超过大小限制", name)
+		}
+		stream, err := file.Open()
+		if err != nil {
+			return nil, err
+		}
+		data, err := io.ReadAll(io.LimitReader(stream, int64(limit)+1))
+		_ = stream.Close()
+		if err != nil {
+			return nil, err
+		}
+		if uint64(len(data)) > limit {
+			return nil, fmt.Errorf("备份中的 %s 超过大小限制", name)
+		}
+		return data, nil
+	}
+	return nil, nil
+}
+
+// importBackup restores a panel backup. Everything is parsed and validated
+// before anything is written, so a forged or corrupt section cannot leave the
+// panel with state.json already replaced and the rest rejected.
+func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restoreOutcome, error) {
+	m := a.manager
+	var outcome restoreOutcome
 	temporary, err := os.CreateTemp(m.dataDir, "restore-*.zip")
 	if err != nil {
-		return err
+		return outcome, err
 	}
 	temporaryPath := temporary.Name()
 	defer os.Remove(temporaryPath)
 	written, err := io.Copy(temporary, io.LimitReader(source, maximumBackupInput+1))
 	closeErr := temporary.Close()
 	if err != nil {
-		return err
+		return outcome, err
 	}
 	if closeErr != nil {
-		return closeErr
+		return outcome, closeErr
 	}
 	if written > maximumBackupInput {
-		return fmt.Errorf("备份文件超过 32 MB 限制")
+		return outcome, fmt.Errorf("备份文件超过 32 MB 限制")
 	}
 	reader, err := zip.OpenReader(temporaryPath)
 	if err != nil {
-		return fmt.Errorf("备份文件不是有效的 ZIP")
+		return outcome, fmt.Errorf("备份文件不是有效的 ZIP")
 	}
 	defer reader.Close()
-	var stateData []byte
-	for _, file := range reader.File {
-		if file.Name != "state.json" || file.UncompressedSize64 > 4<<20 {
-			continue
+	format := 1
+	manifestData, err := readBackupEntry(reader, "manifest.json", 64<<10)
+	if err != nil {
+		return outcome, err
+	}
+	if len(manifestData) > 0 {
+		var manifest struct {
+			Format int `json:"format"`
 		}
-		stream, err := file.Open()
-		if err != nil {
-			return err
+		if err := json.Unmarshal(manifestData, &manifest); err != nil {
+			return outcome, fmt.Errorf("manifest.json 无效: %w", err)
 		}
-		stateData, err = io.ReadAll(io.LimitReader(stream, 4<<20))
-		_ = stream.Close()
-		if err != nil {
-			return err
+		if manifest.Format > 0 {
+			format = manifest.Format
 		}
-		break
+	}
+	if format > backupFormatVersion {
+		return outcome, fmt.Errorf("备份版本过新，请升级 m-ui")
+	}
+	stateData, err := readBackupEntry(reader, backupStateFile, 4<<20)
+	if err != nil {
+		return outcome, err
 	}
 	if len(stateData) == 0 {
-		return fmt.Errorf("备份中缺少 state.json")
+		return outcome, fmt.Errorf("备份中缺少 state.json")
 	}
 	var restored State
 	if err := json.Unmarshal(stateData, &restored); err != nil {
-		return fmt.Errorf("state.json 无效: %w", err)
+		return outcome, fmt.Errorf("state.json 无效: %w", err)
 	}
 	if restored.Settings.Username == "" || restored.Settings.Password == "" || restored.Settings.APIAddress == "" {
-		return fmt.Errorf("备份缺少必要的面板设置")
+		return outcome, fmt.Errorf("备份缺少必要的面板设置")
 	}
 	if restored.Settings.MixedPort < 1 || restored.Settings.MixedPort > 65535 {
-		return fmt.Errorf("备份中的默认端口无效")
+		return outcome, fmt.Errorf("备份中的默认端口无效")
 	}
 	if err := validateSubscriptionServicePort(restored.Settings, restored.Inbounds); err != nil {
-		return fmt.Errorf("备份中的订阅服务端口无效: %w", err)
+		return outcome, fmt.Errorf("备份中的订阅服务端口无效: %w", err)
 	}
 	outbounds, err := normalizeMihomoOutbounds(restored.Outbounds)
 	if err != nil {
-		return fmt.Errorf("备份中的 Mihomo Outbounds 无效: %w", err)
+		return outcome, fmt.Errorf("备份中的 Mihomo Outbounds 无效: %w", err)
 	}
 	routingRules, err := normalizeMihomoRoutingRules(restored.RoutingRules, outbounds)
 	if err != nil {
-		return fmt.Errorf("备份中的 Mihomo Routing Rules 无效: %w", err)
+		return outcome, fmt.Errorf("备份中的 Mihomo Routing Rules 无效: %w", err)
 	}
 	restored.Outbounds, restored.RoutingRules = outbounds, routingRules
 	basics, err := normalizeMihomoBasics(effectiveMihomoBasics(restored))
 	if err != nil {
-		return fmt.Errorf("备份中的 Mihomo Basics 无效: %w", err)
+		return outcome, fmt.Errorf("备份中的 Mihomo Basics 无效: %w", err)
 	}
 	if _, _, _, err = compileMihomoBasics(basics, outbounds, routingRules); err != nil {
-		return err
+		return outcome, err
 	}
 	restored.MihomoBasics = &basics
 	if err = validateWarpAccount(restored.WARP); err != nil {
-		return fmt.Errorf("备份中的 WARP 账户无效: %w", err)
+		return outcome, fmt.Errorf("备份中的 WARP 账户无效: %w", err)
+	}
+	var peerDiskData *peerDisk
+	var crossDiskData *crossSubscriptionCacheDisk
+	if format >= 2 {
+		data, err := readBackupEntry(reader, backupPeerFile, 1<<20)
+		if err != nil {
+			return outcome, err
+		}
+		if len(data) > 0 {
+			var incoming peerDisk
+			if err := json.Unmarshal(data, &incoming); err != nil {
+				return outcome, fmt.Errorf("备份中的 Multi-control 数据无效: %w", err)
+			}
+			if err := validatePeerDisk(&incoming); err != nil {
+				return outcome, err
+			}
+			peerDiskData = &incoming
+		}
+		data, err = readBackupEntry(reader, backupCrossFile, 8<<20)
+		if err != nil {
+			return outcome, err
+		}
+		if len(data) > 0 {
+			var incoming crossSubscriptionCacheDisk
+			if err := json.Unmarshal(data, &incoming); err != nil {
+				return outcome, fmt.Errorf("备份中的跨面板订阅缓存无效: %w", err)
+			}
+			if _, err := validateCrossSubscriptionDisk(incoming); err != nil {
+				return outcome, err
+			}
+			crossDiskData = &incoming
+		}
+	}
+	if peerDiskData != nil && a.peers == nil {
+		outcome.Warnings = append(outcome.Warnings, "Multi-control 未启用，备份中的联机身份未恢复")
+		peerDiskData = nil
+	}
+	if crossDiskData != nil && a.cross == nil {
+		outcome.Warnings = append(outcome.Warnings, "跨面板订阅未启用，备份中的订阅缓存未恢复")
+		crossDiskData = nil
 	}
 	m.warpMu.Lock()
 	defer m.warpMu.Unlock()
@@ -215,12 +364,30 @@ func (m *CoreManager) importBackup(source multipart.File) error {
 	m.versionCache = ""
 	err = m.saveLocked()
 	m.mu.Unlock()
-	if err == nil {
-		m.mu.Lock()
-		m.addLogLocked("面板数据已从备份恢复")
-		m.mu.Unlock()
+	if err != nil {
+		return outcome, err
 	}
-	return err
+	outcome.Inbounds = len(restored.Inbounds)
+	if peerDiskData != nil {
+		if err := a.peers.restoreDisk(*peerDiskData, replaceIdentity); err != nil {
+			outcome.Warnings = append(outcome.Warnings, fmt.Sprintf("Multi-control 恢复失败: %s", err.Error()))
+		} else {
+			outcome.IdentityReplaced = replaceIdentity
+			outcome.Peers = len(a.peers.exportDisk().Peers)
+		}
+	}
+	if crossDiskData != nil {
+		if err := a.cross.restoreDisk(*crossDiskData); err != nil {
+			outcome.Warnings = append(outcome.Warnings, fmt.Sprintf("跨面板订阅缓存恢复失败: %s", err.Error()))
+		}
+	}
+	if configured, valid := panelTLSStatus(restored.Settings); configured && !valid {
+		outcome.Warnings = append(outcome.Warnings, "TLS 证书文件缺失或无效，面板已回落 HTTP")
+	}
+	m.mu.Lock()
+	m.addLogLocked("面板数据已从备份恢复")
+	m.mu.Unlock()
+	return outcome, nil
 }
 
 func (a *App) handleCoreReleases(w http.ResponseWriter, r *http.Request) {

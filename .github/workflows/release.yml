@@ -1,4 +1,4 @@
-name: Build and publish Linux release
+name: Build and publish release
 
 on:
   push:
@@ -52,7 +52,7 @@ jobs:
       - name: Run Go vet
         run: go vet ./...
 
-      - name: Build Linux release assets
+      - name: Build release assets
         shell: bash
         run: |
           set -euo pipefail
@@ -101,6 +101,26 @@ jobs:
           build_one "armv7" "arm" "7"
           build_one "s390x" "s390x"
 
+          echo "Building m-ui-windows-amd64..."
+
+          export GOOS=windows
+          export GOARCH=amd64
+          export CGO_ENABLED=0
+          unset GOARM || true
+
+          go build \
+            -trimpath \
+            -ldflags="-s -w -X main.version=${GITHUB_REF_NAME}" \
+            -o "dist/m-ui.exe" \
+            .
+
+          (
+            cd dist
+            zip -9 "m-ui-windows-amd64.zip" "m-ui.exe"
+          )
+
+          rm "dist/m-ui.exe"
+
       - name: Verify release assets
         shell: bash
         run: |
@@ -133,6 +153,23 @@ jobs:
             fi
           done
 
+          windows_archive="dist/m-ui-windows-amd64.zip"
+
+          if [[ ! -s "$windows_archive" ]]; then
+            echo "Missing or empty archive: $windows_archive"
+            exit 1
+          fi
+
+          windows_contents="$(unzip -Z1 "$windows_archive")"
+
+          if [[ "$windows_contents" != "m-ui.exe" ]]; then
+            echo "Unexpected contents in $windows_archive:"
+            echo "$windows_contents"
+            exit 1
+          fi
+
+          unzip -tq "$windows_archive"
+
           reported_version="$(./dist/m-ui-linux-amd64 version)"
 
           if [[ "$reported_version" != "$GITHUB_REF_NAME" ]]; then
@@ -144,7 +181,7 @@ jobs:
 
           echo "Embedded version: $reported_version"
           echo
-          sha256sum dist/*.tar.gz
+          sha256sum dist/*.tar.gz dist/*.zip
 
       - name: Create or update GitHub Release
         shell: bash
@@ -153,10 +190,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          release_files=(dist/m-ui-linux-*.tar.gz)
+          release_files=(
+            dist/m-ui-linux-*.tar.gz
+            dist/m-ui-windows-amd64.zip
+          )
 
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            echo "Release already exists; replacing its Linux assets."
+            echo "Release already exists; replacing its release assets."
 
             gh release upload \
               "$GITHUB_REF_NAME" \

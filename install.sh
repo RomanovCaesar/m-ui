@@ -6,6 +6,7 @@ REPO="RomanovCaesar/m-ui"
 MIHOMO_REPO="MetaCubeX/mihomo"
 INSTALL_DIR="/usr/local/m-ui"
 DATA_DIR="${INSTALL_DIR}/data"
+BACKUP_DIR="${DATA_DIR}/backups"
 BIN_PATH="${INSTALL_DIR}/m-ui"
 CORE_PATH="${INSTALL_DIR}/mihomo"
 SYSTEMD_UNIT="/etc/systemd/system/m-ui.service"
@@ -20,6 +21,7 @@ PORT=""; PANEL_PATH=""; USERNAME=""; PASSWORD=""; LISTEN_IP="0.0.0.0"
 VERSION="latest"; MIHOMO_VERSION="latest"; UPDATE_ONLY=0; UPDATE_MIHOMO=0; SKIP_MIHOMO=0
 PORT_SET=0; PATH_SET=0; USERNAME_SET=0; PASSWORD_SET=0; LISTEN_SET=0
 SSL_MODE=""; SSL_DOMAIN=""; SSL_IP=""; SSL_CERT=""; SSL_KEY=""; NO_SSL=0; SSL_MENU=0
+NO_BACKUP=0; BACKUP_KEEP=3; BACKUP_PATH=""
 TEMP_DIR=""
 
 info() { echo -e "${green}[m-ui]${plain} $*"; }
@@ -49,6 +51,8 @@ Options:
   --cert FILE --key FILE  Configure an existing certificate pair
   --no-ssl                Skip the interactive TLS certificate prompt
   --ssl-menu              Configure TLS on an existing installation only
+  --no-backup             Do not snapshot the data directory before updating
+  --backup-keep N         Snapshots to retain, 1-50 (default: 3)
   -h, --help              Show this help
 
 Environment overrides:
@@ -87,6 +91,9 @@ while [[ $# -gt 0 ]]; do
         --key=*) SSL_KEY="${1#*=}"; SSL_MODE=custom; shift ;;
         --no-ssl) NO_SSL=1; shift ;;
         --ssl-menu) SSL_MENU=1; UPDATE_ONLY=1; shift ;;
+        --no-backup) NO_BACKUP=1; shift ;;
+        --backup-keep) [[ $# -ge 2 ]] || die "--backup-keep requires a value"; BACKUP_KEEP="$2"; shift 2 ;;
+        --backup-keep=*) BACKUP_KEEP="${1#*=}"; shift ;;
         -h|--help) usage; exit 0 ;;
         v[0-9]*|[0-9]*) [[ "$VERSION" == "latest" ]] || die "version specified more than once"; VERSION="$1"; shift ;;
         *) die "unknown option: $1" ;;
@@ -97,7 +104,10 @@ if [[ -n "${MUI_INSTALL_DIR:-}" ]]; then
     INSTALL_DIR="${MUI_INSTALL_DIR%/}"
     [[ "$INSTALL_DIR" =~ ^/[A-Za-z0-9._/-]+$ ]] || die "MUI_INSTALL_DIR must be an absolute path without spaces"
     DATA_DIR="${INSTALL_DIR}/data"; BIN_PATH="${INSTALL_DIR}/m-ui"; CORE_PATH="${INSTALL_DIR}/mihomo"
+    BACKUP_DIR="${DATA_DIR}/backups"
 fi
+
+[[ "$BACKUP_KEEP" =~ ^[0-9]+$ ]] && ((BACKUP_KEEP >= 1 && BACKUP_KEEP <= 50)) || die "--backup-keep must be between 1 and 50"
 
 [[ "$(uname -s)" == "Linux" ]] || die "this installer only supports Linux"
 [[ ${EUID} -eq 0 ]] || die "run this installer as root"
@@ -435,6 +445,57 @@ install_repo_file() {
     fi
 }
 
+# Files the panel cannot regenerate. Geo databases, cache.db and the logs are
+# intentionally excluded: they are large, re-downloadable, and would push an
+# ordinary snapshot past 40 MB.
+BACKUP_FILES=(state.json config.yaml multi-control.json cross-panel-subscriptions.json)
+
+prune_backups() {
+    local keep="$1" existing=() candidate index total
+    # Glob order is lexicographic, which is chronological here: every snapshot is
+    # stamped YYYYmmdd-HHMMSS. Avoids parsing ls, and avoids `head -n -N`, which
+    # busybox (Alpine) does not implement.
+    for candidate in "${BACKUP_DIR}"/m-ui-data-*.tar.gz; do
+        [[ -f "$candidate" ]] && existing+=("$candidate")
+    done
+    total=${#existing[@]}
+    ((total > keep)) || return 0
+    for ((index = 0; index < total - keep; index++)); do
+        rm -f -- "${existing[index]}"
+    done
+}
+
+backup_data_dir() {
+    BACKUP_PATH=""
+    [[ $NO_BACKUP -eq 1 ]] && { info "Skipping the data snapshot (--no-backup)"; return 0; }
+    [[ -f "$DATA_DIR/state.json" ]] || return 0
+    local present=() name
+    for name in "${BACKUP_FILES[@]}"; do
+        [[ -f "$DATA_DIR/$name" ]] && present+=("$name")
+    done
+    ((${#present[@]})) || return 0
+    if ! mkdir -p "$BACKUP_DIR" || ! chmod 0700 "$BACKUP_DIR"; then
+        warn "could not create ${BACKUP_DIR}; continuing without a snapshot"
+        return 0
+    fi
+    local stamp archive
+    stamp="$(date +%Y%m%d-%H%M%S)"
+    archive="${BACKUP_DIR}/m-ui-data-${stamp}.tar.gz"
+    # Build under a temporary name so an interrupted run never leaves a
+    # truncated archive that later looks like a usable snapshot.
+    if ! tar -czf "${archive}.partial" -C "$DATA_DIR" "${present[@]}" 2>/dev/null; then
+        rm -f -- "${archive}.partial"
+        warn "data snapshot failed; continuing with the update"
+        return 0
+    fi
+    mv -f "${archive}.partial" "$archive"
+    chmod 0600 "$archive"
+    BACKUP_PATH="$archive"
+    info "Data snapshot saved to ${archive}"
+    prune_backups "$BACKUP_KEEP"
+    return 0
+}
+
 install_service() {
     if command -v systemctl >/dev/null 2>&1 && [[ -d /run/systemd/system ]]; then
         install_repo_file deploy/m-ui.service "$SYSTEMD_UNIT" 0644
@@ -487,6 +548,11 @@ if command -v systemctl >/dev/null 2>&1; then systemctl stop m-ui >/dev/null 2>&
 elif command -v rc-service >/dev/null 2>&1; then rc-service m-ui stop >/dev/null 2>&1 || true
 fi
 
+# Snapshot after the panel is stopped so state.json cannot be rewritten midway,
+# and before anything is replaced: the old binaries are restorable, but a state
+# file damaged by a bad migration is not.
+backup_data_dir
+
 old_binary=""
 if [[ -f "$BIN_PATH" ]]; then old_binary="${TEMP_DIR}/m-ui.old"; cp "$BIN_PATH" "$old_binary"; fi
 old_core=""
@@ -511,6 +577,7 @@ if [[ $new_install -eq 1 || ${#configure_args[@]} -gt 3 ]]; then
         [[ -n "$old_binary" ]] && cp "$old_binary" "$BIN_PATH"
         [[ -n "$old_core" ]] && cp "$old_core" "$CORE_PATH"
         restart_panel_service >/dev/null 2>&1 || true
+        [[ -n "$BACKUP_PATH" ]] && warn "data snapshot from before this attempt: ${BACKUP_PATH}"
         die "m-ui configuration failed; previous binaries were restored when available"
     }
 fi
@@ -526,6 +593,7 @@ if ! init_system="$(install_service)"; then
     if command -v systemctl >/dev/null 2>&1; then systemctl restart m-ui >/dev/null 2>&1 || true
     elif command -v rc-service >/dev/null 2>&1; then rc-service m-ui restart >/dev/null 2>&1 || true
     fi
+    [[ -n "$BACKUP_PATH" ]] && warn "data snapshot from before this attempt: ${BACKUP_PATH}"
     die "service installation failed; the previous binaries were restored when available"
 fi
 
@@ -555,6 +623,12 @@ echo -e "${green}Access URL:${plain} ${access_scheme}://${access_host}:${current
 echo -e "${green}Username:${plain}   ${current_user}"
 if [[ $new_install -eq 1 || $PASSWORD_SET -eq 1 ]]; then echo -e "${green}Password:${plain}   ${PASSWORD}"; fi
 echo -e "${yellow}Save these credentials now. Configure HTTPS in Panel Settings before exposing the panel publicly.${plain}"
+if [[ -n "$BACKUP_PATH" ]]; then
+    echo
+    echo -e "${green}Data snapshot:${plain} ${BACKUP_PATH}"
+    echo "Restore it with:"
+    echo "  m-ui stop && tar -xzf ${BACKUP_PATH} -C ${DATA_DIR} && m-ui start"
+fi
 echo
 echo "Management commands:"
 echo "  m-ui start | stop | restart | status | logs | settings | configure"

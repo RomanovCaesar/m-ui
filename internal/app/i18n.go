@@ -468,9 +468,17 @@ var messagesEN = map[string]string{
 	"请先设置 Mihomo 核心路径":                                                     "Set the Mihomo core path first",
 	"找不到 Mihomo 核心":                                                        "Mihomo core not found",
 	"Mihomo 配置测试失败":                                                        "The Mihomo config test failed",
+	"Mihomo 自动启动失败":                                                        "Mihomo automatic startup failed",
 
 	// —— Mihomo 分流、Outbound 与工具 ——
-	"Mihomo 分流设置已保存":                                                  "Mihomo routing settings saved",
+	"Mihomo 分流设置已保存":   "Mihomo routing settings saved",
+	"Inbound YAML 已导入": "Inbound YAML imported",
+	"YAML 中没有 Inbound": "The YAML contains no inbound",
+	"YAML 顶层必须是一个 listener、单项数组或 listeners 数组":                        "The YAML top level must be one listener, a single-item array, or a listeners array",
+	"每次只能导入一个 Inbound":                                                "Only one inbound can be imported at a time",
+	"Inbound YAML 必须是 listener 对象":                                    "Inbound YAML must be a listener object",
+	"Inbound YAML 包含不支持的数据":                                           "Inbound YAML contains unsupported data",
+	"找不到可用的五位数 Inbound 端口":                                            "No available five-digit inbound port was found",
 	"GLOBAL 只能定义为策略组":                                                 "GLOBAL can only be defined as a proxy group",
 	"Server 必须是域名或 IP，且不能包含协议、路径或空格":                                  "Server must be a domain or an IP, without scheme, path or spaces",
 	"Port 必须在 1-65535 之间":                                             "Port must be between 1 and 65535",

@@ -64,7 +64,7 @@ docker compose up -d
 
 面板状态和可在面板内更新的 Mihomo 核心分别保存在 `m-ui-data`、`m-ui-core` 数据卷中，正常升级不会删除它们。除非确定要删除全部面板配置、订阅 token、Multi-control 身份和已安装核心，否则不要执行 `docker compose down -v`。
 
-Compose 使用 `network_mode: host`，面板和所有启用的 Inbound 会直接监听宿主机上所选的端口。默认面板端口为 `2053`，默认 Mixed Inbound 为 `12080` TCP/UDP；仍需在系统防火墙和云安全组中放行需要公开的端口。host 网络主要面向 Linux 服务器，在 Docker Desktop 中行为可能不同。
+Compose 使用 `network_mode: host`，面板和所有启用的 Inbound 会直接监听宿主机上所选的端口。默认面板端口为 `2053`；新建 Inbound 会随机预填一个未占用的五位数端口，系统不会自动创建 `12080` 监听。仍需在系统防火墙和云安全组中放行需要公开的端口。host 网络主要面向 Linux 服务器，在 Docker Desktop 中行为可能不同。
 
 使用 TUN Inbound 时还需要 `/dev/net/tun` 和 `NET_ADMIN` 权限，请取消 `docker-compose.yml` 中预留的 `cap_add` 与 `devices` 注释。普通代理 Inbound 和 Outbound 不需要这些权限。
 
@@ -137,7 +137,7 @@ m-ui uninstall
 - Mixed/HTTP/Socks 支持 Mihomo 原生用户名密码列表；Shadowsocks 和 SS2022 统一使用启用客户端的密码及 Mihomo 原生加密方式
 - Mihomo Shadowsocks listener 本身只有一个核心密码；多个 SS 客户端密码仅作为分享链接/面板元数据保留，不能由 Mihomo 核心单独强制校验
 - 生成并校验原生 YAML 格式的 Mihomo `config.yaml`
-- 启动、停止、重启 Mihomo，读取日志和 REST 控制器状态
+  - m-ui 启动时自动启动 Mihomo，也可在面板中启动、停止、重启，并读取日志和 REST 控制器状态
 - 首页系统仪表盘、运行配置查看/复制/下载、数据备份恢复
 - 公开订阅页、Base64、Mihomo/Clash、Sing-box、Surge、Surfboard、Loon、Quantumult X、Stash、Egern 等订阅转换；可选独立订阅服务端口，留空则沿用面板端口
 - 从 MetaCubeX 官方 GitHub Releases 下载和切换 Mihomo 版本

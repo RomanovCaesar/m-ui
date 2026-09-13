@@ -94,6 +94,7 @@ type Settings struct {
 }
 
 type Inbound struct {
+	Native               map[string]any         `json:"native,omitempty"`
 	SyncOrigin           *InboundSyncOrigin     `json:"syncOrigin,omitempty"`
 	ID                   string                 `json:"id"`
 	Name                 string                 `json:"name"`
@@ -664,6 +665,16 @@ func Run(buildVersion string) {
 		log.Fatal(err)
 	}
 	app := &App{manager: manager, session: session, restart: make(chan struct{}, 1)}
+	// Start Mihomo together with the panel. A bad or missing core/config should
+	// not make the management UI unreachable: keep serving the panel and expose
+	// the actionable error in the runtime log so the operator can fix it and
+	// start the core from the dashboard.
+	if err := manager.startCore(); err != nil {
+		log.Printf("Mihomo automatic startup failed: %v", err)
+		manager.mu.Lock()
+		manager.addLogLocked("Mihomo 自动启动失败: " + err.Error())
+		manager.mu.Unlock()
+	}
 	peerContext, stopPeers := context.WithCancel(context.Background())
 	defer stopPeers()
 	if peers, err := newPeerNetwork(dataDir); err != nil {
@@ -913,12 +924,14 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/api/mihomo/warp/", a.auth(a.handleWarp))
 	mux.HandleFunc("/api/raw-config", a.auth(a.handleRawConfig))
 	mux.HandleFunc("/api/inbounds", a.auth(a.handleInbounds))
+	mux.HandleFunc("/api/inbounds/import", a.auth(a.handleInboundImport))
 	mux.HandleFunc("/api/server/cpuHistory/", a.auth(a.handleCPUHistory))
 	mux.HandleFunc("/api/inbound-sync", a.auth(a.handleInboundSync))
 	mux.HandleFunc("/api/clients", a.auth(a.handleClients))
 	mux.HandleFunc("/api/subscriptions/token", a.auth(a.handleSubscriptionToken))
 	mux.HandleFunc("/api/traffic/reset", a.auth(a.handleTrafficReset))
 	mux.HandleFunc("/api/tools/uuid", a.auth(a.handleNewUUID))
+	mux.HandleFunc("/api/tools/inbound-port", a.auth(a.handleAvailableInboundPort))
 	mux.HandleFunc("/api/tools/subscription-path", a.auth(a.handleNewSubscriptionPath))
 	mux.HandleFunc("/api/tools/cross-panel-subscription-path", a.auth(a.handleNewCrossPanelSubscriptionPath))
 	mux.HandleFunc("/api/cross-subscriptions", a.auth(a.handleCrossSubscriptions))
@@ -1541,7 +1554,7 @@ func defaultState() State {
 		Settings:           Settings{Username: "admin", Password: password, CorePath: core, PanelListen: defaultListen, PanelPath: "/", ClashPath: "/clash", APIAddress: defaultCoreAPI, APISecret: "m-ui-local", MixedPort: defaultCorePort, AllowLAN: true, Mode: "rule", LogLevel: "info", RemarkModel: defaultRemarkModel, SessionMaxAge: defaultSessionMaxAge, PageSize: defaultPageSize, ExpireDiff: defaultExpireDiff, TrafficDiff: defaultTrafficDiff, TimeLocation: defaultTimeLocation, Language: defaultLanguage},
 		RoutingRules:       defaultMihomoRoutingRules(),
 		SubscriptionTokens: map[string]string{},
-		Inbounds:           []Inbound{{ID: "default-mixed", Name: "Mixed 主入口", Type: "mixed", Listen: "0.0.0.0", Port: defaultCorePort, Enabled: true, UDP: true, Notes: "HTTP + SOCKS5 混合入口", CreatedAt: time.Now().Format(time.RFC3339)}},
+		Inbounds:           []Inbound{},
 		UpdatedAt:          time.Now().Format(time.RFC3339),
 	}
 }
@@ -1919,6 +1932,16 @@ func (m *CoreManager) saveInbound(input Inbound) error {
 	normalizeMuxBrutal(&input)
 	if err := normalizeInboundSecrets(&input); err != nil {
 		return err
+	}
+	if input.Native != nil {
+		merged, err := mergeInboundForm(input)
+		if err != nil {
+			return err
+		}
+		input.Native = merged
+	}
+	if !isSupportedInboundType(input.Type) {
+		return fmt.Errorf("不支持的类型 %q", input.Type)
 	}
 	if err := validateInbound(input); err != nil {
 		return err
@@ -2421,8 +2444,22 @@ func inboundLoadsCertificate(i Inbound) bool {
 }
 
 func inboundConfig(i Inbound) (map[string]any, error) {
-	allowed := map[string]bool{"mixed": true, "socks": true, "http": true, "redir": true, "tproxy": true, "shadowsocks": true, "snell": true, "vmess": true, "vless": true, "trojan": true, "hysteria2": true, "hysteria2-realm": true, "tuic": true, "shadowquic": true, "anytls": true, "mieru": true, "sudoku": true, "trusttunnel": true}
-	if !allowed[i.Type] {
+	if i.Native != nil {
+		data, err := json.Marshal(i.Native)
+		if err != nil {
+			return nil, err
+		}
+		var native map[string]any
+		if err = json.Unmarshal(data, &native); err != nil {
+			return nil, err
+		}
+		return native, nil
+	}
+	return managedInboundConfig(i)
+}
+
+func managedInboundConfig(i Inbound) (map[string]any, error) {
+	if !isSupportedInboundType(i.Type) {
 		return nil, fmt.Errorf("不支持的类型 %q", i.Type)
 	}
 	result := map[string]any{"name": i.Name, "type": i.Type, "listen": i.Listen, "port": i.Port}

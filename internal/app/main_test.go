@@ -142,6 +142,7 @@ func TestMihomoSettingsPageWiring(t *testing.T) {
 	}
 	content := string(index)
 	for _, needle := range []string{
+		`data-general="import"`, `id="inbound-import-modal"`, `id="inbound-import-form"`, `id="inbound-import-yaml"`,
 		`data-view="mihomo"`, `id="view-mihomo"`, `Mihomo Settings`, `id="mihomo-settings-root"`,
 		`id="mihomo-add-outbound"`, `id="mihomo-add-rule"`, `id="mihomo-warp"`, `id="mihomo-save"`,
 		`mihomo-settings.css`, `mihomo-settings.js`,

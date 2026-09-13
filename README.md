@@ -66,7 +66,7 @@ docker compose up -d
 
 Persistent state and the panel-updatable Mihomo executable are stored in the `m-ui-data` and `m-ui-core` volumes. Normal upgrades keep both volumes. Do not run `docker compose down -v` unless all panel state, subscription tokens, Multi-control identity, and the installed core should be deleted.
 
-The Compose file uses `network_mode: host`, so the panel and every enabled inbound listen directly on the host ports selected in m-ui. The default panel port is `2053`; the default mixed inbound is `12080` TCP/UDP. Firewall rules still need to permit every port that should be reachable. Host networking is intended for Linux servers and may behave differently in Docker Desktop.
+The Compose file uses `network_mode: host`, so the panel and every enabled inbound listen directly on the host ports selected in m-ui. The default panel port is `2053`; new Inbounds receive a random available five-digit port, and no listener is created automatically on `12080`. Firewall rules still need to permit every port that should be reachable. Host networking is intended for Linux servers and may behave differently in Docker Desktop.
 
 TUN inbounds additionally need `/dev/net/tun` and the `NET_ADMIN` capability. Uncomment the prepared `cap_add` and `devices` sections in `docker-compose.yml` only when TUN is used. Ordinary proxy inbounds and outbounds do not need those permissions.
 
@@ -124,7 +124,7 @@ m-ui uninstall
 
 * 3x-ui-inspired login page, sidebar, dashboard, traffic statistics, and responsive tables
 * Native Mihomo YAML generation and validation
-* Start, stop, restart, and monitor Mihomo
+* Automatically start Mihomo with the panel, then start, stop, restart, and monitor it from the dashboard
 * Runtime logs, controller state, and active connections
 * System CPU, memory, disk, uptime, and traffic information
 * Raw configuration preview, copy, and download

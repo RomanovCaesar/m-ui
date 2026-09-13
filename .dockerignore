@@ -1,0 +1,17 @@
+.git
+.github
+.gocache
+.gomodcache
+.release-check
+.runtime-*
+.env
+data
+dist
+*.log
+m-ui
+m-ui.exe
+mihomo
+mihomo.exe
+Dockerfile*
+docker-compose*.yml
+docker-compose*.yaml

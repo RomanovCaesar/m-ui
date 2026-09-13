@@ -39,7 +39,43 @@ bash <(curl -Ls https://raw.githubusercontent.com/RomanovCaesar/m-ui/main/instal
   --password 'ChangeThisA12345'
 ```
 
-程序安装在 `/usr/local/m-ui`，持久数据位于 `/usr/local/m-ui/data`。重复执行安装器会升级程序并保留现有设置。安装器还会下载适配当前架构的 Mihomo 内核；已有内核默认保留，可用 `--update-mihomo` 更新，或用 `--skip-mihomo` 跳过。m-ui 的 GitHub Release 只需发布 Linux 资产，文件名必须是 `m-ui-linux-<architecture>.tar.gz`，支持 `386`、`amd64`、`arm64`、`armv5`、`armv6`、`armv7` 和 `s390x`；不需要 Windows 资产。tar.gz 内应包含对应的 `m-ui-linux-<architecture>` 或 `m-ui` 可执行文件。
+程序安装在 `/usr/local/m-ui`，持久数据位于 `/usr/local/m-ui/data`。重复执行安装器会升级程序并保留现有设置。安装器还会下载适配当前架构的 Mihomo 内核；已有内核默认保留，可用 `--update-mihomo` 更新，或用 `--skip-mihomo` 跳过。m-ui 的 GitHub Release 提供 `m-ui-linux-<architecture>.tar.gz`，支持 `386`、`amd64`、`arm64`、`armv5`、`armv6`、`armv7` 和 `s390x`；Windows amd64 版本为 `m-ui-windows-amd64.zip`，压缩包内包含 `m-ui.exe`。
+
+## Docker 安装
+
+Docker 镜像面向 Linux amd64，镜像内同时包含 m-ui 和固定版本、经过 SHA-256 校验的 Mihomo 核心。项目提供的 Compose 使用 host 网络，因此在面板中新建任意端口的 Inbound 后无需再为每个入口修改 Docker 端口映射。请在 Linux Docker 主机上执行：
+
+```bash
+git clone https://github.com/RomanovCaesar/m-ui.git
+cd m-ui
+cp .env.example .env
+docker compose up -d --build
+docker compose logs m-ui
+```
+
+如果 `.env` 中的 `MUI_PASSWORD` 和 `MUI_PATH` 留空，首次启动会安全地随机生成密码和面板路径，并在容器日志中仅打印一次访问地址、用户名和密码。如需固定值，请在第一次启动前填写 `.env`。`state.json` 创建后，初始化环境变量不再覆盖已有设置，后续请在面板中修改。
+
+发布标签会推送 `ghcr.io/romanovcaesar/m-ui:<tag>`，正式版本还会更新 `latest`。GHCR Package 设为 Public 后，可以直接使用发布镜像：
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+面板状态和可在面板内更新的 Mihomo 核心分别保存在 `m-ui-data`、`m-ui-core` 数据卷中，正常升级不会删除它们。除非确定要删除全部面板配置、订阅 token、Multi-control 身份和已安装核心，否则不要执行 `docker compose down -v`。
+
+Compose 使用 `network_mode: host`，面板和所有启用的 Inbound 会直接监听宿主机上所选的端口。默认面板端口为 `2053`，默认 Mixed Inbound 为 `12080` TCP/UDP；仍需在系统防火墙和云安全组中放行需要公开的端口。host 网络主要面向 Linux 服务器，在 Docker Desktop 中行为可能不同。
+
+使用 TUN Inbound 时还需要 `/dev/net/tun` 和 `NET_ADMIN` 权限，请取消 `docker-compose.yml` 中预留的 `cap_add` 与 `devices` 注释。普通代理 Inbound 和 Outbound 不需要这些权限。
+
+常用命令：
+
+```bash
+docker compose logs -f m-ui
+docker compose restart m-ui
+docker compose run --rm m-ui version
+docker compose run --rm m-ui settings --data-dir /opt/m-ui/data
+```
 
 首次安装会提供 TLS 证书设置菜单，功能包括域名 Let’s Encrypt 证书、IPv4 Let’s Encrypt short-lived 证书，以及手动填写已有证书和私钥。域名/IP 证书使用 `/root/.acme.sh` 和 standalone HTTP-01，证书安装到 `/root/cert/` 并配置为 m-ui 的面板证书，续期时自动重启面板。也可以使用 `--ssl-domain DOMAIN`、`--ssl-ip IP` 或 `--cert FILE --key FILE` 非交互配置；HTTP-01 默认需要外部 TCP 80 端口可达。
 

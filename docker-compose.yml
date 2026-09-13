@@ -1,0 +1,42 @@
+name: m-ui
+
+services:
+  m-ui:
+    image: ghcr.io/romanovcaesar/m-ui:${MUI_IMAGE_TAG:-latest}
+    build:
+      context: .
+      args:
+        MUI_VERSION: ${MUI_BUILD_VERSION:-dev}
+        MIHOMO_VERSION: ${MIHOMO_VERSION:-1.19.30}
+        MIHOMO_SHA256: ${MIHOMO_SHA256:-db214c7a2517e63c150d123178d16d102e03a241ccdae4e5e07ffbe9cf56c6f9}
+    platform: linux/amd64
+    container_name: m-ui
+    restart: unless-stopped
+    stop_grace_period: 10s
+
+    # Host networking lets every inbound configured in the panel listen on its
+    # selected port without recreating the container for each new port.
+    network_mode: host
+
+    environment:
+      TZ: ${TZ:-UTC}
+      MUI_LISTEN_IP: 0.0.0.0
+      MUI_PANEL_PORT: ${MUI_PANEL_PORT:-2053}
+      MUI_USERNAME: ${MUI_USERNAME:-admin}
+      MUI_PASSWORD: ${MUI_PASSWORD:-}
+      MUI_PATH: ${MUI_PATH:-}
+
+    volumes:
+      - m-ui-data:/opt/m-ui/data
+      - m-ui-core:/opt/m-ui/core
+
+    # TUN inbounds need these two settings. Leave them commented when TUN is
+    # not used, since ordinary proxy inbounds and outbounds do not need them.
+    # cap_add:
+    #   - NET_ADMIN
+    # devices:
+    #   - /dev/net/tun:/dev/net/tun
+
+volumes:
+  m-ui-data:
+  m-ui-core:

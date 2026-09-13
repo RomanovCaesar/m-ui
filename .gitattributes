@@ -9,5 +9,10 @@
 *.html text eol=lf
 *.ps1 text eol=lf
 *.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+.dockerignore text eol=lf
+.env.example text eol=lf
 deploy/m-ui.openrc text eol=lf
 deploy/m-ui.service text eol=lf

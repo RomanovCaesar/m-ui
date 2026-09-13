@@ -7,3 +7,5 @@ mihomo.exe
 .gocache/
 .gomodcache/
 .runtime-*/
+.release-check/
+.env

@@ -41,7 +41,43 @@ bash <(curl -Ls https://raw.githubusercontent.com/RomanovCaesar/m-ui/main/instal
 
 m-ui is installed under `/usr/local/m-ui`, with persistent state under `/usr/local/m-ui/data`. Running the installer again upgrades m-ui while preserving existing settings. The installer also downloads a Mihomo core for the current architecture. An existing core is preserved unless `--update-mihomo` is used; `--skip-mihomo` skips core installation.
 
-GitHub Releases contain Linux assets named `m-ui-linux-<architecture>.tar.gz` for `386`, `amd64`, `arm64`, `armv5`, `armv6`, `armv7`, and `s390x`. Each archive contains either the corresponding `m-ui-linux-<architecture>` executable or `m-ui`. Windows Release assets are not required.
+GitHub Releases contain Linux assets named `m-ui-linux-<architecture>.tar.gz` for `386`, `amd64`, `arm64`, `armv5`, `armv6`, `armv7`, and `s390x`. Each archive contains either the corresponding `m-ui-linux-<architecture>` executable or `m-ui`. Windows amd64 is published as `m-ui-windows-amd64.zip` with `m-ui.exe` inside.
+
+## Docker installation
+
+The Docker image targets Linux amd64 and contains both m-ui and a pinned, SHA-256-verified Mihomo core. The supplied Compose file uses host networking so new inbound ports configured in the panel work immediately without adding a Docker port mapping for every inbound. Run it on a Linux Docker host:
+
+```bash
+git clone https://github.com/RomanovCaesar/m-ui.git
+cd m-ui
+cp .env.example .env
+docker compose up -d --build
+docker compose logs m-ui
+```
+
+If `MUI_PASSWORD` and `MUI_PATH` are empty, the first start generates both securely and prints the URL, username, and password once in the container log. Set them in `.env` before the first start if explicit values are preferred. Initialization variables are ignored after `state.json` exists; subsequent settings should be changed in the panel.
+
+Tagged releases publish `ghcr.io/romanovcaesar/m-ui:<tag>` and stable tags also update `latest`. Once the GHCR package is public, use the published image instead of building locally:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Persistent state and the panel-updatable Mihomo executable are stored in the `m-ui-data` and `m-ui-core` volumes. Normal upgrades keep both volumes. Do not run `docker compose down -v` unless all panel state, subscription tokens, Multi-control identity, and the installed core should be deleted.
+
+The Compose file uses `network_mode: host`, so the panel and every enabled inbound listen directly on the host ports selected in m-ui. The default panel port is `2053`; the default mixed inbound is `12080` TCP/UDP. Firewall rules still need to permit every port that should be reachable. Host networking is intended for Linux servers and may behave differently in Docker Desktop.
+
+TUN inbounds additionally need `/dev/net/tun` and the `NET_ADMIN` capability. Uncomment the prepared `cap_add` and `devices` sections in `docker-compose.yml` only when TUN is used. Ordinary proxy inbounds and outbounds do not need those permissions.
+
+Useful commands:
+
+```bash
+docker compose logs -f m-ui
+docker compose restart m-ui
+docker compose run --rm m-ui version
+docker compose run --rm m-ui settings --data-dir /opt/m-ui/data
+```
 
 ## TLS certificates
 

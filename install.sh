@@ -225,13 +225,21 @@ restart_panel_service() {
 }
 
 configure_panel_tls() {
-    local cert="$1" key="$2" domain="${3:-}" args=(configure --data-dir "$DATA_DIR" --cert "$cert" --key "$key" --domain "$domain")
+    local cert key domain
+    local -a args
+    cert="${1:-}"
+    key="${2:-}"
+    domain="${3:-}"
+    [[ -n "$cert" && -n "$key" ]] || { warn "certificate and private key paths are required"; return 1; }
+    args=(configure --data-dir "$DATA_DIR" --cert "$cert" --key "$key" --domain "$domain")
     "$BIN_PATH" "${args[@]}" >/dev/null || return 1
     restart_panel_service || return 1
 }
 
 issue_domain_certificate() {
-    local domain="$1" cert_dir="/root/cert/${domain}" acme_port cert key
+    local domain cert_dir acme_port cert key
+    domain="${1:-}"
+    cert_dir="/root/cert/${domain}"
     is_domain "$domain" || { warn "invalid domain: ${domain}"; return 1; }
     install_acme || return 1
     acme_port="$(certificate_http_port)" || { warn "no available ACME port"; return 1; }
@@ -258,7 +266,8 @@ issue_domain_certificate() {
 }
 
 issue_ip_certificate() {
-    local address="$1" cert_dir="/root/cert/ip" acme_port cert key
+    local address cert_dir="/root/cert/ip" acme_port cert key
+    address="${1:-}"
     is_ipv4 "$address" || { warn "invalid IPv4 address: ${address}"; return 1; }
     install_acme || return 1
     acme_port="$(certificate_http_port)" || { warn "no available ACME port"; return 1; }

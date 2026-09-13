@@ -82,6 +82,11 @@ run_ssl_installer() {
         rm -f -- "$script"
         die "could not download the m-ui installer"
     fi
+    if ! bash -n "$script"; then
+        rm -f -- "$script"
+        warn "downloaded m-ui installer has invalid shell syntax"
+        return 1
+    fi
     if ! bash "$script" "$@"; then
         rm -f -- "$script"
         return 1
@@ -216,7 +221,8 @@ ssl_cloudflare() {
 
 ssl() {
     require_root
-    case "${1:-menu}" in
+    local ssl_command="${1:-menu}" ssl_choice=""
+    case "$ssl_command" in
         domain) shift; ssl_issue_domain "$@"; return ;;
         ip) shift; ssl_issue_ip "$@"; return ;;
         cloudflare|cf) shift; ssl_cloudflare "$@"; return ;;
@@ -236,9 +242,8 @@ ssl() {
     echo "  6. Show existing certificates"
     echo "  7. Apply existing certificate paths to m-ui"
     echo "  0. Back"
-    local choice
-    read -rp "Choose [0-7]: " choice
-    case "$choice" in
+    read -rp "Choose [0-7]: " ssl_choice
+    case "$ssl_choice" in
         1) ssl_issue_domain;; 2) ssl_issue_ip;; 3) ssl_cloudflare;; 4) ssl_renew;;
         5) ssl_revoke;; 6) ssl_list;; 7) ssl_set_paths;; 0) return 0;; *) die "invalid selection";;
     esac
@@ -346,6 +351,7 @@ EOF
 }
 
 show_menu() {
+    local menu_choice=""
     echo -e "${blue}m-ui management${plain}"
     echo "  1. Start                 8. Reset credentials"
     echo "  2. Stop                  9. Reset panel path"
@@ -356,8 +362,8 @@ show_menu() {
     echo "  7. Configure panel      14. TLS certificates"
     echo "                         15. Clear logs"
     echo "                          0. Exit"
-    read -rp "Select: " choice
-    case "$choice" in
+    read -rp "Select: " menu_choice
+    case "$menu_choice" in
         1) start;; 2) stop;; 3) restart;; 4) status;; 5) logs;; 6) settings;;
         7) configure;; 8) reset_credentials;; 9) reset_path;; 10) enable;; 11) disable;;
         12) update;; 13) uninstall;; 14) ssl;; 15) clear_logs;; 0) exit 0;; *) warn "Invalid selection";;

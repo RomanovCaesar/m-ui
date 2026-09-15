@@ -288,6 +288,11 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	if err := json.Unmarshal(stateData, &restored); err != nil {
 		return outcome, fmt.Errorf("state.json 无效: %w", err)
 	}
+	restored.Settings.IPInfoToken, err = normalizeIPInfoToken(restored.Settings.IPInfoToken)
+	if err != nil {
+		return outcome, fmt.Errorf("备份中的 IPinfo Token 无效: %w", err)
+	}
+	restored.Settings.IPInfoTokenSet, restored.Settings.IPInfoTokenClear = false, false
 	if restored.Settings.Username == "" || restored.Settings.Password == "" || restored.Settings.APIAddress == "" {
 		return outcome, fmt.Errorf("备份缺少必要的面板设置")
 	}
@@ -367,6 +372,9 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	if err != nil {
 		return outcome, err
 	}
+	if err := m.writeConfig(); err != nil {
+		return outcome, err
+	}
 	outcome.Inbounds = len(restored.Inbounds)
 	if peerDiskData != nil {
 		if err := a.peers.restoreDisk(*peerDiskData, replaceIdentity); err != nil {
@@ -384,6 +392,17 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	if configured, valid := panelTLSStatus(restored.Settings); configured && !valid {
 		outcome.Warnings = append(outcome.Warnings, "TLS 证书文件缺失或无效，面板已回落 HTTP")
 	}
+	// 备份里只有 VPNGate 的逻辑配置，可执行文件、租约和 PID 都不在其中。所以
+	// 恢复之后先停掉按旧配置跑的槽位，再按新配置重建；软件本身没装就只提示，
+	// 不擅自去下载编译。
+	if vpnGateOutbounds := findVPNGateOutbounds(restored.Outbounds); len(vpnGateOutbounds) > 0 {
+		if supported, reason := vpnGatePlatformSupported(); !supported {
+			outcome.Warnings = append(outcome.Warnings, reason)
+		} else if !m.vpnGateInstalled() {
+			outcome.Warnings = append(outcome.Warnings, "备份里的 VPNGate 出站需要先在 VPNGate 窗口点击 Install 安装客户端")
+		}
+	}
+	m.restartVPNGateTasks()
 	m.mu.Lock()
 	m.addLogLocked("面板数据已从备份恢复")
 	m.mu.Unlock()
@@ -601,7 +620,7 @@ func unpackCoreArchive(archivePath, destination string) error {
 			if err != nil {
 				return err
 			}
-			err = writeStreamAtomically(destination, io.LimitReader(stream, maximumDownload+1), 0755)
+			err = writeStreamAtomically(destination, io.LimitReader(stream, maximumDownload+1), 0755, maximumDownload)
 			_ = stream.Close()
 			return err
 		}
@@ -617,7 +636,7 @@ func unpackCoreArchive(archivePath, destination string) error {
 		return err
 	}
 	defer stream.Close()
-	return writeStreamAtomically(destination, io.LimitReader(stream, maximumDownload+1), 0755)
+	return writeStreamAtomically(destination, io.LimitReader(stream, maximumDownload+1), 0755, maximumDownload)
 }
 
 func (m *CoreManager) updateGeofiles(ctx context.Context) error {
@@ -714,7 +733,7 @@ func downloadOfficialFile(ctx context.Context, sourceURL, destination string, ma
 	if response.ContentLength > maximum {
 		return fmt.Errorf("下载文件超过大小限制")
 	}
-	return writeStreamAtomically(destination, io.LimitReader(response.Body, maximum+1), 0600)
+	return writeStreamAtomically(destination, io.LimitReader(response.Body, maximum+1), 0600, maximum)
 }
 
 func isApprovedDownloadHost(host string) bool {
@@ -722,7 +741,7 @@ func isApprovedDownloadHost(host string) bool {
 	return host == "github.com" || host == "api.github.com" || host == "objects.githubusercontent.com" || host == "release-assets.githubusercontent.com" || strings.HasSuffix(host, ".githubusercontent.com") || host == "fastly.jsdelivr.net" || host == "cdn.jsdelivr.net" || strings.HasSuffix(host, ".jsdelivr.net")
 }
 
-func writeStreamAtomically(destination string, source io.Reader, mode os.FileMode) error {
+func writeStreamAtomically(destination string, source io.Reader, mode os.FileMode, maximum int64) error {
 	temporary := destination + ".tmp"
 	file, err := os.OpenFile(temporary, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
 	if err != nil {
@@ -738,7 +757,7 @@ func writeStreamAtomically(destination string, source io.Reader, mode os.FileMod
 		_ = os.Remove(temporary)
 		return closeErr
 	}
-	if written > maximumDownload {
+	if written > maximum {
 		_ = os.Remove(temporary)
 		return fmt.Errorf("文件超过大小限制")
 	}

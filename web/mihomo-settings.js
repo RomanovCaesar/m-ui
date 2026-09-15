@@ -45,6 +45,7 @@
     syncButtons();
   }
   function outboundAddress(item){
+    if(item.vpngate)return `vpn_vpn${item.vpngate.slot} · table ${100+Number(item.vpngate.slot)}`;
     if(item.kind==='group')return (item.proxies||[]).join(', ');
     return `${item.server||'—'}${item.port?':'+item.port:''}`;
   }
@@ -64,8 +65,8 @@
     const box=$('#mihomo-outbound-table');
     const rows=outboundRows(),showTraffic=draft.basics.outboundUploadStatistics||draft.basics.outboundDownloadStatistics;
     box.innerHTML=`<div class="mihomo-table-wrap"><table class="mihomo-table"><thead><tr><th>#</th><th>${muiT('mh.colName')}</th><th>${muiT('mh.colKind')}</th><th>${muiT('mh.colStrategy')}</th><th>${muiT('mh.colMembers')}</th><th>Dialer Proxy</th>${showTraffic?`<th>${muiT('mh.colUpDown')}</th>`:''}<th>${muiT('mh.colTestResult')}</th><th>${muiT('mh.colTest')}</th><th>${muiT('mh.colActions')}</th></tr></thead><tbody>${rows.map((item,index)=>{
-      const custom=item.kind!=='builtin',position=draft.outbounds.findIndex(entry=>entry.id===item.id),kind=item.kind==='group'?muiT('mh.kindGroup'):item.kind==='proxy'?muiT('mh.kindProxy'):muiT('mh.kindBuiltin');
-      return `<tr><td>${index+1}</td><td class="mihomo-name">${esc(item.name)}</td><td><span class="mihomo-pill ${item.kind==='group'?'group':''}">${esc(kind)}</span></td><td>${esc(item.type)}</td><td><div class="mihomo-member-summary" title="${esc(item.address||'')}">${esc(item.address||'—')}</div></td><td>${esc(item.dialerProxy||'—')}</td>${showTraffic?'<td>'+fmt(app.state?.state?.outboundTraffic?.[item.name]?.up||0)+' / '+fmt(app.state?.state?.outboundTraffic?.[item.name]?.down||0)+'</td>':''}<td><span class="mihomo-delay-result" title="${esc(delayLabel(item.name))}">${esc(delayLabel(item.name)||'—')}</span></td><td><button type="button" class="mihomo-icon" data-test-outbound="${esc(item.name)}" title="${muiT('mh.testOutbound')}" ${dirty||delayResults.get(item.name)==='Testing'||!outboundSupportsDelay(item)||(!custom&&item.name!=='DIRECT')?'disabled':''}>${AI('thunderbolt')}</button></td><td><div class="mihomo-actions">${custom?`<button class="mihomo-icon" data-outbound-up="${esc(item.id)}" title="${muiT('mh.moveUp')}" ${position===0?'disabled':''}>${AI('arrow-up')}</button><button class="mihomo-icon" data-outbound-down="${esc(item.id)}" title="${muiT('mh.moveDown')}" ${position===draft.outbounds.length-1?'disabled':''}>${AI('arrow-down')}</button><button class="mihomo-icon" data-outbound-edit="${esc(item.id)}" title="${muiT('action.edit')}">${AI('edit')}</button><button class="mihomo-icon danger" data-outbound-delete="${esc(item.id)}" title="${muiT('common.delete')}">${AI('delete')}</button>`:'—'}</div></td></tr>`;
+      const custom=item.kind!=='builtin',position=draft.outbounds.findIndex(entry=>entry.id===item.id),kind=item.vpngate?muiT('mh.vpngate'):item.kind==='group'?muiT('mh.kindGroup'):item.kind==='proxy'?muiT('mh.kindProxy'):muiT('mh.kindBuiltin'),type=item.vpngate?'VPNGate':item.type;
+      return `<tr><td>${index+1}</td><td class="mihomo-name">${esc(item.name)}</td><td><span class="mihomo-pill ${item.kind==='group'?'group':''}">${esc(kind)}</span></td><td>${esc(type)}</td><td><div class="mihomo-member-summary" title="${esc(item.address||'')}">${esc(item.address||'—')}</div>${vpnGateStatusHTML(item)}</td><td>${esc(item.dialerProxy||'—')}</td>${showTraffic?'<td>'+fmt(app.state?.state?.outboundTraffic?.[item.name]?.up||0)+' / '+fmt(app.state?.state?.outboundTraffic?.[item.name]?.down||0)+'</td>':''}<td><span class="mihomo-delay-result" title="${esc(delayLabel(item.name))}">${esc(delayLabel(item.name)||'—')}</span></td><td><button type="button" class="mihomo-icon" data-test-outbound="${esc(item.name)}" title="${muiT('mh.testOutbound')}" ${dirty||delayResults.get(item.name)==='Testing'||!outboundSupportsDelay(item)||(!custom&&item.name!=='DIRECT')?'disabled':''}>${AI('thunderbolt')}</button></td><td><div class="mihomo-actions">${custom?`<button class="mihomo-icon" data-outbound-up="${esc(item.id)}" title="${muiT('mh.moveUp')}" ${position===0?'disabled':''}>${AI('arrow-up')}</button><button class="mihomo-icon" data-outbound-down="${esc(item.id)}" title="${muiT('mh.moveDown')}" ${position===draft.outbounds.length-1?'disabled':''}>${AI('arrow-down')}</button><button class="mihomo-icon" data-outbound-edit="${esc(item.id)}" title="${muiT('action.edit')}">${AI('edit')}</button><button class="mihomo-icon danger" data-outbound-delete="${esc(item.id)}" title="${muiT('common.delete')}">${AI('delete')}</button>`:'—'}</div></td></tr>`;
     }).join('')}</tbody></table></div>`;
     bindOutboundTable();
     $$('[data-test-outbound]',root).forEach(button=>button.onclick=()=>testOutbound(button));
@@ -202,6 +203,7 @@
     $('#outbound-yaml').value=yamlDraft;$('#outbound-share-link').value=linkDraft;syncYAMLLines();
   }
   async function openOutboundModal(id=''){
+    if(draft.outbounds.find(item=>item.id===id)?.vpngate){await openVPNGateModal(id);return;}
     ensureModals();editingOutbound=id;
     editingOriginal=clone(draft.outbounds.find(candidate=>candidate.id===id)||{kind:'proxy',type:'ss',port:443,cipher:'aes-256-gcm',network:'tcp',udp:true,testUrl:draft.basics.outboundTestUrl||defaultTestURL,interval:300,strategy:'consistent-hashing'});
     fillOutboundForm(editingOriginal);showImportError('');$('#outbound-share-link').value='';setYAML('');
@@ -461,6 +463,135 @@
     $('#warp-license-input').oninput=syncWarpButtons;
     $('#warp-license-form').onsubmit=event=>{event.preventDefault();if(!$('#warp-license-update').disabled)warpAction('/license',{license:$('#warp-license-input').value.trim()});};
   }
+  let vpngateData=null,vpngateBusy=false,vpngateTimer=null,vpngateEditingId='',vpngateFetching=false,vpngateFetchedAt=0;
+  function vpnGateUsedSlots(){
+    const original=(app.state?.state?.outbounds||[]).find(item=>item.id===vpngateEditingId)?.vpngate?.slot;
+    return new Set([...(vpngateData?.usedSlots||[]).filter(slot=>slot!==original),...draft.outbounds.filter(item=>item.vpngate&&item.id!==vpngateEditingId).map(item=>item.vpngate.slot)]);
+  }
+  function vpnGatePending(item){
+    const saved=(app.state?.state?.outbounds||[]).find(candidate=>candidate.id===item.id);
+    return !saved?.vpngate||saved.name!==item.name||JSON.stringify(saved.vpngate)!==JSON.stringify(item.vpngate);
+  }
+  async function refreshVPNGateData(force=false){
+    if(vpngateFetching||(!force&&Date.now()-vpngateFetchedAt<5000))return;
+    vpngateFetching=true;
+    try{vpngateData=await api('/api/mihomo/vpngate');vpngateFetchedAt=Date.now();if($('#vpngate-modal')?.classList.contains('open'))renderVPNGateModal();else if(currentTab==='outbounds')renderOutbounds();}
+    catch(error){if($('#vpngate-modal')?.classList.contains('open'))showVPNGateError(error.message);}
+    finally{vpngateFetching=false;}
+  }
+  function vpnGateCountryInfo(code){return (vpngateData?.presets||[]).find(item=>item.code===code)||null;}
+  function validVPNGateCountry(code){return /^[A-Z]{2}$/.test(String(code||''));}
+  function vpnGateStatusForSlot(slot){return (vpngateData?.statuses||[]).find(item=>Number(item.slot)===Number(slot))||null;}
+  function vpnGateStateLabel(state){return muiT({'starting':'mh.vpngateStarting','searching':'mh.vpngateSearching','connecting':'mh.vpngateConnecting','connected':'mh.vpngateConnected','reconnecting':'mh.vpngateReconnecting','error':'mh.vpngateError','pending':'mh.vpngatePending'}[state]||'mh.vpngateUnknown');}
+  function vpnGateStatusHTML(item){
+    if(!item?.vpngate)return '';
+    const status=vpnGatePending(item)?null:vpnGateStatusForSlot(item.vpngate.slot);
+    if(!status)return `<div class="vpngate-row-status"><span class="mihomo-pill">${esc(muiT(vpnGatePending(item)?'mh.vpngatePending':'mh.vpngateWaiting'))}</span></div>`;
+    const details=[status.node,status.isp||status.asn].filter(Boolean).join(' · ');
+    return `<div class="vpngate-row-status"><span class="mihomo-pill ${status.connected?'group':''}">${esc(vpnGateStateLabel(status.state))}</span>${status.fallback?`<span class="mihomo-pill fallback">${esc(muiT('mh.vpngateFallback'))}</span>`:''}<span class="vpngate-row-detail">${esc(details||status.lastError||'—')}</span></div>`;
+  }
+  function scheduleVPNGatePoll(delay=1500){
+    clearTimeout(vpngateTimer);vpngateTimer=setTimeout(async()=>{vpngateTimer=null;if(!$('#vpngate-modal')?.classList.contains('open'))return;try{vpngateData=await api('/api/mihomo/vpngate');renderVPNGateModal();if(vpngateData?.install?.running)scheduleVPNGatePoll(1000);else if(vpngateData?.statuses?.length)scheduleVPNGatePoll(5000);}catch(error){showVPNGateError(error.message);}},delay);
+  }
+  function showVPNGateError(message){const box=$('#vpngate-error');if(box){box.textContent=message;box.hidden=!message;}}
+  function syncVPNGateForm(){
+    const form=$('#vpngate-form');if(!form)return;
+    const country=form.elements.country.value.trim().toUpperCase();form.elements.country.value=country;
+	if(form.dataset.country&&form.dataset.country!==country)form.elements.isp.value='';
+	form.dataset.country=country;
+    const valid=validVPNGateCountry(country),info=vpnGateCountryInfo(country),isp=form.elements.isp;
+    isp.disabled=!valid;
+    const list=$('#vpngate-isp-options');if(list){list.innerHTML=(info?.isps||[]).map(item=>`<option value="${esc(item.label)}"></option>`).join('');}
+    const note=$('#vpngate-isp-note');if(note)note.textContent=!valid?muiT('mh.vpngateChooseCountry'):country==='KR'?muiT('mh.vpngateKoreaOnly'):info?.keyword?muiT('mh.vpngateKeywordHint'):muiT('mh.vpngateKeywordOnly');
+    const slot=Number(form.elements.slot.value)||0,used=vpnGateUsedSlots();
+    for(const option of form.elements.slot.options)option.disabled=used.has(Number(option.value));
+    const preview=$('#vpngate-slot-preview');if(preview)preview.textContent=muiT('mh.vpngateSlotPreview',{iface:`vpn_vpn${slot}`,table:100+slot});
+	const raw=isp.value.trim(),preset=(info?.isps||[]).find(item=>item.label.toLowerCase()===raw.toLowerCase()||item.id.toLowerCase()===raw.toLowerCase()),add=$('#vpngate-add');
+	if(add)add.disabled=vpngateBusy||!valid||used.has(slot)||!raw||(country==='KR'&&!preset);
+  }
+  function vpnGateFormConfig(){
+    const form=$('#vpngate-form'),country=form.elements.country.value.trim().toUpperCase(),raw=form.elements.isp.value.trim(),info=vpnGateCountryInfo(country),preset=(info?.isps||[]).find(item=>item.label.toLowerCase()===raw.toLowerCase()||item.id.toLowerCase()===raw.toLowerCase());
+    return {country,isp:preset?.id||'',ispKeyword:preset?'':raw,slot:Number(form.elements.slot.value)||0,name:form.elements.name.value.trim()};
+  }
+  function resetVPNGateForm(){
+    const form=$('#vpngate-form');if(!form)return;form.reset();form.dataset.originalSlot='';form.dataset.country='';vpngateEditingId='';
+    const option=Array.from(form.elements.slot.options).find(candidate=>!vpnGateUsedSlots().has(Number(candidate.value)));if(option)form.elements.slot.value=option.value;
+    syncVPNGateForm();
+  }
+  function renderVPNGateStatuses(){
+    const box=$('#vpngate-status-list');if(!box)return;
+    const saved=(draft.outbounds||[]).filter(item=>item.vpngate),bySlot=new Map(saved.map(item=>[Number(item.vpngate.slot),item])),statuses=vpngateData?.statuses||[];
+    for(const status of statuses)if(!bySlot.has(Number(status.slot)))bySlot.set(Number(status.slot),{name:status.outbound||'VPNGate',vpngate:{slot:Number(status.slot),country:status.country||'',ispKeyword:status.target||''}});
+    const rows=[...bySlot.entries()].sort((a,b)=>a[0]-b[0]);
+    if(!rows.length){box.innerHTML=`<div class="mihomo-empty"><strong>${esc(muiT('mh.vpngateNoSaved'))}</strong><span>${esc(muiT('mh.vpngateNoSavedNote'))}</span></div>`;return;}
+    box.innerHTML=rows.map(([slot,item])=>{const status=vpnGateStatusForSlot(slot),config=item.vpngate;return `<div class="vpngate-status-row"><div class="vpngate-status-main"><strong>${esc(item.name)}</strong><span>${esc(config.country)} · ${esc(vpnGateISPLabelForUI(config))} · vpn_vpn${slot} · table ${100+slot}</span></div><div class="vpngate-status-state"><span class="mihomo-pill ${status?.connected?'group':''}">${esc(vpnGateStateLabel(status?.state||'pending'))}</span>${status?.fallback?`<span class="mihomo-pill fallback">${esc(muiT('mh.vpngateFallback'))}</span>`:''}${status?.node?`<span class="vpngate-row-detail">${esc(status.node)}${status.isp?` · ${esc(status.isp)}`:''}</span>`:''}${status?.lastError?`<small class="vpngate-status-error">${esc(status.lastError)}</small>`:''}</div><div class="mihomo-actions"><button type="button" class="mihomo-icon" data-vpngate-edit="${esc(String(slot))}" title="${esc(muiT('action.edit'))}">${AI('edit')}</button><button type="button" class="outline-btn" data-vpngate-reconnect="${esc(String(slot))}" ${status?'':'disabled'}>${esc(muiT('mh.vpngateReconnect'))}</button></div></div>`;}).join('');
+    $$('[data-vpngate-edit]',box).forEach(button=>button.onclick=()=>editVPNGateSlot(Number(button.dataset.vpngateEdit)));
+    $$('[data-vpngate-reconnect]',box).forEach(button=>button.onclick=()=>reconnectVPNGate(Number(button.dataset.vpngateReconnect)));
+  }
+  function vpnGateISPLabelForUI(config){const info=vpnGateCountryInfo(config.country),preset=(info?.isps||[]).find(item=>item.id===config.isp);return preset?.label||config.ispKeyword||'—';}
+  function renderVPNGateModal(){
+    const modal=$('#vpngate-modal');if(!modal)return;
+    const install=vpngateData?.install||{},installBox=$('#vpngate-install'),form=$('#vpngate-form'),button=$('#vpngate-install-button'),message=$('#vpngate-install-message'),error=$('#vpngate-install-error');
+    if(message)message.textContent=install.installed?muiT('mh.vpngateInstalled',{version:install.version||''}):install.running?`${muiT('mh.vpngateInstalling')} ${install.message||''}`:install.reason||muiT('mh.vpngateNotInstalled');
+    if(error){error.textContent=install.error||'';error.hidden=!install.error;}
+    if(button){button.hidden=!!install.installed||!install.supported;button.disabled=vpngateBusy||!!install.running;button.textContent=install.running?muiT('mh.vpngateInstalling'):muiT('mh.vpngateInstall');}
+    if(installBox)installBox.classList.toggle('installed',!!install.installed);
+    if(form){form.hidden=!install.installed;syncVPNGateForm();}
+    renderVPNGateStatuses();
+    if(typeof muiApply==='function')muiApply(modal);
+    if(vpngateData?.install?.running)scheduleVPNGatePoll(1000);
+    if(currentTab==='outbounds')renderOutbounds();
+  }
+  function ensureVPNGateModal(){
+    if($('#vpngate-modal'))return;
+    const modal=document.createElement('div');modal.id='vpngate-modal';modal.className='modal-backdrop';
+    modal.innerHTML=`<section class="modal-panel vpngate-modal" role="dialog" aria-modal="true" aria-labelledby="vpngate-title"><header class="modal-titlebar"><span id="vpngate-title" data-i18n="mh.vpngateTitle">VPNGate</span><button type="button" class="modal-close" id="vpngate-close" data-i18n-aria="common.close" aria-label="Close">${AI('close')}</button></header><div class="modal-content"><div id="vpngate-error" role="alert" hidden></div><div id="vpngate-install" class="vpngate-install-card"><div><strong data-i18n="mh.vpngateClient">VPNGate Client</strong><p id="vpngate-install-message"></p><p data-i18n="mh.vpngateInstallNote">Installs the pinned official SoftEther VPN Client after checking Linux dependencies. Read and accept the included SoftEther licence before use.</p></div><button type="button" class="primary-btn" id="vpngate-install-button">Install</button><div id="vpngate-install-error" class="vpngate-status-error" role="alert" hidden></div></div><form id="vpngate-form" hidden><div class="mihomo-form-grid"><label class="mihomo-field"><span data-i18n="mh.vpngateCountry">Country</span><input name="country" maxlength="2" minlength="2" pattern="[A-Z]{2}" list="vpngate-country-options" autocomplete="off" required><datalist id="vpngate-country-options"><option value="JP">Japan</option><option value="KR">Korea</option></datalist></label><label class="mihomo-field"><span data-i18n="mh.vpngateISP">ISP / ASN keyword</span><input name="isp" list="vpngate-isp-options" autocomplete="off" disabled required><datalist id="vpngate-isp-options"></datalist><small id="vpngate-isp-note"></small></label><label class="mihomo-field"><span data-i18n="mh.vpngateName">Outbound name</span><input name="name" maxlength="128" placeholder="vpngate-jp-0"></label><label class="mihomo-field"><span data-i18n="mh.vpngateSlot">VPNGate NIC index</span><select name="slot">${Array.from({length:10},(_,index)=>`<option value="${index}">${index}</option>`).join('')}</select><small id="vpngate-slot-preview"></small></label></div><footer class="modal-footer"><button type="button" class="outline-btn" id="vpngate-cancel" data-i18n="common.cancel">Cancel</button><button type="submit" class="primary-btn" id="vpngate-add" data-i18n="mh.vpngateAdd">Add to Draft</button></footer></form><h3 class="warp-divider" data-i18n="mh.vpngateStatus">Saved VPNGate Outbounds</h3><div id="vpngate-status-list"></div></div></section>`;
+    document.body.appendChild(modal);
+    $('#vpngate-close').onclick=()=>{if(!vpngateBusy){clearTimeout(vpngateTimer);closeModal(modal);}};
+    $('#vpngate-cancel').onclick=()=>{if(!vpngateBusy){vpngateEditingId='';closeModal(modal);}};
+    modal.onclick=event=>{if(event.target===modal&&!vpngateBusy){clearTimeout(vpngateTimer);closeModal(modal);}};
+    $('#vpngate-install-button').onclick=installVPNGate;
+    $('#vpngate-form').onsubmit=saveVPNGateDraft;
+    $('#vpngate-form').elements.country.oninput=syncVPNGateForm;
+    $('#vpngate-form').elements.country.onchange=syncVPNGateForm;
+    $('#vpngate-form').elements.isp.oninput=syncVPNGateForm;
+    $('#vpngate-form').elements.slot.onchange=syncVPNGateForm;
+    document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!vpngateBusy&&modal.classList.contains('open')){clearTimeout(vpngateTimer);closeModal(modal);}});
+  }
+  async function openVPNGateModal(id=''){
+    ensureVPNGateModal();openModal('vpngate-modal');if(vpngateBusy)return;
+    vpngateEditingId='';showVPNGateError('');resetVPNGateForm();vpngateBusy=true;renderVPNGateModal();
+    try{vpngateData=await api('/api/mihomo/vpngate');vpngateFetchedAt=Date.now();resetVPNGateForm();renderVPNGateModal();const item=draft.outbounds.find(candidate=>candidate.id===id);if(item?.vpngate)editVPNGateSlot(item.vpngate.slot);scheduleVPNGatePoll();}catch(error){showVPNGateError(error.message);}finally{vpngateBusy=false;renderVPNGateModal();}
+  }
+  async function installVPNGate(){
+    if(vpngateBusy)return;vpngateBusy=true;showVPNGateError('');renderVPNGateModal();
+    try{vpngateData=await api('/api/mihomo/vpngate/install',{method:'POST'});renderVPNGateModal();}catch(error){showVPNGateError(error.message);}finally{vpngateBusy=false;renderVPNGateModal();}
+  }
+  function editVPNGateSlot(slot){
+    const item=draft.outbounds.find(candidate=>candidate.vpngate&&Number(candidate.vpngate.slot)===slot);if(!item)return;
+    const form=$('#vpngate-form');if(!form||form.hidden)return;vpngateEditingId=item.id;form.dataset.originalSlot=String(slot);form.dataset.country=item.vpngate.country;form.elements.country.value=item.vpngate.country;form.elements.isp.value=vpnGateISPLabelForUI(item.vpngate);form.elements.name.value=item.name||'';form.elements.slot.value=String(slot);syncVPNGateForm();form.elements.country.focus();
+  }
+  async function reconnectVPNGate(slot){
+    if(vpngateBusy)return;vpngateBusy=true;showVPNGateError('');try{vpngateData=await api('/api/mihomo/vpngate/reconnect',{method:'POST',body:JSON.stringify({slot})});renderVPNGateModal();scheduleVPNGatePoll(1000);}catch(error){showVPNGateError(error.message);}finally{vpngateBusy=false;renderVPNGateModal();}
+  }
+  async function saveVPNGateDraft(event){
+    event.preventDefault();if(vpngateBusy)return;
+    const form=event.currentTarget,config=vpnGateFormConfig();
+    if(!validVPNGateCountry(config.country)){showVPNGateError(muiT('mh.vpngateCountryInvalid'));return;}
+    const info=vpnGateCountryInfo(config.country),preset=(info?.isps||[]).find(item=>item.id===config.isp);
+    if(config.country==='KR'&&!preset){showVPNGateError(muiT('mh.vpngateKoreaOnly'));return;}
+    if(!config.isp&&!config.ispKeyword){showVPNGateError(muiT('mh.vpngateISPRequired'));return;}
+    if(config.name&&draft.outbounds.some(item=>item.id!==vpngateEditingId&&item.name===config.name)){showVPNGateError(muiT('mh.vpngateNameTaken'));return;}
+    const used=vpnGateUsedSlots();if(used.has(config.slot)){showVPNGateError(muiT('mh.vpngateSlotUsed'));return;}
+    vpngateBusy=true;showVPNGateError('');
+    try{
+      const item=clone(await api('/api/mihomo/vpngate/outbound',{method:'POST',body:JSON.stringify(config)})),next=clone(draft),editing=vpngateEditingId?next.outbounds.findIndex(candidate=>candidate.id===vpngateEditingId):-1;
+      item.id=editing>=0?vpngateEditingId:freshID('vpngate');
+      if(editing>=0){const previous=next.outbounds[editing];next.outbounds[editing]=item;if(previous.name!==item.name)renameReferences(next.outbounds,next.routingRules,previous.name,item.name);}else next.outbounds.push(item);
+      draft=next;markDirty();vpngateEditingId='';form.dataset.originalSlot='';closeModal($('#vpngate-modal'));
+    }catch(error){showVPNGateError(error.message);}finally{vpngateBusy=false;renderVPNGateModal();}
+  }
+
   function showWarpError(message){const box=$('#warp-error');box.textContent=message;box.hidden=!message;}
   function syncWarpButtons(){
     for(const id of ['warp-create','warp-refresh','warp-delete','warp-close'])$('#'+id).disabled=warpBusy;
@@ -536,20 +667,22 @@
   $('#mihomo-add-outbound').onclick=()=>openOutboundModal();
   $('#mihomo-add-rule').onclick=()=>openRuleModal();
   $('#mihomo-warp').onclick=openWarpModal;
+  $('#mihomo-vpngate').onclick=()=>openVPNGateModal();
   $('#basics-warp').onclick=openWarpModal;
   $('#mihomo-save').onclick=saveSettings;
   $('#mihomo-restart').onclick=()=>{if(dirty){toast(muiT('mh.saveFirst'),true);return;}coreAction('restart');};
 
   const baseRenderState=renderState;
-  renderState=function(){baseRenderState();syncFromState();};
+  renderState=function(){baseRenderState();syncFromState();if(app.currentView==='mihomo'&&currentTab==='outbounds'&&draft.outbounds.some(item=>item.vpngate))refreshVPNGateData();};
   const baseSetView=setView;
-  setView=function(name){baseSetView(name);if(name==='mihomo')render();};
+  setView=function(name){baseSetView(name);if(name==='mihomo'){render();if(draft.outbounds.some(item=>item.vpngate))refreshVPNGateData();}};
   window.addEventListener('mui-langchange',()=>{
     render();
     for(const field of $$('[data-basics-list]'))renderBasicsTags(field.dataset.basicsList);
     if($('#mihomo-outbound-modal')?.classList.contains('open'))$('#mihomo-outbound-title').textContent=muiT(editingOutbound?'mh.editOutbound':'mihomo.addOutbound');
     if($('#mihomo-rule-modal')?.classList.contains('open')){$('#mihomo-rule-title').textContent=muiT(editingRule?'mh.editRule':'mh.addRule');syncRuleForm();}
     if($('#warp-modal')?.classList.contains('open'))renderWarpModal();
+    if($('#vpngate-modal')?.classList.contains('open'))renderVPNGateModal();
   });
   setupBasics();syncFromState();setTab('basics');
 })();

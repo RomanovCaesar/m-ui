@@ -124,13 +124,23 @@ func convertOutboundInput(input mihomoYAMLParseRequest) ([]MihomoOutbound, []byt
 	items = normalized[len(context):]
 	if input.EditingID != "" {
 		items[0].ID = input.EditingID
-		if items[0].Type == "wireguard" {
-			for _, existing := range input.Context {
-				if existing.ID == input.EditingID {
-					items[0].WarpDeviceID = existing.WarpDeviceID
-					break
+		for _, existing := range input.Context {
+			if existing.ID != input.EditingID {
+				continue
+			}
+			if items[0].Type == "wireguard" {
+				items[0].WarpDeviceID = existing.WarpDeviceID
+			}
+			// 受管的 VPNGate 出站即使被 YAML 覆盖，国家、运营商和网卡序号也要
+			// 留住，否则编辑一次就会丢掉这条线路的身份、在系统里变成野生 direct。
+			if existing.VPNGate != nil && items[0].VPNGate == nil {
+				config := *existing.VPNGate
+				items[0].VPNGate = &config
+				if err := applyVPNGateOutbound(&items[0]); err != nil {
+					return nil, nil, err
 				}
 			}
+			break
 		}
 	}
 	data, err := mihomoOutboundYAML(items)

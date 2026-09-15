@@ -91,6 +91,21 @@ type Settings struct {
 	ExternalTrafficInformURI    string `json:"externalTrafficInformURI"`
 	TimeLocation                string `json:"timeLocation"`
 	Language                    string `json:"language"`
+	// VPNGate 的 ASN 归属查询用。留空时用 IPinfo 免费接口，额度耗尽后退回 ip-api；
+	// 填写后只发给 IPinfo，绝不转发给备用服务。
+	IPInfoToken string `json:"ipinfoToken,omitempty"`
+	// 只在响应里出现，用来告诉界面"已设置"；请求体里的值一律忽略，也不落盘。
+	IPInfoTokenSet bool `json:"ipinfoTokenSet,omitempty"`
+	// 只在请求里出现：勾选时清除已保存的 Token。
+	IPInfoTokenClear bool `json:"ipinfoTokenClear,omitempty"`
+}
+
+// maskSecrets 清掉响应里不该回显的字段，并保留"是否已设置"的提示。
+func (s Settings) maskSecrets() Settings {
+	s.Password = ""
+	s.IPInfoTokenSet = s.IPInfoToken != ""
+	s.IPInfoToken = ""
+	return s
 }
 
 type Inbound struct {
@@ -606,6 +621,16 @@ type CoreManager struct {
 	externalTrafficClients  map[string]externalClientTraffic
 	lastTrafficInform       time.Time
 	lastTrafficInformLog    time.Time
+	// VPNGate 的安装进度与每个网卡序号对应的维护任务，都不受 mu 保护，
+	// 因为它们会长时间等待网络和外部命令。
+	vpngateInstaller  vpnGateInstaller
+	vpngateMu         sync.Mutex
+	vpngateSyncMu     sync.Mutex
+	vpngateStopped    bool
+	vpngateTasks      map[int]*vpnGateTask
+	vpngateASN        *vpnGateASNResolver
+	vpngateServiceMu  sync.Mutex
+	vpngateServiceCmd *exec.Cmd
 }
 
 type App struct {
@@ -660,6 +685,8 @@ func Run(buildVersion string) {
 		log.Printf("write config: %v", err)
 	}
 	go manager.monitorTraffic()
+	// 已保存的 VPNGate 出站在面板启动时就恢复拨号，不用等用户再点一次保存。
+	go manager.syncVPNGateTasks()
 	var session string
 	if err := randomToken(&session); err != nil {
 		log.Fatal(err)
@@ -731,19 +758,31 @@ func Run(buildVersion string) {
 		select {
 		case err := <-errCh:
 			if err != nil && !errors.Is(err, http.ErrServerClosed) {
+				_ = manager.stopCore()
+				manager.stopVPNGateTasks()
 				shutdownServers()
 				log.Fatal(err)
 			}
+			_ = manager.stopCore()
+			manager.stopVPNGateTasks()
 			return
 		case <-app.restart:
 			shutdownServers()
 			log.Printf("panel restarting")
 		case <-signalCh:
 			_ = manager.stopCore()
+			manager.stopVPNGateTasks()
 			shutdownServers()
 			return
 		}
 	}
+}
+
+// outboundsSnapshot 复制一份已保存的出站列表，供不能持有 mu 的长任务读取。
+func (m *CoreManager) outboundsSnapshot() []MihomoOutbound {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]MihomoOutbound(nil), m.state.Outbounds...)
 }
 
 // settingsSnapshot 复制一份当前设置，供 main 的重启循环在别的 goroutine 正在改设置时安全读取。
@@ -922,6 +961,8 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/api/mihomo/outbound/delay", a.auth(a.handleMihomoOutboundDelay))
 	mux.HandleFunc("/api/mihomo/warp", a.auth(a.handleWarp))
 	mux.HandleFunc("/api/mihomo/warp/", a.auth(a.handleWarp))
+	mux.HandleFunc("/api/mihomo/vpngate", a.auth(a.handleVPNGate))
+	mux.HandleFunc("/api/mihomo/vpngate/", a.auth(a.handleVPNGate))
 	mux.HandleFunc("/api/raw-config", a.auth(a.handleRawConfig))
 	mux.HandleFunc("/api/inbounds", a.auth(a.handleInbounds))
 	mux.HandleFunc("/api/inbounds/import", a.auth(a.handleInboundImport))
@@ -1162,7 +1203,7 @@ func (a *App) handleState(w http.ResponseWriter, r *http.Request) {
 	state := a.manager.state
 	basics := effectiveMihomoBasics(state)
 	state.MihomoBasics = &basics
-	state.Settings.Password = ""
+	state.Settings = state.Settings.maskSecrets()
 	state.WARP = nil
 	running := a.manager.runningLocked()
 	started := a.manager.started
@@ -1235,7 +1276,7 @@ func (a *App) handleConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		a.manager.mu.Lock()
 		settings := a.manager.state.Settings
-		settings.Password = ""
+		settings = settings.maskSecrets()
 		a.manager.mu.Unlock()
 		writeJSON(w, http.StatusOK, apiResponse{OK: true, Data: settings})
 	case http.MethodPut:
@@ -1470,6 +1511,19 @@ func (m *CoreManager) load() error {
 		m.state.Settings = defaultState().Settings
 	}
 	settingsMigrated := false
+	token, tokenErr := normalizeIPInfoToken(m.state.Settings.IPInfoToken)
+	if tokenErr != nil {
+		// Never turn control characters from a hand-edited legacy state into an
+		// outbound Authorization header. The token is optional, so clear it and
+		// keep the rest of the panel usable.
+		token = ""
+	}
+	if token != m.state.Settings.IPInfoToken || m.state.Settings.IPInfoTokenSet || m.state.Settings.IPInfoTokenClear {
+		m.state.Settings.IPInfoToken = token
+		m.state.Settings.IPInfoTokenSet = false
+		m.state.Settings.IPInfoTokenClear = false
+		settingsMigrated = true
+	}
 	// States written before the panel had a URI prefix carry no panelPath at all.
 	m.state.Settings.PanelPath = normalizePanelPath(m.state.Settings.PanelPath)
 	m.state.Settings.SubscriptionPath = normalizeSubscriptionPath(m.state.Settings.SubscriptionPath)
@@ -1664,6 +1718,10 @@ func (m *CoreManager) updateSettings(input Settings) error {
 	if !containsString(supportedLanguages, input.Language) {
 		return fmt.Errorf("界面语言无效")
 	}
+	input.IPInfoToken, err = normalizeIPInfoToken(input.IPInfoToken)
+	if err != nil {
+		return err
+	}
 	m.mu.Lock()
 	if err := validateSubscriptionServicePort(input, m.state.Inbounds); err != nil {
 		m.mu.Unlock()
@@ -1700,10 +1758,26 @@ func (m *CoreManager) updateSettings(input Settings) error {
 		}
 		input.Password = password
 	}
+	// Token 不回显，所以留空一律理解成"保持现有的"；清除要显式勾选。
+	switch {
+	case input.IPInfoTokenClear:
+		input.IPInfoToken = ""
+	case input.IPInfoToken == "":
+		input.IPInfoToken = m.state.Settings.IPInfoToken
+	}
+	input.IPInfoTokenClear, input.IPInfoTokenSet = false, false
 	m.state.Settings = input
 	err = m.saveLocked()
 	m.mu.Unlock()
 	return err
+}
+
+func normalizeIPInfoToken(value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if len(value) > 128 || strings.ContainsAny(value, " \r\n\t") {
+		return "", fmt.Errorf("IPinfo Token 不能包含空白字符，且不能超过 128 个字符")
+	}
+	return value, nil
 }
 
 // 3x-ui 的备注分隔符清单，顺序也保持一致（下拉框按这个顺序渲染）。
@@ -4341,6 +4415,13 @@ func (m *CoreManager) captureLogs(reader io.ReadCloser) {
 		m.addLogLocked(line)
 		m.mu.Unlock()
 	}
+}
+
+// addLog 供不持有 m.mu 的长时间任务使用，比如 VPNGate 的安装与拨号维护。
+func (m *CoreManager) addLog(line string) {
+	m.mu.Lock()
+	m.addLogLocked(line)
+	m.mu.Unlock()
 }
 
 func (m *CoreManager) addLogLocked(line string) {

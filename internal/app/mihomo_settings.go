@@ -38,6 +38,10 @@ type MihomoOutbound struct {
 	Native       map[string]any `json:"native,omitempty"`
 	WarpDeviceID string         `json:"warpDeviceId,omitempty"`
 
+	// VPNGate turns the outbound into a managed direct proxy bound to a
+	// SoftEther VPN Client adapter; the metadata travels with the outbound.
+	VPNGate *VPNGateConfig `json:"vpngate,omitempty"`
+
 	// Proxy node common fields.
 	Server            string `json:"server,omitempty"`
 	Port              int    `json:"port,omitempty"`
@@ -169,6 +173,10 @@ func (a *App) handleMihomoSettings(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusInternalServerError, apiResponse{Message: a.tr(err.Error())})
 			return
 		}
+		// Only reconcile system resources after both state.json and config.yaml
+		// have been written successfully. Dialling happens in the background so
+		// saving the page never waits for a volunteer node.
+		go a.manager.syncVPNGateTasks()
 		writeJSON(w, http.StatusOK, apiResponse{OK: true, Message: a.tr("Mihomo 分流设置已保存")})
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, apiResponse{Message: "method not allowed"})
@@ -184,12 +192,21 @@ func (m *CoreManager) updateMihomoSettings(input mihomoSettingsPayload) error {
 	if err != nil {
 		return err
 	}
+	if err = m.applyMihomoSettings(input, outbounds, rules); err != nil {
+		return err
+	}
+	return nil
+}
+
+// applyMihomoSettings 在持有 mu 的情况下完成校验和落盘，成功才返回 nil。
+func (m *CoreManager) applyMihomoSettings(input mihomoSettingsPayload, outbounds []MihomoOutbound, rules []MihomoRoutingRule) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	basics := effectiveMihomoBasics(m.state)
 	if input.Basics != nil {
 		basics = *input.Basics
 	}
+	var err error
 	basics, err = normalizeMihomoBasics(basics)
 	if err != nil {
 		return err
@@ -213,12 +230,13 @@ func (m *CoreManager) updateMihomoSettings(input mihomoSettingsPayload) error {
 	if len(m.logs) > basics.LogBufferSize {
 		m.logs = m.logs[len(m.logs)-basics.LogBufferSize:]
 	}
-	return err
+	return nil
 }
 
 func normalizeMihomoOutbounds(input []MihomoOutbound) ([]MihomoOutbound, error) {
 	items := append([]MihomoOutbound(nil), input...)
 	names := make(map[string]int, len(items))
+	slots := make(map[int]string, len(items))
 	for index := range items {
 		item := &items[index]
 		if item.Native != nil {
@@ -228,6 +246,7 @@ func normalizeMihomoOutbounds(input []MihomoOutbound) ([]MihomoOutbound, error) 
 			}
 			parsed.ID = item.ID
 			parsed.WarpDeviceID = item.WarpDeviceID
+			parsed.VPNGate = item.VPNGate
 			*item = parsed
 		}
 		item.Kind = strings.ToLower(strings.TrimSpace(item.Kind))
@@ -279,6 +298,15 @@ func normalizeMihomoOutbounds(input []MihomoOutbound) ([]MihomoOutbound, error) 
 		item.TestURL = strings.TrimSpace(item.TestURL)
 		item.Strategy = strings.ToLower(strings.TrimSpace(item.Strategy))
 		item.DefaultSelected = strings.TrimSpace(item.DefaultSelected)
+		if item.VPNGate != nil {
+			if err := applyVPNGateOutbound(item); err != nil {
+				return nil, fmt.Errorf("Outbound #%d: %w", index+1, err)
+			}
+			if owner, exists := slots[item.VPNGate.Slot]; exists {
+				return nil, fmt.Errorf("VPNGate 网卡序号 %d 已被 Outbound %q 占用", item.VPNGate.Slot, owner)
+			}
+			slots[item.VPNGate.Slot] = item.Name
+		}
 		if item.ID == "" {
 			if err := randomToken(&item.ID); err != nil {
 				return nil, err

@@ -17,7 +17,7 @@ A server management panel powered by Mihomo. Its interface follows the informati
 > [!IMPORTANT]
 > Use this project only on servers and networks that you own or are authorized to administer. Follow local law, upstream provider terms, and the policies of the services you access.
 
-For complete usage and configuration documentation, visit the [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki).
+For complete usage and configuration documentation, visit the [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki). Also subscribe to our [Telegram channel](https://t.me/MihomoUI) if you want to get notifications on our development status. 
 
 ## Linux installation
 

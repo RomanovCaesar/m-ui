@@ -10,9 +10,13 @@ import (
 // internal adapter name vpnN, the Linux interface vpn_vpnN and the policy
 // routing table 100+N, so two outbounds can never share an interface.
 const (
-	vpnGateMaxSlot      = 9
-	vpnGateTableBase    = 100
-	vpnGateOutboundType = "direct"
+	vpnGateMaxSlot             = 9
+	vpnGateTableBase           = 100
+	vpnGateOutboundType        = "direct"
+	vpnGateRouteProtocol       = "242"
+	vpnGateLegacyRouteProtocol = "186"
+	vpnGateGuardMetric         = "42760"
+	vpnGateActiveMetric        = "10"
 )
 
 // VPNGateConfig is the managed part of a VPNGate outbound. It travels with the
@@ -82,6 +86,34 @@ func vpnGateRouteTable(slot int) int  { return vpnGateTableBase + slot }
 func vpnGateRoutingMark(slot int) int { return vpnGateTableBase + slot }
 
 func vpnGateAccountName(slot int) string { return fmt.Sprintf("mui-vpngate-%d", slot) }
+
+func vpnGateRouteField(line, key string) string {
+	fields := strings.Fields(line)
+	for index := 0; index+1 < len(fields); index++ {
+		if fields[index] == key {
+			return fields[index+1]
+		}
+	}
+	return ""
+}
+
+// iproute2 prints protocol 186 as the symbolic name "bgp" on common Linux
+// distributions. Accept that legacy spelling so routes created by v0.1.4-rc.1
+// are recognised and migrated to the private protocol number used now.
+func vpnGateOwnedRouteProtocol(line string) bool {
+	value := strings.ToLower(vpnGateRouteField(line, "proto"))
+	return value == vpnGateRouteProtocol || value == vpnGateLegacyRouteProtocol || value == "bgp"
+}
+
+func vpnGateManagedRoute(line, iface string) (guard, active bool) {
+	line = strings.TrimSpace(line)
+	if line == "" || !vpnGateOwnedRouteProtocol(line) {
+		return false, false
+	}
+	guard = strings.HasPrefix(line, "unreachable default") && vpnGateRouteField(line, "metric") == vpnGateGuardMetric
+	active = strings.HasPrefix(line, "default via ") && vpnGateRouteField(line, "dev") == iface && vpnGateRouteField(line, "metric") == vpnGateActiveMetric
+	return guard, active
+}
 
 func isVPNGateCountryCode(value string) bool {
 	if len(value) != 2 {

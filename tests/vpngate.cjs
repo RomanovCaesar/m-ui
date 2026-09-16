@@ -178,13 +178,12 @@ async function main() {
   assert.equal(layout.overflow, false);
   assert.ok(layout.left >= 0 && layout.right <= layout.viewport, JSON.stringify(layout));
   await cdp.send('Emulation.clearDeviceMetricsOverride');
-  await evaluate(`document.querySelector('#vpngate-close').click()`);
 
-  // Remove the isolated test outbound again, exercising the normal dependency
-  // check/delete/save path without touching the user's real panel data.
-  await cdp.send('Page.setDownloadBehavior', { behavior: 'deny' });
-  await cdp.send('Page.enable');
-  await evaluate(`window.confirm=()=>true; document.querySelector('[data-outbound-delete]').click()`);
+  // Stage the dedicated NIC uninstall flow. System cleanup only begins after
+  // Save, preserving the page's normal draft semantics.
+  await evaluate(`window.confirm=()=>true; document.querySelector('[data-vpngate-uninstall]').click()`);
+  await waitFor(`!document.querySelector('#vpngate-modal').classList.contains('open')`);
+  assert.equal(await evaluate(`document.querySelector('#mihomo-save').disabled`), false);
   await evaluate(`document.querySelector('#mihomo-save').click()`);
   await waitFor(`document.querySelector('#mihomo-save').disabled`);
   outboundText = await evaluate(`document.querySelector('#mihomo-outbound-table').textContent`);
@@ -208,7 +207,7 @@ async function main() {
 
   const pageErrors = await evaluate(`window.__qaErrors`);
   assert.deepEqual(pageErrors, []);
-  console.log('PASS: VPNGate modal linkage, country/ISP rules, slot 0/9 previews, draft/save/edit/delete, managed config, Token masking/clear, dark and narrow layout');
+  console.log('PASS: VPNGate modal linkage, country/ISP rules, slot 0/9 previews, draft/save/edit/NIC uninstall, managed config, Token masking/clear, dark and narrow layout');
   cdp.socket.close();
 }
 

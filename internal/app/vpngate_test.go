@@ -70,6 +70,33 @@ func TestVPNGateUnavailableSavedOutboundHasExplicitErrorStatus(t *testing.T) {
 	}
 }
 
+func TestVPNGateManagedRoutesRecognizeLegacyBGPName(t *testing.T) {
+	tests := []struct {
+		name       string
+		line       string
+		iface      string
+		wantGuard  bool
+		wantActive bool
+	}{
+		{name: "legacy symbolic guard", line: "unreachable default proto bgp metric 42760", iface: "vpn_vpn1", wantGuard: true},
+		{name: "legacy numeric guard", line: "unreachable default proto 186 metric 42760", iface: "vpn_vpn1", wantGuard: true},
+		{name: "current numeric guard", line: "unreachable default proto 242 metric 42760", iface: "vpn_vpn1", wantGuard: true},
+		{name: "legacy active", line: "default via 10.211.254.254 dev vpn_vpn1 proto bgp metric 10", iface: "vpn_vpn1", wantActive: true},
+		{name: "current active", line: "default via 10.211.254.254 dev vpn_vpn1 proto 242 metric 10", iface: "vpn_vpn1", wantActive: true},
+		{name: "foreign protocol", line: "unreachable default proto static metric 42760", iface: "vpn_vpn1"},
+		{name: "foreign interface", line: "default via 10.0.0.1 dev eth0 proto 242 metric 10", iface: "vpn_vpn1"},
+		{name: "foreign metric", line: "unreachable default proto bgp metric 99", iface: "vpn_vpn1"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			guard, active := vpnGateManagedRoute(test.line, test.iface)
+			if guard != test.wantGuard || active != test.wantActive {
+				t.Fatalf("vpnGateManagedRoute(%q) = guard %v active %v, want %v %v", test.line, guard, active, test.wantGuard, test.wantActive)
+			}
+		})
+	}
+}
+
 func TestVPNGateValidationAndLiteralMatching(t *testing.T) {
 	cases := []VPNGateConfig{
 		{Country: "J", ISP: "kddi", Slot: 0},

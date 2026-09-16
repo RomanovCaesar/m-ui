@@ -38,9 +38,7 @@ const (
 	vpnGateProbeURL       = "https://www.gstatic.com/generate_204"
 	// Rules carry a priority derived from the slot so they can be found and
 	// removed one by one instead of by blanket table deletion.
-	vpnGateRulePriority  = 20000
-	vpnGateRouteProtocol = "186"
-	vpnGateGuardMetric   = "42760"
+	vpnGateRulePriority = 20000
 )
 
 func (l vpnGateLinuxLink) runDir(slot int) string {
@@ -566,7 +564,7 @@ func (l vpnGateLinuxLink) installRouting(ctx context.Context, slot int, iface, a
 	if err := l.ensureFailClosed(ctx, slot, iface); err != nil {
 		return err
 	}
-	if _, err := l.ip(ctx, "route", "replace", "default", "via", gateway, "dev", iface, "onlink", "table", table, "proto", vpnGateRouteProtocol, "metric", "10"); err != nil {
+	if _, err := l.ip(ctx, "route", "replace", "default", "via", gateway, "dev", iface, "onlink", "table", table, "proto", vpnGateRouteProtocol, "metric", vpnGateActiveMetric); err != nil {
 		return err
 	}
 	// The source-address rule keeps replies to the leased address on this table
@@ -588,23 +586,33 @@ func (l vpnGateLinuxLink) installRouting(ctx context.Context, slot int, iface, a
 	return nil
 }
 
+func (l vpnGateLinuxLink) showRouteTable(ctx context.Context, table string) (string, error) {
+	output, err := l.ip(ctx, "-N", "route", "show", "table", table)
+	if err == nil {
+		return output, nil
+	}
+	// Older iproute2 builds may not support -N. The parser also understands the
+	// legacy symbolic "bgp" spelling, so the ordinary output remains safe.
+	return l.ip(ctx, "route", "show", "table", table)
+}
+
 // ensureFailClosed validates the table and then installs the unreachable guard
 // before the fwmark rule. A missing VPN default therefore terminates lookup in
 // this table instead of continuing at the main-table rule.
 func (l vpnGateLinuxLink) ensureFailClosed(ctx context.Context, slot int, iface string) error {
 	table := strconv.Itoa(vpnGateRouteTable(slot))
-	output, err := l.ip(ctx, "route", "show", "table", table)
-	if err == nil {
-		for _, line := range strings.Split(output, "\n") {
-			line = strings.TrimSpace(line)
-			if line == "" {
-				continue
-			}
-			ownedGuard := strings.HasPrefix(line, "unreachable default") && strings.Contains(line, "proto "+vpnGateRouteProtocol) && strings.Contains(line, "metric "+vpnGateGuardMetric)
-			ownedDefault := strings.HasPrefix(line, "default via ") && strings.Contains(line, " dev "+iface) && strings.Contains(line, "proto "+vpnGateRouteProtocol)
-			if !ownedGuard && !ownedDefault {
-				return fmt.Errorf("路由表 %s 已被其他配置占用：%s", table, line)
-			}
+	output, err := l.showRouteTable(ctx, table)
+	if err != nil {
+		return err
+	}
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		ownedGuard, ownedDefault := vpnGateManagedRoute(line, iface)
+		if !ownedGuard && !ownedDefault {
+			return fmt.Errorf("路由表 %s 已被其他配置占用：%s", table, line)
 		}
 	}
 	if _, err := l.ip(ctx, "route", "replace", "unreachable", "default", "table", table, "proto", vpnGateRouteProtocol, "metric", vpnGateGuardMetric); err != nil {
@@ -622,17 +630,16 @@ func (l vpnGateLinuxLink) ensureFailClosed(ctx context.Context, slot int, iface 
 
 func (l vpnGateLinuxLink) removeOwnedRoutes(ctx context.Context, slot int, iface string, includeGuard bool) error {
 	table := strconv.Itoa(vpnGateRouteTable(slot))
-	output, err := l.ip(ctx, "route", "show", "table", table)
+	output, err := l.showRouteTable(ctx, table)
 	if err != nil {
 		return nil
 	}
 	for _, line := range strings.Split(output, "\n") {
 		line = strings.TrimSpace(line)
-		if line == "" || !strings.Contains(line, "proto "+vpnGateRouteProtocol) {
+		if line == "" {
 			continue
 		}
-		guard := strings.HasPrefix(line, "unreachable default") && strings.Contains(line, "metric "+vpnGateGuardMetric)
-		active := strings.HasPrefix(line, "default via ") && strings.Contains(line, " dev "+iface)
+		guard, active := vpnGateManagedRoute(line, iface)
 		if !active && !(includeGuard && guard) {
 			continue
 		}
@@ -778,12 +785,8 @@ func (l vpnGateLinuxLink) Disconnect(ctx context.Context, slot int) error {
 // tagged routes owned by this slot.
 func (l vpnGateLinuxLink) Cleanup(ctx context.Context, slot int) error {
 	iface := vpnGateInterfaceName(slot)
-	l.removeRule(ctx, strconv.Itoa(vpnGateRulePriority+slot), "fwmark ", "lookup "+strconv.Itoa(vpnGateRouteTable(slot)))
-	if raw, err := os.ReadFile(l.sourceAddressPath(slot)); err == nil {
-		l.removeRule(ctx, strconv.Itoa(vpnGateRulePriority+100+slot), "from "+strings.TrimSpace(string(raw)), "lookup "+strconv.Itoa(vpnGateRouteTable(slot)))
-	}
-	_ = l.removeOwnedRoutes(ctx, slot, iface, true)
 	if !l.slotOwned(slot) {
+		_ = l.removeOwnedRoutes(ctx, slot, iface, true)
 		return nil
 	}
 	if err := l.ensureService(ctx); err != nil {
@@ -806,12 +809,21 @@ func (l vpnGateLinuxLink) Cleanup(ctx context.Context, slot int) error {
 		return err
 	}
 	if vpnGateOutputMentions(list, adapter) {
+		if _, err := l.vpncmd(ctx, "NicDisable", adapter); err != nil {
+			l.manager.addLog(fmt.Sprintf("VPNGate 槽位 %d 禁用网卡 %s 失败，继续尝试删除: %v", slot, adapter, err))
+		}
 		if _, err := l.vpncmd(ctx, "NicDelete", adapter); err != nil {
 			return err
 		}
 	}
+	l.removeRule(ctx, strconv.Itoa(vpnGateRulePriority+slot), "fwmark ", "lookup "+strconv.Itoa(vpnGateRouteTable(slot)))
+	if raw, err := os.ReadFile(l.sourceAddressPath(slot)); err == nil {
+		l.removeRule(ctx, strconv.Itoa(vpnGateRulePriority+100+slot), "from "+strings.TrimSpace(string(raw)), "lookup "+strconv.Itoa(vpnGateRouteTable(slot)))
+	}
+	_ = l.removeOwnedRoutes(ctx, slot, iface, true)
 	_ = os.Remove(l.slotOwnerPath(slot))
 	_ = os.Remove(l.sourceAddressPath(slot))
+	_ = os.RemoveAll(l.runDir(slot))
 	return nil
 }
 
@@ -915,7 +927,7 @@ apply_address() {
         [ "$new_interface_mtu" -ge 576 ] 2>/dev/null && [ "$new_interface_mtu" -le 9000 ] 2>/dev/null || return 1
         ip link set dev "$interface" mtu "$new_interface_mtu" 2>/dev/null || return 1
     fi
-    ip route replace unreachable default table "$MUI_VPNGATE_TABLE" proto 186 metric 42760 2>/dev/null || return 1
+    ip route replace unreachable default table "$MUI_VPNGATE_TABLE" proto 242 metric 42760 2>/dev/null || return 1
     mark_hex=$(printf '0x%x' "$MUI_VPNGATE_MARK") || return 1
     mark_rule=$(ip rule show | awk -v p="$MUI_VPNGATE_MARK_PRIORITY:" '$1 == p {print}')
     if [ -n "$mark_rule" ]; then
@@ -927,7 +939,7 @@ apply_address() {
         case "$source_rule" in *"from $new_ip_address"*"lookup $MUI_VPNGATE_TABLE"*) ip rule del priority "$MUI_VPNGATE_SOURCE_PRIORITY" 2>/dev/null || return 1;; *) return 1;; esac
     fi
     ip rule add from "$new_ip_address" table "$MUI_VPNGATE_TABLE" priority "$MUI_VPNGATE_SOURCE_PRIORITY" 2>/dev/null || return 1
-    ip route replace default via "$gateway" dev "$interface" onlink table "$MUI_VPNGATE_TABLE" proto 186 metric 10 2>/dev/null || return 1
+    ip route replace default via "$gateway" dev "$interface" onlink table "$MUI_VPNGATE_TABLE" proto 242 metric 10 2>/dev/null || return 1
 }
 
 case "$reason" in
@@ -940,7 +952,7 @@ case "$reason" in
         ip -4 addr flush dev "$interface" 2>/dev/null
         source_rule=$(ip rule show | awk -v p="$MUI_VPNGATE_SOURCE_PRIORITY:" '$1 == p {print}')
         case "$source_rule" in *"from "*"lookup $MUI_VPNGATE_TABLE"*) ip rule del priority "$MUI_VPNGATE_SOURCE_PRIORITY" 2>/dev/null;; esac
-        ip route del default dev "$interface" table "$MUI_VPNGATE_TABLE" proto 186 2>/dev/null
+        ip route del default dev "$interface" table "$MUI_VPNGATE_TABLE" proto 242 2>/dev/null
         ;;
 esac
 exit 0

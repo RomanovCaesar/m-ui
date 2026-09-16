@@ -524,9 +524,10 @@
     for(const status of statuses)if(!bySlot.has(Number(status.slot)))bySlot.set(Number(status.slot),{name:status.outbound||'VPNGate',vpngate:{slot:Number(status.slot),country:status.country||'',ispKeyword:status.target||''}});
     const rows=[...bySlot.entries()].sort((a,b)=>a[0]-b[0]);
     if(!rows.length){box.innerHTML=`<div class="mihomo-empty"><strong>${esc(muiT('mh.vpngateNoSaved'))}</strong><span>${esc(muiT('mh.vpngateNoSavedNote'))}</span></div>`;return;}
-    box.innerHTML=rows.map(([slot,item])=>{const status=vpnGateStatusForSlot(slot),config=item.vpngate;return `<div class="vpngate-status-row"><div class="vpngate-status-main"><strong>${esc(item.name)}</strong><span>${esc(config.country)} · ${esc(vpnGateISPLabelForUI(config))} · vpn_vpn${slot} · table ${100+slot}</span></div><div class="vpngate-status-state"><span class="mihomo-pill ${status?.connected?'group':''}">${esc(vpnGateStateLabel(status?.state||'pending'))}</span>${status?.fallback?`<span class="mihomo-pill fallback">${esc(muiT('mh.vpngateFallback'))}</span>`:''}${status?.node?`<span class="vpngate-row-detail">${esc(status.node)}${status.isp?` · ${esc(status.isp)}`:''}</span>`:''}${status?.lastError?`<small class="vpngate-status-error">${esc(status.lastError)}</small>`:''}</div><div class="mihomo-actions"><button type="button" class="mihomo-icon" data-vpngate-edit="${esc(String(slot))}" title="${esc(muiT('action.edit'))}">${AI('edit')}</button><button type="button" class="outline-btn" data-vpngate-reconnect="${esc(String(slot))}" ${status?'':'disabled'}>${esc(muiT('mh.vpngateReconnect'))}</button></div></div>`;}).join('');
+    box.innerHTML=rows.map(([slot,item])=>{const status=vpnGateStatusForSlot(slot),config=item.vpngate;return `<div class="vpngate-status-row"><div class="vpngate-status-main"><strong>${esc(item.name)}</strong><span>${esc(config.country)} · ${esc(vpnGateISPLabelForUI(config))} · vpn_vpn${slot} · table ${100+slot}</span></div><div class="vpngate-status-state"><span class="mihomo-pill ${status?.connected?'group':''}">${esc(vpnGateStateLabel(status?.state||'pending'))}</span>${status?.fallback?`<span class="mihomo-pill fallback">${esc(muiT('mh.vpngateFallback'))}</span>`:''}${status?.node?`<span class="vpngate-row-detail">${esc(status.node)}${status.isp?` · ${esc(status.isp)}`:''}</span>`:''}${status?.lastError?`<small class="vpngate-status-error">${esc(status.lastError)}</small>`:''}</div><div class="mihomo-actions"><button type="button" class="mihomo-icon" data-vpngate-edit="${esc(String(slot))}" title="${esc(muiT('action.edit'))}">${AI('edit')}</button><button type="button" class="outline-btn" data-vpngate-reconnect="${esc(String(slot))}" ${status?'':'disabled'}>${esc(muiT('mh.vpngateReconnect'))}</button>${item.id?`<button type="button" class="danger-btn" data-vpngate-uninstall="${esc(item.id)}">${esc(muiT('mh.vpngateUninstall'))}</button>`:''}</div></div>`;}).join('');
     $$('[data-vpngate-edit]',box).forEach(button=>button.onclick=()=>editVPNGateSlot(Number(button.dataset.vpngateEdit)));
     $$('[data-vpngate-reconnect]',box).forEach(button=>button.onclick=()=>reconnectVPNGate(Number(button.dataset.vpngateReconnect)));
+	$$('[data-vpngate-uninstall]',box).forEach(button=>button.onclick=()=>stageVPNGateUninstall(button.dataset.vpngateUninstall));
   }
   function vpnGateISPLabelForUI(config){const info=vpnGateCountryInfo(config.country),preset=(info?.isps||[]).find(item=>item.id===config.isp);return preset?.label||config.ispKeyword||'—';}
   function renderVPNGateModal(){
@@ -574,6 +575,15 @@
   async function reconnectVPNGate(slot){
     if(vpngateBusy)return;vpngateBusy=true;showVPNGateError('');try{vpngateData=await api('/api/mihomo/vpngate/reconnect',{method:'POST',body:JSON.stringify({slot})});renderVPNGateModal();scheduleVPNGatePoll(1000);}catch(error){showVPNGateError(error.message);}finally{vpngateBusy=false;renderVPNGateModal();}
   }
+	function stageVPNGateUninstall(id){
+	  const item=draft.outbounds.find(candidate=>candidate.id===id&&candidate.vpngate);if(!item)return;
+	  const dependencies=outboundDependencies(item.name);
+	  for(const inbound of app.state?.state?.inbounds||[])if(inbound.proxy===item.name)dependencies.push('Inbound '+inbound.name);
+	  if(dependencies.length){showVPNGateError(muiT('mh.cannotDelete',{deps:dependencies.join(muiT('common.listSep')),name:item.name}));return;}
+	  if(!confirm(muiT('mh.vpngateConfirmUninstall',{name:item.name})))return;
+	  draft.outbounds=draft.outbounds.filter(candidate=>candidate.id!==id);vpngateEditingId='';markDirty();
+	  clearTimeout(vpngateTimer);closeModal($('#vpngate-modal'));toast(muiT('mh.vpngateUninstallDrafted'));
+	}
   async function saveVPNGateDraft(event){
     event.preventDefault();if(vpngateBusy)return;
     const form=event.currentTarget,config=vpnGateFormConfig();

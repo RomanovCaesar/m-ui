@@ -507,14 +507,9 @@ func (l vpnGateLinuxLink) leaseAddress(ctx context.Context, slot int, iface stri
 
 	commandCtx, cancel := context.WithTimeout(ctx, vpnGateCommandTimeout)
 	defer cancel()
-	command := exec.CommandContext(commandCtx, "dhclient",
-		"-4", "-1", "-v", "-cf", config, "-lf", lease, "-pf", pid, "-sf", script, iface)
-	command.Env = append(os.Environ(), "LANG=C", "LC_ALL=C",
-		"MUI_VPNGATE_TABLE="+strconv.Itoa(vpnGateRouteTable(slot)),
-		"MUI_VPNGATE_MARK="+strconv.Itoa(vpnGateRoutingMark(slot)),
-		"MUI_VPNGATE_MARK_PRIORITY="+strconv.Itoa(vpnGateRulePriority+slot),
-		"MUI_VPNGATE_SOURCE_PRIORITY="+strconv.Itoa(vpnGateRulePriority+100+slot))
-	if output, err := command.CombinedOutput(); err != nil {
+	command := vpnGateDHCPCommand(commandCtx, slot, iface, config, lease, pid, script)
+	output, err := command.CombinedOutput()
+	if err != nil {
 		detail := vpnGateTailLines(string(output), 6)
 		if detail == "" {
 			detail = err.Error()
@@ -523,6 +518,12 @@ func (l vpnGateLinuxLink) leaseAddress(ctx context.Context, slot int, iface stri
 	}
 	address, err := l.waitForInterfaceAddress(ctx, iface, 3*time.Second)
 	if err != nil {
+		// dhclient can exit successfully even when its hook did not configure
+		// the address. Preserve its diagnostics instead of hiding that failure
+		// behind the generic "no IPv4 address" message.
+		if detail := vpnGateTailLines(string(output), 6); detail != "" && ctx.Err() == nil {
+			return "", "", fmt.Errorf("DHCP 已结束，但网卡 %s 仍没有 IPv4 地址：%s", iface, detail)
+		}
 		return "", "", err
 	}
 	gateway, err := vpnGateLeaseGateway(lease, iface)
@@ -530,6 +531,20 @@ func (l vpnGateLinuxLink) leaseAddress(ctx context.Context, slot int, iface stri
 		return "", "", err
 	}
 	return address, gateway, nil
+}
+
+func vpnGateDHCPCommand(ctx context.Context, slot int, iface, config, lease, pid, script string) *exec.Cmd {
+	// ISC dhclient builds a fresh environment for its hook. Parent-process
+	// environment variables are not inherited; -e must be used for both the
+	// initial lease and subsequent renewals to receive the slot's routing data.
+	command := exec.CommandContext(ctx, "dhclient",
+		"-4", "-1", "-v", "-cf", config, "-lf", lease, "-pf", pid, "-sf", script,
+		"-e", "MUI_VPNGATE_TABLE="+strconv.Itoa(vpnGateRouteTable(slot)),
+		"-e", "MUI_VPNGATE_MARK="+strconv.Itoa(vpnGateRoutingMark(slot)),
+		"-e", "MUI_VPNGATE_MARK_PRIORITY="+strconv.Itoa(vpnGateRulePriority+slot),
+		"-e", "MUI_VPNGATE_SOURCE_PRIORITY="+strconv.Itoa(vpnGateRulePriority+100+slot), iface)
+	command.Env = append(os.Environ(), "LANG=C", "LC_ALL=C")
+	return command
 }
 
 func (l vpnGateLinuxLink) waitForInterfaceAddress(ctx context.Context, iface string, timeout time.Duration) (string, error) {
@@ -940,12 +955,16 @@ case "$interface" in
     vpn_vpn[0-9]) ;;
     *) exit 0 ;;
 esac
-[ -n "${MUI_VPNGATE_TABLE:-}" ] || exit 0
-[ -n "${MUI_VPNGATE_MARK:-}" ] || exit 0
-[ -n "${MUI_VPNGATE_MARK_PRIORITY:-}" ] || exit 0
-[ -n "${MUI_VPNGATE_SOURCE_PRIORITY:-}" ] || exit 0
+fail() {
+    printf 'm-ui VPNGate DHCP hook: %s\n' "$*" >&2
+    exit 1
+}
+[ -n "${MUI_VPNGATE_TABLE:-}" ] &&
+[ -n "${MUI_VPNGATE_MARK:-}" ] &&
+[ -n "${MUI_VPNGATE_MARK_PRIORITY:-}" ] &&
+[ -n "${MUI_VPNGATE_SOURCE_PRIORITY:-}" ] || fail "missing slot routing parameters for $interface"
 case "$MUI_VPNGATE_TABLE:$MUI_VPNGATE_MARK:$MUI_VPNGATE_MARK_PRIORITY:$MUI_VPNGATE_SOURCE_PRIORITY" in
-    *[!0-9:]*) exit 0 ;;
+    *[!0-9:]*) fail "invalid slot routing parameters for $interface" ;;
 esac
 
 valid_ipv4() {
@@ -958,7 +977,7 @@ valid_ipv4() {
 }
 
 apply_address() {
-    [ -n "${new_ip_address:-}" ] || return 0
+    [ -n "${new_ip_address:-}" ] || return 1
     [ -n "${new_subnet_mask:-}" ] || return 1
     gateway=$(printf '%s\n' "${new_routers:-}" | awk '{print $1}')
     [ -n "$gateway" ] || return 1
@@ -997,7 +1016,7 @@ apply_address() {
 
 case "$reason" in
     BOUND|RENEW|REBIND|REBOOT)
-		apply_address || exit 1
+        apply_address || fail "could not apply $reason lease to $interface"
         ;;
     EXPIRE|FAIL|RELEASE|STOP)
         # Only this interface is cleared; the panel reinstalls its routes on the

@@ -234,6 +234,7 @@ var messagePatternsEN = []struct {
 	{regexp.MustCompile(`^网卡 (\S+) 已被其他程序占用，请换一个网卡序号$`), "Interface $1 is owned by another program — choose another NIC index"},
 	{regexp.MustCompile(`^路由表 (\d+) 已被其他配置占用：(.+)$`), "Routing table $1 is owned by another configuration: $2"},
 	{regexp.MustCompile(`^网卡 (\S+) 还没有拿到 IPv4 地址$`), "Interface $1 has not received an IPv4 address yet"},
+	{regexp.MustCompile(`^DHCP 已结束，但网卡 (\S+) 仍没有 IPv4 地址：(.*)$`), "DHCP finished but interface $1 still has no IPv4 address: $2"},
 	{regexp.MustCompile(`^为 (\S+) 申请地址失败：(.*)$`), "DHCP address acquisition failed for $1: $2"},
 	{regexp.MustCompile(`^读取 (\S+) 的租约失败：(.*)$`), "Could not read the DHCP lease for $1: $2"},
 	{regexp.MustCompile(`^(\S+) 的租约里没有网关$`), "The DHCP lease for $1 has no gateway"},

@@ -17,7 +17,7 @@
 > [!IMPORTANT]
 > 本项目只应用于您拥有或获授权管理的服务器和网络。请遵守所在地法律、上游服务商条款以及您所访问服务的使用政策。
 
-完整使用说明请参阅 [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki)。
+完整使用说明请参阅 [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki)。也请您关注我们的 [Telegram 频道](https://t.me/MihomoUI)，以便收到我们开发进度的通知。
 
 ## Linux 安装
 

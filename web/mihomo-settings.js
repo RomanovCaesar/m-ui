@@ -501,7 +501,6 @@
 	form.dataset.country=country;
     const valid=validVPNGateCountry(country),info=vpnGateCountryInfo(country),isp=form.elements.isp;
     isp.disabled=!valid;
-    const list=$('#vpngate-isp-options');if(list){list.innerHTML=(info?.isps||[]).map(item=>`<option value="${esc(item.label)}"></option>`).join('');}
     const note=$('#vpngate-isp-note');if(note)note.textContent=!valid?muiT('mh.vpngateChooseCountry'):country==='KR'?muiT('mh.vpngateKoreaOnly'):info?.keyword?muiT('mh.vpngateKeywordHint'):muiT('mh.vpngateKeywordOnly');
     const slot=Number(form.elements.slot.value)||0,used=vpnGateUsedSlots();
     for(const option of form.elements.slot.options)option.disabled=used.has(Number(option.value));
@@ -546,11 +545,32 @@
   function ensureVPNGateModal(){
     if($('#vpngate-modal'))return;
     const modal=document.createElement('div');modal.id='vpngate-modal';modal.className='modal-backdrop';
-    modal.innerHTML=`<section class="modal-panel vpngate-modal" role="dialog" aria-modal="true" aria-labelledby="vpngate-title"><header class="modal-titlebar"><span id="vpngate-title" data-i18n="mh.vpngateTitle">VPNGate</span><button type="button" class="modal-close" id="vpngate-close" data-i18n-aria="common.close" aria-label="Close">${AI('close')}</button></header><div class="modal-content"><div id="vpngate-error" role="alert" hidden></div><div id="vpngate-install" class="vpngate-install-card"><div><strong data-i18n="mh.vpngateClient">VPNGate Client</strong><p id="vpngate-install-message"></p><p data-i18n="mh.vpngateInstallNote">Installs the pinned official SoftEther VPN Client after checking Linux dependencies. Read and accept the included SoftEther licence before use.</p></div><button type="button" class="primary-btn" id="vpngate-install-button">Install</button><div id="vpngate-install-error" class="vpngate-status-error" role="alert" hidden></div></div><form id="vpngate-form" hidden><div class="mihomo-form-grid"><label class="mihomo-field"><span data-i18n="mh.vpngateCountry">Country</span><input name="country" maxlength="2" minlength="2" pattern="[A-Z]{2}" list="vpngate-country-options" autocomplete="off" required><datalist id="vpngate-country-options"><option value="JP">Japan</option><option value="KR">Korea</option></datalist></label><label class="mihomo-field"><span data-i18n="mh.vpngateISP">ISP / ASN keyword</span><input name="isp" list="vpngate-isp-options" autocomplete="off" disabled required><datalist id="vpngate-isp-options"></datalist><small id="vpngate-isp-note"></small></label><label class="mihomo-field"><span data-i18n="mh.vpngateName">Outbound name</span><input name="name" maxlength="128" placeholder="vpngate-jp-0"></label><label class="mihomo-field"><span data-i18n="mh.vpngateSlot">VPNGate NIC index</span><select name="slot">${Array.from({length:10},(_,index)=>`<option value="${index}">${index}</option>`).join('')}</select><small id="vpngate-slot-preview"></small></label></div><footer class="modal-footer"><button type="button" class="outline-btn" id="vpngate-cancel" data-i18n="common.cancel">Cancel</button><button type="submit" class="primary-btn" id="vpngate-add" data-i18n="mh.vpngateAdd">Add to Draft</button></footer></form><h3 class="warp-divider" data-i18n="mh.vpngateStatus">Saved VPNGate Outbounds</h3><div id="vpngate-status-list"></div></div></section>`;
+    modal.innerHTML=`<section class="modal-panel vpngate-modal" role="dialog" aria-modal="true" aria-labelledby="vpngate-title"><header class="modal-titlebar"><span id="vpngate-title" data-i18n="mh.vpngateTitle">VPNGate</span><button type="button" class="modal-close" id="vpngate-close" data-i18n-aria="common.close" aria-label="Close">${AI('close')}</button></header><div class="modal-content"><div id="vpngate-error" role="alert" hidden></div><div id="vpngate-install" class="vpngate-install-card"><div><strong data-i18n="mh.vpngateClient">VPNGate Client</strong><p id="vpngate-install-message"></p><p data-i18n="mh.vpngateInstallNote">Installs the pinned official SoftEther VPN Client after checking Linux dependencies. Read and accept the included SoftEther licence before use.</p></div><button type="button" class="primary-btn" id="vpngate-install-button">Install</button><div id="vpngate-install-error" class="vpngate-status-error" role="alert" hidden></div></div><form id="vpngate-form" hidden><div class="mihomo-form-grid"><label class="mihomo-field"><span data-i18n="mh.vpngateCountry">Country</span><input name="country" maxlength="2" minlength="2" pattern="[A-Z]{2}" autocomplete="off" spellcheck="false" style="text-transform:uppercase" placeholder="JP" required></label><label class="mihomo-field"><span data-i18n="mh.vpngateISP">ISP / ASN keyword</span><input name="isp" autocomplete="off" spellcheck="false" disabled required><small id="vpngate-isp-note"></small></label><label class="mihomo-field"><span data-i18n="mh.vpngateName">Outbound name</span><input name="name" maxlength="128" placeholder="vpngate-jp-0"></label><label class="mihomo-field"><span data-i18n="mh.vpngateSlot">VPNGate NIC index</span><select name="slot">${Array.from({length:10},(_,index)=>`<option value="${index}">${index}</option>`).join('')}</select><small id="vpngate-slot-preview"></small></label></div><footer class="modal-footer"><button type="button" class="outline-btn" id="vpngate-cancel" data-i18n="common.cancel">Cancel</button><button type="submit" class="primary-btn" id="vpngate-add" data-i18n="mh.vpngateAdd">Add to Draft</button></footer></form><h3 class="warp-divider" data-i18n="mh.vpngateStatus">Saved VPNGate Outbounds</h3><div id="vpngate-status-list"></div></div></section>`;
     document.body.appendChild(modal);
-    $('#vpngate-close').onclick=()=>{if(!vpngateBusy){clearTimeout(vpngateTimer);closeModal(modal);}};
-    $('#vpngate-cancel').onclick=()=>{if(!vpngateBusy){vpngateEditingId='';closeModal(modal);}};
-    modal.onclick=event=>{if(event.target===modal&&!vpngateBusy){clearTimeout(vpngateTimer);closeModal(modal);}};
+    if(typeof window.muiUpgradeCombobox==='function'){
+      window.muiUpgradeCombobox(modal.querySelector('[name="country"]'),function(){
+        const presets=vpngateData?.presets;
+        if(presets&&presets.length){
+          return presets.map(item=>{
+            const label=item.code==='JP'?'Japan':item.code==='KR'?'Korea':item.code;
+            return {value:item.code,label,sublabel:label};
+          });
+        }
+        return [
+          {value:'JP',label:'Japan',sublabel:'Japan'},
+          {value:'KR',label:'Korea',sublabel:'Korea'}
+        ];
+      });
+      window.muiUpgradeCombobox(modal.querySelector('[name="isp"]'),function(){
+        const form=$('#vpngate-form');if(!form)return [];
+        const country=form.elements.country.value.trim().toUpperCase();
+        const info=vpnGateCountryInfo(country);
+        return (info?.isps||[]).map(item=>({value:item.label,label:item.label}));
+      });
+    }
+    $('#vpngate-close').onclick=()=>{if(!vpngateBusy){if(window.muiCloseSelects)window.muiCloseSelects();clearTimeout(vpngateTimer);closeModal(modal);}};
+    $('#vpngate-cancel').onclick=()=>{if(!vpngateBusy){if(window.muiCloseSelects)window.muiCloseSelects();vpngateEditingId='';closeModal(modal);}};
+    modal.onclick=event=>{if(event.target===modal&&!vpngateBusy){if(window.muiCloseSelects)window.muiCloseSelects();clearTimeout(vpngateTimer);closeModal(modal);}};
     $('#vpngate-install-button').onclick=installVPNGate;
     $('#vpngate-form').onsubmit=saveVPNGateDraft;
     $('#vpngate-form').elements.country.oninput=syncVPNGateForm;

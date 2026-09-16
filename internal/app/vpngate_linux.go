@@ -495,6 +495,9 @@ func (l vpnGateLinuxLink) leaseAddress(ctx context.Context, slot int, iface stri
 	if err := os.WriteFile(script, []byte(vpnGateDHCPHook), 0700); err != nil {
 		return "", "", err
 	}
+	if err := l.ensureDHCPAppArmor(ctx); err != nil {
+		return "", "", fmt.Errorf("VPNGate AppArmor 配置失败：%w", err)
+	}
 
 	// Only this slot's own client is stopped, by pid; `dhclient -r` without an
 	// interface would tear down the server's real network.
@@ -531,6 +534,38 @@ func (l vpnGateLinuxLink) leaseAddress(ctx context.Context, slot int, iface stri
 		return "", "", err
 	}
 	return address, gateway, nil
+}
+
+func (l vpnGateLinuxLink) ensureDHCPAppArmor(ctx context.Context) error {
+	// AppArmor matches canonical paths, including installations reached through
+	// a symlink or started with a relative --data-dir.
+	runRoot, err := filepath.Abs(filepath.Join(l.manager.vpnGateHome(), "run"))
+	if err != nil {
+		return err
+	}
+	runRoot, err = filepath.EvalSymlinks(runRoot)
+	if err != nil {
+		return err
+	}
+	return l.manager.vpngateAppArmor.ensure(ctx, runRoot,
+		"/sys/kernel/security/apparmor/profiles", "/etc/apparmor.d", reloadVPNGateAppArmor)
+}
+
+func reloadVPNGateAppArmor(ctx context.Context, profile string) error {
+	parser, err := exec.LookPath("apparmor_parser")
+	if err != nil {
+		return fmt.Errorf("apparmor_parser is required for VPNGate DHCP; install the apparmor package: %w", err)
+	}
+	commandCtx, cancel := context.WithTimeout(ctx, vpnGateCommandTimeout)
+	defer cancel()
+	// Ignore an older binary cache so the new local include takes effect.
+	command := exec.CommandContext(commandCtx, parser, "-r", "-T", profile)
+	command.Env = append(os.Environ(), "LANG=C", "LC_ALL=C")
+	output, err := command.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("apparmor_parser: %w: %s", err, vpnGateTailLines(string(output), 6))
+	}
+	return nil
 }
 
 func vpnGateDHCPCommand(ctx context.Context, slot int, iface, config, lease, pid, script string) *exec.Cmd {

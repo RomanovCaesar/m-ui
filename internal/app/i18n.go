@@ -221,6 +221,7 @@ var messagePatternsEN = []struct {
 	{regexp.MustCompile(`^目标拒绝同步 \(HTTP (\d+)\)，请检查联机状态和版本$`), "The target refused the sync (HTTP $1) — check the link status and version"},
 	{regexp.MustCompile(`^Cloudflare WARP 请求失败 \(HTTP (\d+)\)$`), "The Cloudflare WARP request failed (HTTP $1)"},
 	{regexp.MustCompile(`^VPNGate 暂不支持 (\S+) 架构$`), "VPNGate does not support the $1 architecture yet"},
+	{regexp.MustCompile(`^VPNGate AppArmor 配置失败：(.*)$`), "VPNGate AppArmor configuration failed: $1"},
 	{regexp.MustCompile(`^VPNGate 网卡序号必须是 0-(\d+)$`), "The VPNGate NIC index must be between 0 and $1"},
 	{regexp.MustCompile(`^VPNGate 运营商 (.+) 不是 (\S+) 的可选项$`), "VPNGate ISP $1 is not available for $2"},
 	{regexp.MustCompile(`^(\S+) 只能选择预设运营商$`), "$1 only allows a preset ISP"},

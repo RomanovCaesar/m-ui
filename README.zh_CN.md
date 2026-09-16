@@ -41,6 +41,14 @@ bash <(curl -Ls https://raw.githubusercontent.com/RomanovCaesar/m-ui/main/instal
 
 程序安装在 `/usr/local/m-ui`，持久数据位于 `/usr/local/m-ui/data`。重复执行安装器会升级程序并保留现有设置。安装器还会下载适配当前架构的 Mihomo 内核；已有内核默认保留，可用 `--update-mihomo` 更新，或用 `--skip-mihomo` 跳过。m-ui 的 GitHub Release 提供 `m-ui-linux-<architecture>.tar.gz`，支持 `386`、`amd64`、`arm64`、`armv5`、`armv6`、`armv7` 和 `s390x`；Windows amd64 版本为 `m-ui-windows-amd64.zip`，压缩包内包含 `m-ui.exe`。
 
+## VPNGate 与 AppArmor
+
+m-ui 在申请 VPNGate DHCP 租约前，会检查 AppArmor 是否正在强制执行标准的 `dhclient` 策略。如果是，会自动为该策略的本地规则补齐配置文件、租约、PID 文件和脚本所需权限，并重新加载策略。授权仅覆盖实际 VPNGate 数据目录下的 `0–9` 号网卡，支持自定义安装路径，以及 `sbin.dhclient`、`usr.sbin.dhclient` 两种策略文件布局。
+
+已有本地规则（包括之前手工添加的 VPNGate 修复）会保留。修改前会在本地规则文件旁保存以 `.m-ui-vpngate.bak` 结尾的隐藏备份，加载失败时回滚。重复连接不会重复追加规则，也不会启用未加载或处于 complain 模式的 `dhclient` 策略。已有 VPNGate 安装升级 m-ui 后同样适用，无需重装 SoftEther。
+
+自动配置需要面板以 root 运行、能够读取已加载的 AppArmor 策略列表，并提供 `apparmor` 软件包中的 `apparmor_parser`。策略配置失败会直接显示在 VPNGate 状态中，避免在权限不可用时继续申请租约。m-ui 不会自动安装软件包或关闭 AppArmor；使用自定义受限策略且没有受支持的本地规则扩展入口时，需由管理员提供对应策略。
+
 ## Docker 安装
 
 Docker 镜像面向 Linux amd64，镜像内同时包含 m-ui 和固定版本、经过 SHA-256 校验的 Mihomo 核心。项目提供的 Compose 使用 host 网络，因此在面板中新建任意端口的 Inbound 后无需再为每个入口修改 Docker 端口映射。请在 Linux Docker 主机上执行：

@@ -631,6 +631,7 @@ type CoreManager struct {
 	vpngateASN        *vpnGateASNResolver
 	vpngateServiceMu  sync.Mutex
 	vpngateServiceCmd *exec.Cmd
+	vpngateAppArmor   vpnGateAppArmor
 }
 
 type App struct {

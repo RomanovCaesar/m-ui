@@ -32,7 +32,20 @@
     '.mui-select-menu li{margin:2px 0;padding:5px 12px;border-radius:var(--radius-sm,.5rem);color:var(--select-item-color,var(--text,rgba(0,0,0,.65)));font-size:14px;line-height:22px;cursor:pointer;transition:background-color .3s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
     '.mui-select-menu li:hover,.mui-select-menu li.mui-active{background:var(--select-item-hover,#e8f4f2)}',
     '.mui-select-menu li.mui-selected{background:var(--select-item-selected,#fafafa);font-weight:600}',
-    '.mui-select-menu li:empty::after{content:"None";font-weight:400;color:var(--muted-2,rgba(0,0,0,.25))}'
+    '.mui-select-menu li:empty::after{content:"None";font-weight:400;color:var(--muted-2,rgba(0,0,0,.25))}',
+    /* Ant Select Combobox (可输入下拉选单) */
+    ':where(.ant-select-combobox){position:relative;display:block;width:100%;min-width:0}',
+    '.ant-select-combobox .ant-select-selection{display:flex;align-items:center;height:var(--ctl,32px);padding:0 28px 0 11px;border:1px solid var(--stroke,#d9d9d9);border-radius:var(--radius,1rem);background:var(--select-bg,var(--surface,#fff));color:var(--text,rgba(0,0,0,.65));font-size:14px;cursor:text;transition:border-color .3s var(--ease,cubic-bezier(.645,.045,.355,1)),background-color .3s var(--ease,cubic-bezier(.645,.045,.355,1)),box-shadow .3s var(--ease,cubic-bezier(.645,.045,.355,1))}',
+    '.ant-select-combobox .ant-select-search__field{flex:1;width:100%!important;height:100%!important;min-width:0!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;color:inherit!important;font:inherit!important;font-size:14px!important;line-height:30px!important;cursor:text}',
+    '.ant-select-combobox:not(.ant-select-disabled) .ant-select-selection:hover{border-color:var(--teal-3,#18947b);background-color:var(--select-hover,#e8f4f2)}',
+    '.ant-select-combobox.ant-select-open .ant-select-selection,.ant-select-combobox:focus-within .ant-select-selection{border-color:var(--teal,#008771);box-shadow:0 0 0 2px var(--teal-soft,rgba(0,135,113,.2));outline:0}',
+    '.ant-select-combobox.ant-select-disabled .ant-select-selection{background:var(--surface-2,#f5f5f5);color:var(--muted,rgba(0,0,0,.45));cursor:not-allowed;border-color:var(--stroke,#d9d9d9)}',
+    '.ant-select-combobox.ant-select-disabled .ant-select-search__field{cursor:not-allowed;color:var(--muted,rgba(0,0,0,.45))}',
+    '.ant-select-combobox .mui-select-arrow{position:absolute;top:50%;right:11px;margin-top:-6px;width:12px;height:12px;color:var(--muted-2,rgba(0,0,0,.25));cursor:pointer;pointer-events:auto;transition:transform .3s var(--ease,cubic-bezier(.645,.045,.355,1))}',
+    '.ant-select-combobox.ant-select-open .mui-select-arrow{transform:rotate(180deg)}',
+    '.ant-select-combobox.ant-select-disabled .mui-select-arrow{cursor:not-allowed;pointer-events:none}',
+    '.mui-combobox-item{display:flex;align-items:center;justify-content:space-between;gap:8px}',
+    '.mui-combobox-sub{margin-left:auto;color:var(--muted,rgba(0,0,0,.45));font-size:12px;font-weight:400}'
   ].join('\n');
 
   function injectStyle(){
@@ -64,7 +77,7 @@
   function closeAll(){
     if(!openWrap)return;
     openWrap.classList.remove('ant-select-open');
-    openWrap.mui.menu.hidden=true;
+    if(openWrap.mui&&openWrap.mui.menu)openWrap.mui.menu.hidden=true;
     openWrap=null;
   }
 
@@ -232,8 +245,241 @@
     }
   }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','style','class']});
 
+  function upgradeCombobox(input, getOptions){
+    if(!input || input.dataset.antCombobox) return input ? input.closest('.ant-select-combobox') : null;
+    input.dataset.antCombobox = '1';
+    input.classList.add('ant-select-search__field');
+    input.autocomplete = 'off';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'ant-select ant-select-combobox' + (input.disabled ? ' ant-select-disabled' : '');
+    wrap.tabIndex = -1;
+    wrap.setAttribute('role', 'combobox');
+
+    input.parentNode.insertBefore(wrap, input);
+    var selection = document.createElement('div');
+    selection.className = 'ant-select-selection';
+    selection.appendChild(input);
+    selection.insertAdjacentHTML('beforeend', ARROW);
+    wrap.appendChild(selection);
+
+    var arrow = selection.querySelector('.mui-select-arrow');
+    var menu = document.createElement('ul');
+    menu.className = 'mui-select-menu';
+    menu.hidden = true;
+    document.body.appendChild(menu);
+
+    wrap.mui = {
+      isCombobox: true,
+      input: input,
+      menu: menu,
+      arrow: arrow,
+      getOptions: getOptions || function(){ return []; },
+      filterActive: false
+    };
+
+    function esc(s){
+      return String(s || '').replace(/[&<>"]/g, function(ch){
+        return ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : '&quot;';
+      });
+    }
+
+    function rebuild(){
+      var raw = typeof wrap.mui.getOptions === 'function' ? wrap.mui.getOptions() : (wrap.mui.getOptions || []);
+      var items = [];
+      for(var i = 0; i < raw.length; i++){
+        var opt = raw[i];
+        if(typeof opt === 'string'){
+          items.push({ value: opt, label: opt, sublabel: '' });
+        } else if(opt && typeof opt === 'object'){
+          var val = opt.value !== undefined ? String(opt.value) : (opt.code || opt.id || opt.label || '');
+          var lbl = opt.label !== undefined ? String(opt.label) : (opt.name || val);
+          var sub = opt.sublabel || opt.sub || (opt.code && opt.label ? opt.label : '');
+          items.push({ value: val, label: lbl, sublabel: sub });
+        }
+      }
+
+      var current = (input.value || '').trim();
+      var filter = (wrap.mui.filterActive ? current : '').toLowerCase();
+
+      var list = items;
+      if(filter){
+        list = items.filter(function(it){
+          return it.value.toLowerCase().indexOf(filter) !== -1 ||
+                 it.label.toLowerCase().indexOf(filter) !== -1 ||
+                 (it.sublabel && it.sublabel.toLowerCase().indexOf(filter) !== -1);
+        });
+      }
+
+      if(!list.length){
+        menu.innerHTML = '<li class="mui-empty" style="color:var(--muted-2);cursor:default;font-style:italic">None</li>';
+        return;
+      }
+
+      var html = '';
+      for(var j = 0; j < list.length; j++){
+        var item = list[j];
+        var isSelected = current && (item.value.toLowerCase() === current.toLowerCase() || item.label.toLowerCase() === current.toLowerCase());
+        html += '<li data-value="' + esc(item.value) + '" class="' + (isSelected ? 'mui-selected' : '') + ' mui-combobox-item" role="option">';
+        if(item.sublabel && item.sublabel !== item.value){
+          html += '<span class="mui-combobox-val">' + esc(item.value) + '</span><span class="mui-combobox-sub">' + esc(item.sublabel) + '</span>';
+        } else {
+          html += '<span class="mui-combobox-val">' + esc(item.label) + '</span>';
+        }
+        html += '</li>';
+      }
+      menu.innerHTML = html;
+    }
+
+    function open(resetFilter){
+      if(input.disabled) return;
+      if(openWrap === wrap && !resetFilter){
+        closeAll();
+        return;
+      }
+      closeAll();
+      wrap.mui.filterActive = !resetFilter;
+      rebuild();
+      openWrap = wrap;
+      wrap.classList.add('ant-select-open');
+      position(wrap);
+      var active = menu.querySelector('.mui-selected') || menu.querySelector('li:not(.mui-empty)');
+      if(active) menu.scrollTop = Math.max(0, active.offsetTop - menu.clientHeight / 2 + active.offsetHeight / 2);
+    }
+
+    function pick(value){
+      input.value = value;
+      closeAll();
+      refresh();
+      wrap.mui.picking = true;
+      try {
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      } finally {
+        wrap.mui.picking = false;
+      }
+    }
+
+    function refresh(){
+      wrap.hidden = isHiddenSelect(input);
+      wrap.classList.toggle('ant-select-disabled', !!input.disabled);
+      if(openWrap === wrap){
+        if(input.disabled) closeAll();
+        else position(wrap);
+      }
+    }
+
+    input.addEventListener('focus', function(){
+      if(!input.disabled && !wrap.classList.contains('ant-select-open')){
+        open(true);
+      }
+    });
+    input.addEventListener('click', function(){
+      if(!input.disabled && !wrap.classList.contains('ant-select-open')){
+        open(true);
+      }
+    });
+
+    arrow.addEventListener('click', function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      if(input.disabled) return;
+      if(wrap.classList.contains('ant-select-open')){
+        closeAll();
+      } else {
+        input.focus();
+        open(true);
+      }
+    });
+
+    input.addEventListener('input', function(){
+      if(input.disabled || wrap.mui.picking) return;
+      wrap.mui.filterActive = true;
+      if(!wrap.classList.contains('ant-select-open')){
+        open(false);
+      } else {
+        rebuild();
+        position(wrap);
+      }
+    });
+
+    menu.addEventListener('mousedown', function(event){
+      event.preventDefault();
+    });
+    menu.addEventListener('click', function(event){
+      var item = event.target.closest('li');
+      if(item && item.dataset.value !== undefined){
+        pick(item.dataset.value);
+      }
+    });
+
+    input.addEventListener('keydown', function(event){
+      if(event.key === 'Escape'){
+        if(wrap.classList.contains('ant-select-open')){
+          event.preventDefault();
+          event.stopPropagation();
+          closeAll();
+        }
+        return;
+      }
+      if(event.key === 'ArrowDown' || event.key === 'ArrowUp'){
+        event.preventDefault();
+        if(!wrap.classList.contains('ant-select-open')){
+          open(true);
+          return;
+        }
+        var items = [].slice.call(menu.children).filter(function(it){ return !it.classList.contains('mui-empty'); });
+        if(!items.length) return;
+        var current = items.findIndex(function(it){ return it.classList.contains('mui-active'); });
+        var next = event.key === 'ArrowDown' ? Math.min(items.length - 1, current + 1) : Math.max(0, current < 0 ? items.length - 1 : current - 1);
+        items.forEach(function(it, idx){ it.classList.toggle('mui-active', idx === next); });
+        if(items[next]){
+          menu.scrollTop = Math.max(0, items[next].offsetTop - menu.clientHeight / 2 + items[next].offsetHeight / 2);
+        }
+        return;
+      }
+      if(event.key === 'Enter'){
+        if(wrap.classList.contains('ant-select-open')){
+          var active = menu.querySelector('li.mui-active');
+          if(active && active.dataset.value !== undefined){
+            event.preventDefault();
+            event.stopPropagation();
+            pick(active.dataset.value);
+          }
+        }
+      }
+    });
+
+    wrap.addEventListener('focusout', function(e){
+      if(openWrap === wrap && (!e.relatedTarget || (!wrap.contains(e.relatedTarget) && !menu.contains(e.relatedTarget)))){
+        closeAll();
+      }
+    });
+
+    new MutationObserver(function(){
+      refresh();
+    }).observe(input, { attributes: true, attributeFilter: ['disabled', 'hidden', 'class', 'style'] });
+
+    var inputDisabledDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'disabled') || (typeof Element !== 'undefined' ? Object.getOwnPropertyDescriptor(Element.prototype, 'disabled') : null);
+    if(inputDisabledDesc && inputDisabledDesc.set){
+      Object.defineProperty(input, 'disabled', {
+        configurable: true,
+        get: function(){ return inputDisabledDesc.get.call(this); },
+        set: function(val){
+          inputDisabledDesc.set.call(this, val);
+          refresh();
+        }
+      });
+    }
+
+    refresh();
+    return wrap;
+  }
+
   injectStyle();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){scan();});
   else scan();
   window.muiUpgradeSelects=scan;
+  window.muiUpgradeCombobox=upgradeCombobox;
+  window.muiCloseSelects=closeAll;
 })();

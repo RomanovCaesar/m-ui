@@ -9,3 +9,5 @@ mihomo.exe
 .runtime-*/
 .release-check/
 .env
+.claude/
+cookies.txt

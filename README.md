@@ -43,6 +43,14 @@ m-ui is installed under `/usr/local/m-ui`, with persistent state under `/usr/loc
 
 GitHub Releases contain Linux assets named `m-ui-linux-<architecture>.tar.gz` for `386`, `amd64`, `arm64`, `armv5`, `armv6`, `armv7`, and `s390x`. Each archive contains either the corresponding `m-ui-linux-<architecture>` executable or `m-ui`. Windows amd64 is published as `m-ui-windows-amd64.zip` with `m-ui.exe` inside.
 
+## VPNGate and AppArmor
+
+Before acquiring a VPNGate DHCP lease, m-ui detects whether AppArmor is enforcing the standard `dhclient` profile. If so, it automatically adds the required configuration, lease, PID, and hook permissions to that profile's local rules and reloads it. The permissions cover only slots `0–9` under the actual VPNGate data directory, including custom installation paths. Both `sbin.dhclient` and `usr.sbin.dhclient` profile layouts are supported.
+
+Existing local rules, including earlier manual VPNGate fixes, are preserved. Updates are backed up beside the local rules file as a hidden `.m-ui-vpngate.bak` file and rolled back if loading fails. Reconnecting does not duplicate rules, and unconfined or complain-mode `dhclient` profiles are left alone. This also works for an already installed VPNGate client after upgrading m-ui; reinstalling SoftEther is unnecessary.
+
+Automatic configuration requires a root panel, access to the loaded AppArmor profile list, and `apparmor_parser` from the `apparmor` package. m-ui reports policy setup errors in the VPNGate status rather than continuing to request a lease with unusable permissions. It does not install packages or disable AppArmor. A confined host with a customized profile that has no supported local include needs an administrator-provided policy.
+
 ## Docker installation
 
 The Docker image targets Linux amd64 and contains both m-ui and a pinned, SHA-256-verified Mihomo core. The supplied Compose file uses host networking so new inbound ports configured in the panel work immediately without adding a Docker port mapping for every inbound. Run it on a Linux Docker host:

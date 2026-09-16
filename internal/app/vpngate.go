@@ -110,9 +110,29 @@ func vpnGateManagedRoute(line, iface string) (guard, active bool) {
 	if line == "" || !vpnGateOwnedRouteProtocol(line) {
 		return false, false
 	}
-	guard = strings.HasPrefix(line, "unreachable default") && vpnGateRouteField(line, "metric") == vpnGateGuardMetric
+	// `ip -N route` renders RTN_UNREACHABLE as its numeric value 7 on some
+	// iproute2 releases. Normal route reads below request symbolic output, but
+	// accepting both forms also lets rc.2-created guards recover safely.
+	guard = (strings.HasPrefix(line, "unreachable default") || strings.HasPrefix(line, "7 default")) && vpnGateRouteField(line, "metric") == vpnGateGuardMetric
 	active = strings.HasPrefix(line, "default via ") && vpnGateRouteField(line, "dev") == iface && vpnGateRouteField(line, "metric") == vpnGateActiveMetric
 	return guard, active
+}
+
+func vpnGateAccountConnected(output string) bool {
+	for _, line := range strings.Split(output, "\n") {
+		parts := strings.SplitN(line, "|", 2)
+		if len(parts) != 2 || !strings.Contains(strings.ToLower(strings.TrimSpace(parts[0])), "status") {
+			continue
+		}
+		value := strings.ToLower(strings.Join(strings.Fields(parts[1]), " "))
+		if strings.Contains(value, "not connected") || strings.Contains(value, "disconnected") || strings.Contains(value, "offline") {
+			continue
+		}
+		if value == "connected" || value == "online" || strings.Contains(value, "connection completed") || strings.Contains(value, "connection established") || strings.Contains(value, "session established") {
+			return true
+		}
+	}
+	return false
 }
 
 func isVPNGateCountryCode(value string) bool {

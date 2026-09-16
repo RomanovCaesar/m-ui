@@ -81,6 +81,7 @@ func TestVPNGateManagedRoutesRecognizeLegacyBGPName(t *testing.T) {
 		{name: "legacy symbolic guard", line: "unreachable default proto bgp metric 42760", iface: "vpn_vpn1", wantGuard: true},
 		{name: "legacy numeric guard", line: "unreachable default proto 186 metric 42760", iface: "vpn_vpn1", wantGuard: true},
 		{name: "current numeric guard", line: "unreachable default proto 242 metric 42760", iface: "vpn_vpn1", wantGuard: true},
+		{name: "numeric route type guard", line: "7 default proto 242 metric 42760", iface: "vpn_vpn1", wantGuard: true},
 		{name: "legacy active", line: "default via 10.211.254.254 dev vpn_vpn1 proto bgp metric 10", iface: "vpn_vpn1", wantActive: true},
 		{name: "current active", line: "default via 10.211.254.254 dev vpn_vpn1 proto 242 metric 10", iface: "vpn_vpn1", wantActive: true},
 		{name: "foreign protocol", line: "unreachable default proto static metric 42760", iface: "vpn_vpn1"},
@@ -92,6 +93,28 @@ func TestVPNGateManagedRoutesRecognizeLegacyBGPName(t *testing.T) {
 			guard, active := vpnGateManagedRoute(test.line, test.iface)
 			if guard != test.wantGuard || active != test.wantActive {
 				t.Fatalf("vpnGateManagedRoute(%q) = guard %v active %v, want %v %v", test.line, guard, active, test.wantGuard, test.wantActive)
+			}
+		})
+	}
+}
+
+func TestVPNGateAccountConnectedStatus(t *testing.T) {
+	for name, test := range map[string]struct {
+		output string
+		want   bool
+	}{
+		"connected":   {output: "Connection Status | Connected\n", want: true},
+		"established": {output: "Session Status | Connection Established\n", want: true},
+		"completed":   {output: "Connection Status | Connection Completed\n", want: true},
+		"online":      {output: "Account Status | Online\n", want: true},
+		"connecting":  {output: "Connection Status | Connecting\n"},
+		"offline":     {output: "Connection Status | Offline\n"},
+		"negative":    {output: "Connection Status | Not Connected\n"},
+		"unrelated":   {output: "Server Name | connected.example\n"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if got := vpnGateAccountConnected(test.output); got != test.want {
+				t.Fatalf("vpnGateAccountConnected(%q) = %v, want %v", test.output, got, test.want)
 			}
 		})
 	}

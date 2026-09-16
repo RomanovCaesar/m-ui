@@ -35,6 +35,7 @@ func newVPNGateLink(manager *CoreManager) vpnGateLink {
 
 const (
 	vpnGateCommandTimeout = 30 * time.Second
+	vpnGateSessionTimeout = 25 * time.Second
 	vpnGateProbeURL       = "https://www.gstatic.com/generate_204"
 	// Rules carry a priority derived from the slot so they can be found and
 	// removed one by one instead of by blanket table deletion.
@@ -347,6 +348,9 @@ func (l vpnGateLinuxLink) Connect(ctx context.Context, slot int, node VPNGateNod
 	if _, err := l.vpncmd(ctx, "AccountConnect", account); err != nil {
 		return err
 	}
+	if err := l.waitForAccountConnected(ctx, account); err != nil {
+		return err
+	}
 	if err := l.waitForInterface(ctx, iface); err != nil {
 		return err
 	}
@@ -355,6 +359,31 @@ func (l vpnGateLinuxLink) Connect(ctx context.Context, slot int, node VPNGateNod
 		return err
 	}
 	return l.installRouting(ctx, slot, iface, address, gateway)
+}
+
+func (l vpnGateLinuxLink) waitForAccountConnected(ctx context.Context, account string) error {
+	deadline := time.Now().Add(vpnGateSessionTimeout)
+	lastStatus := ""
+	for time.Now().Before(deadline) {
+		output, err := l.vpncmd(ctx, "AccountStatusGet", account)
+		if err == nil && vpnGateAccountConnected(output) {
+			return nil
+		}
+		if tail := vpnGateTailLines(output, 4); tail != "" {
+			lastStatus = tail
+		} else if err != nil {
+			lastStatus = err.Error()
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+	if lastStatus != "" {
+		return fmt.Errorf("SoftEther 账户 %s 未能建立连接：%s", account, lastStatus)
+	}
+	return fmt.Errorf("SoftEther 账户 %s 未能建立连接", account)
 }
 
 // ensureAdapter creates the adapter only when neither it nor its interface
@@ -470,20 +499,29 @@ func (l vpnGateLinuxLink) leaseAddress(ctx context.Context, slot int, iface stri
 	// Only this slot's own client is stopped, by pid; `dhclient -r` without an
 	// interface would tear down the server's real network.
 	l.releaseLease(ctx, slot, iface)
+	_ = os.Remove(lease)
+	_ = os.Remove(pid)
+	if _, err := l.ip(ctx, "-4", "addr", "flush", "dev", iface); err != nil {
+		return "", "", err
+	}
 
 	commandCtx, cancel := context.WithTimeout(ctx, vpnGateCommandTimeout)
 	defer cancel()
 	command := exec.CommandContext(commandCtx, "dhclient",
-		"-4", "-cf", config, "-lf", lease, "-pf", pid, "-sf", script, iface)
+		"-4", "-1", "-v", "-cf", config, "-lf", lease, "-pf", pid, "-sf", script, iface)
 	command.Env = append(os.Environ(), "LANG=C", "LC_ALL=C",
 		"MUI_VPNGATE_TABLE="+strconv.Itoa(vpnGateRouteTable(slot)),
 		"MUI_VPNGATE_MARK="+strconv.Itoa(vpnGateRoutingMark(slot)),
 		"MUI_VPNGATE_MARK_PRIORITY="+strconv.Itoa(vpnGateRulePriority+slot),
 		"MUI_VPNGATE_SOURCE_PRIORITY="+strconv.Itoa(vpnGateRulePriority+100+slot))
 	if output, err := command.CombinedOutput(); err != nil {
-		return "", "", fmt.Errorf("为 %s 申请地址失败：%s", iface, vpnGateTailLines(string(output), 4))
+		detail := vpnGateTailLines(string(output), 6)
+		if detail == "" {
+			detail = err.Error()
+		}
+		return "", "", fmt.Errorf("为 %s 申请地址失败：%s", iface, detail)
 	}
-	address, err := l.interfaceAddress(iface)
+	address, err := l.waitForInterfaceAddress(ctx, iface, 3*time.Second)
 	if err != nil {
 		return "", "", err
 	}
@@ -492,6 +530,27 @@ func (l vpnGateLinuxLink) leaseAddress(ctx context.Context, slot int, iface stri
 		return "", "", err
 	}
 	return address, gateway, nil
+}
+
+func (l vpnGateLinuxLink) waitForInterfaceAddress(ctx context.Context, iface string, timeout time.Duration) (string, error) {
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		address, err := l.interfaceAddress(iface)
+		if err == nil {
+			return address, nil
+		}
+		lastErr = err
+		select {
+		case <-ctx.Done():
+			return "", ctx.Err()
+		case <-time.After(100 * time.Millisecond):
+		}
+	}
+	if lastErr != nil {
+		return "", lastErr
+	}
+	return "", fmt.Errorf("网卡 %s 还没有拿到 IPv4 地址", iface)
 }
 
 func (l vpnGateLinuxLink) interfaceAddress(iface string) (string, error) {
@@ -587,12 +646,6 @@ func (l vpnGateLinuxLink) installRouting(ctx context.Context, slot int, iface, a
 }
 
 func (l vpnGateLinuxLink) showRouteTable(ctx context.Context, table string) (string, error) {
-	output, err := l.ip(ctx, "-N", "route", "show", "table", table)
-	if err == nil {
-		return output, nil
-	}
-	// Older iproute2 builds may not support -N. The parser also understands the
-	// legacy symbolic "bgp" spelling, so the ordinary output remains safe.
 	return l.ip(ctx, "route", "show", "table", table)
 }
 
@@ -944,7 +997,7 @@ apply_address() {
 
 case "$reason" in
     BOUND|RENEW|REBIND|REBOOT)
-        apply_address
+		apply_address || exit 1
         ;;
     EXPIRE|FAIL|RELEASE|STOP)
         # Only this interface is cleared; the panel reinstalls its routes on the

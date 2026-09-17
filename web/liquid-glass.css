@@ -1,0 +1,473 @@
+/* ===== m-ui Apple SwiftUI & iOS 26 / macOS 26 (Tahoe) Liquid Glass Design System =====
+   基于 Apple Human Interface Guidelines 与 SwiftUI 核心架构：
+   - 材质：Liquid Glass (多层光学微折射玻璃质感、动态游标反射高光、Caustic 边缘微弧度倒角、32px 物理磨砂)
+   - 颜色：Apple System Colors (Blue #007aff, Green #34c759, Orange #ff9500, Red #ff3b30, Purple #af52de, Indigo #5856d6)
+   - 控件：SwiftUI NavigationSplitView 侧栏、Picker 分段选择器、iOS 26 弹性 Toggle、Inset Grouped List
+   - 字体：-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text"
+   - 动效：Apple Spring 物理弹性动效 (0.25, 1, 0.5, 1) 与 Dynamic Island 浮岛消息 */
+
+:root {
+  color-scheme: light;
+
+  /* ===== 表面与材质（Apple System Grouped Background & Liquid Glass Material） ===== */
+  --bg: #f2f2f7;                 /* Apple Grouped Background */
+  --surface: #ffffff;            /* Secondary Grouped Background (Cards) */
+  --surface-2: #f6f6f9;          /* Tertiary Inset Fills / Table Header */
+  --surface-3: #e8e8ed;          /* Inset Hover / Segmented Track */
+  --surface-4: #dedee3;          /* Inset Active State */
+  --surface-glass: rgba(255, 255, 255, 0.65);
+  --surface-glass-heavy: rgba(255, 255, 255, 0.82);
+  --surface-modal: rgba(255, 255, 255, 0.90);
+  --line: rgba(60, 60, 67, 0.12);/* Apple Separator Color (Hairline) */
+  --stroke: rgba(60, 60, 67, 0.18);
+  --stroke-2: rgba(60, 60, 67, 0.28);
+
+  /* ===== 文字（Apple SF Pro Labels） ===== */
+  --text: rgba(0, 0, 0, 0.88);      /* Primary Label */
+  --text-strong: rgba(0, 0, 0, 0.98);
+  --muted: rgba(60, 60, 67, 0.60);  /* Secondary Label */
+  --muted-2: rgba(60, 60, 67, 0.38);/* Tertiary Label */
+
+  /* ===== Apple 核心语义色（System Accent Colors） ===== */
+  --accent: #007aff;            /* Apple System Blue */
+  --teal: #007aff;              /* 全局主色：映射为 Apple System Blue，保证全局统一与向后兼容 */
+  --teal-2: #0062cc;            /* 按压态 */
+  --teal-3: #1a88ff;            /* 悬浮高亮 */
+  --teal-soft: rgba(0, 122, 255, 0.12);
+  --green: #34c759;             /* Apple System Green */
+  --orange: #ff9500;            /* Apple System Orange */
+  --red: #ff3b30;               /* Apple System Red */
+  --danger: #ff3b30;
+  --danger-hover: #e02d23;
+  --blue: #007aff;
+  --indigo: #5856d6;
+  --purple: #af52de;
+  --pink: #ff2d55;
+  --mint: #00c7be;
+  --cyan: #32ade6;
+
+  /* ===== Liquid Glass 光学质感与动态反射 ===== */
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-blur: blur(32px) saturate(210%);
+  --glass-caustic: inset 0 1px 1.5px rgba(255, 255, 255, 0.8), inset 0 -1px 1px rgba(0, 0, 0, 0.06);
+  --glass-specular: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.35), transparent 70%);
+
+  /* ===== 表格与列表 ===== */
+  --table-hover: rgba(0, 0, 0, 0.035);
+  --table-ring: rgba(60, 60, 67, 0.08);
+  --row-selected: rgba(0, 122, 255, 0.08);
+
+  /* ===== SwiftUI Picker 下拉选择器 ===== */
+  --select-bg: var(--surface);
+  --select-hover: rgba(0, 0, 0, 0.04);
+  --select-item-hover: rgba(0, 122, 255, 0.08);
+  --select-item-selected: rgba(0, 122, 255, 0.14);
+  --select-item-color: var(--text-strong);
+
+  /* ===== Apple Tag 胶囊语义色 ===== */
+  --tag-bg: rgba(120, 120, 128, 0.08); --tag-border: rgba(120, 120, 128, 0.16); --tag-color: rgba(60, 60, 67, 0.85);
+  --tag-green-bg: rgba(52, 199, 89, 0.12); --tag-green-border: rgba(52, 199, 89, 0.28); --tag-green-color: #248a3d;
+  --tag-red-bg: rgba(255, 59, 48, 0.12); --tag-red-border: rgba(255, 59, 48, 0.28); --tag-red-color: #d72c23;
+  --tag-orange-bg: rgba(255, 149, 0, 0.12); --tag-orange-border: rgba(255, 149, 0, 0.28); --tag-orange-color: #c77300;
+  --tag-blue-bg: rgba(0, 122, 255, 0.12); --tag-blue-border: rgba(0, 122, 255, 0.28); --tag-blue-color: #007aff;
+  --tag-purple-bg: rgba(175, 82, 222, 0.12); --tag-purple-border: rgba(175, 82, 222, 0.28); --tag-purple-color: #8933b4;
+
+  /* ===== Apple 弥散与平滑环境光阴影 ===== */
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-pop: 0 16px 48px rgba(0, 0, 0, 0.14), 0 4px 14px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 28px 76px rgba(0, 0, 0, 0.20), 0 8px 28px rgba(0, 0, 0, 0.08);
+  --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-btn-primary: 0 3px 12px rgba(0, 122, 255, 0.32);
+
+  /* ===== 浮层与杂项 ===== */
+  --tooltip: rgba(30, 30, 32, 0.88);
+  --back-top: rgba(0, 0, 0, 0.55);
+  --back-top-hover: rgba(0, 0, 0, 0.75);
+  --scrollbar: rgba(0, 0, 0, 0.20); --scrollbar-hover: rgba(0, 0, 0, 0.35);
+  --scrollbar-webkit: rgba(0, 0, 0, 0.20); --scrollbar-webkit-hover: rgba(0, 0, 0, 0.35);
+  --gauge-trail: rgba(120, 120, 128, 0.14);
+  --sider-trigger-bg: rgba(246, 246, 248, 0.82); --sider-trigger-color: var(--muted);
+  --code-bg: #f6f6f9; --code-color: #1d1d1f;
+  --login-wave: #f2f2f7;
+
+  /* ===== Apple Squircle 连续平滑圆角 ===== */
+  --radius-xs: 6px;       /* 标签、微型按钮 */
+  --radius-sm: 10px;      /* 导航项、小型按钮、输入框 */
+  --radius: 14px;         /* 标准卡片、选择器、表格 */
+  --radius-lg: 18px;      /* Grouped 容器、模态框头部 */
+  --radius-xl: 24px;      /* 大弹窗、Dynamic Island */
+  --radius-pill: 9999px;  /* 胶囊、开关 */
+
+  /* 控件度量 */
+  --ctl: 34px; --ctl-sm: 28px; --ctl-lg: 42px;
+
+  /* 字体与缓动 */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  --ease: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15);
+  --ease-modal: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===== Dark Mode：macOS 26 Tahoe / iOS 26 深色玻璃材质 ===== */
+body.dark {
+  color-scheme: dark;
+
+  --bg: #161618;                 /* Apple Dark Grouped Background */
+  --surface: #1e1e20;            /* Inset Cards */
+  --surface-2: #28282b;          /* Fills / Rows */
+  --surface-3: #323236;          /* Hover State */
+  --surface-4: #3c3c42;          /* Active State */
+  --surface-glass: rgba(28, 28, 32, 0.68);
+  --surface-glass-heavy: rgba(34, 34, 38, 0.86);
+  --surface-modal: rgba(28, 28, 32, 0.92);
+  --line: rgba(255, 255, 255, 0.09); /* Apple Hairline Separator */
+  --stroke: rgba(255, 255, 255, 0.14);
+  --stroke-2: rgba(255, 255, 255, 0.22);
+
+  --text: rgba(255, 255, 255, 0.90);
+  --text-strong: #ffffff;
+  --muted: rgba(235, 235, 245, 0.60);
+  --muted-2: rgba(235, 235, 245, 0.36);
+
+  --accent: #0a84ff;            /* Apple System Blue (Dark) */
+  --teal: #0a84ff;
+  --teal-2: #0066cc;
+  --teal-3: #2b95ff;
+  --teal-soft: rgba(10, 132, 255, 0.18);
+  --green: #30d158;             /* Apple System Green (Dark) */
+  --orange: #ff9f0a;            /* Apple System Orange (Dark) */
+  --red: #ff453a;               /* Apple System Red (Dark) */
+  --danger: #ff453a;
+  --danger-hover: #ff6961;
+  --blue: #0a84ff;
+  --indigo: #5e5ce6;
+  --purple: #bf5af2;
+  --pink: #ff375f;
+  --mint: #63e6e2;
+  --cyan: #64d2ff;
+
+  --glass-bg: rgba(28, 28, 32, 0.68);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-caustic: inset 0 1px 1px rgba(255, 255, 255, 0.18), inset 0 -1px 1px rgba(0, 0, 0, 0.35);
+  --glass-specular: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.14), transparent 70%);
+
+  --table-hover: rgba(255, 255, 255, 0.04);
+  --table-ring: rgba(255, 255, 255, 0.06);
+  --row-selected: rgba(10, 132, 255, 0.15);
+
+  --select-bg: var(--surface-2);
+  --select-hover: rgba(255, 255, 255, 0.06);
+  --select-item-hover: rgba(10, 132, 255, 0.16);
+  --select-item-selected: rgba(10, 132, 255, 0.25);
+  --select-item-color: var(--text-strong);
+
+  --tag-bg: rgba(255, 255, 255, 0.08); --tag-border: rgba(255, 255, 255, 0.14); --tag-color: rgba(235, 235, 245, 0.85);
+  --tag-green-bg: rgba(48, 209, 88, 0.16); --tag-green-border: rgba(48, 209, 88, 0.32); --tag-green-color: #30d158;
+  --tag-red-bg: rgba(255, 69, 58, 0.16); --tag-red-border: rgba(255, 69, 58, 0.32); --tag-red-color: #ff453a;
+  --tag-orange-bg: rgba(255, 159, 10, 0.16); --tag-orange-border: rgba(255, 159, 10, 0.32); --tag-orange-color: #ff9f0a;
+  --tag-blue-bg: rgba(10, 132, 255, 0.16); --tag-blue-border: rgba(10, 132, 255, 0.32); --tag-blue-color: #0a84ff;
+  --tag-purple-bg: rgba(191, 90, 242, 0.16); --tag-purple-border: rgba(191, 90, 242, 0.32); --tag-purple-color: #bf5af2;
+
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.32);
+  --shadow-hover: 0 10px 32px rgba(0, 0, 0, 0.48);
+  --shadow-pop: 0 18px 52px rgba(0, 0, 0, 0.58);
+  --shadow-modal: 0 32px 80px rgba(0, 0, 0, 0.70);
+  --shadow-btn: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-btn-primary: 0 3px 14px rgba(10, 132, 255, 0.40);
+
+  --tooltip: rgba(40, 40, 44, 0.94);
+  --back-top: rgba(50, 50, 56, 0.92);
+  --back-top-hover: rgba(70, 70, 78, 0.96);
+  --scrollbar: rgba(255, 255, 255, 0.18); --scrollbar-hover: rgba(255, 255, 255, 0.28);
+  --scrollbar-webkit: rgba(255, 255, 255, 0.18); --scrollbar-webkit-hover: rgba(255, 255, 255, 0.28);
+  --gauge-trail: rgba(255, 255, 255, 0.10);
+  --sider-trigger-bg: rgba(30, 30, 32, 0.85); --sider-trigger-color: var(--muted);
+  --code-bg: #141416; --code-color: rgba(255, 255, 255, 0.90);
+  --login-wave: #1e1e20;
+}
+
+/* ===== Ultra Dark：Apple OLED 纯黑极客黑玻璃 ===== */
+html[data-theme="ultra-dark"] body.dark {
+  --bg: #000000;
+  --surface: #101012;
+  --surface-2: #18181a;
+  --surface-3: #222226;
+  --surface-4: #2d2d32;
+  --surface-glass: rgba(14, 14, 16, 0.78);
+  --surface-glass-heavy: rgba(18, 18, 22, 0.90);
+  --surface-modal: rgba(12, 12, 14, 0.95);
+  --line: rgba(255, 255, 255, 0.07);
+  --stroke: rgba(255, 255, 255, 0.12);
+  --stroke-2: rgba(255, 255, 255, 0.18);
+
+  --text: rgba(255, 255, 255, 0.90);
+  --text-strong: #ffffff;
+  --muted: rgba(235, 235, 245, 0.55);
+  --muted-2: rgba(235, 235, 245, 0.30);
+
+  --glass-bg: rgba(14, 14, 16, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-caustic: inset 0 1px 1px rgba(255, 255, 255, 0.15), inset 0 -1px 1px rgba(0, 0, 0, 0.45);
+
+  --table-hover: rgba(255, 255, 255, 0.03);
+  --table-ring: rgba(255, 255, 255, 0.05);
+
+  --code-bg: #09090b;
+  --sider-trigger-bg: rgba(14, 14, 16, 0.92);
+}
+
+/* ===== 全局排版与基础设置 ===== */
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--bg);
+  font: 14px/1.5 var(--font);
+  font-variant: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color .25s var(--ease), color .25s var(--ease);
+}
+
+/* ===== Apple SF Symbols 图标系统 ===== */
+.sf-symbol {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  color: inherit;
+  font-style: normal;
+  line-height: 1em;
+  vertical-align: -0.125em;
+  text-align: center;
+  fill: currentColor;
+  flex-shrink: 0;
+  transition: transform 0.2s var(--ease), color 0.2s var(--ease);
+}
+.sf-symbol svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+
+
+/* ===== Liquid Glass 光学材质与物理反射表面 ===== */
+.glass-surface,
+.glass-card,
+.swift-card {
+  position: relative;
+  background: var(--surface-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow), var(--glass-caustic);
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease), background-color .2s var(--ease);
+}
+
+/* 动态光斑层：随鼠标游标平滑滑动 */
+.glass-surface::before,
+.glass-card::before,
+.swift-card::before,
+.glass-button::before,
+.swift-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.32), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+  z-index: 1;
+}
+body.dark .glass-surface::before,
+body.dark .glass-card::before,
+body.dark .swift-card::before,
+body.dark .glass-button::before,
+body.dark .swift-btn::before {
+  background: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.14), transparent 70%);
+}
+.glass-surface:hover::before,
+.glass-card:hover::before,
+.swift-card:hover::before,
+.glass-button:hover::before,
+.swift-btn:hover::before {
+  opacity: 1;
+}
+
+/* ===== SwiftUI 触感按钮 (Buttons) ===== */
+.glass-button,
+.swift-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--ctl, 34px);
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-sm, 10px);
+  background: var(--surface-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text);
+  box-shadow: var(--shadow-btn), var(--glass-caustic);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all 0.2s var(--ease);
+}
+.glass-button:hover,
+.swift-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--stroke-2);
+  color: var(--text-strong);
+}
+.glass-button:active,
+.swift-btn:active {
+  transform: scale(0.975);
+}
+
+/* 主强调色按钮 (Apple System Blue Liquid Gradient) */
+.glass-button.primary,
+.swift-btn.primary,
+.primary-btn {
+  background: linear-gradient(180deg, var(--teal-3) 0%, var(--teal) 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: var(--shadow-btn-primary), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+  font-weight: 600;
+}
+.glass-button.primary:hover,
+.swift-btn.primary:hover,
+.primary-btn:hover {
+  filter: brightness(1.06);
+}
+.glass-button.primary:active,
+.swift-btn.primary:active,
+.primary-btn:active {
+  transform: scale(0.975);
+  filter: brightness(0.94);
+}
+
+/* 危险操作按钮 (Apple System Red Liquid Gradient) */
+.glass-button.danger,
+.swift-btn.danger,
+.danger-btn {
+  background: linear-gradient(180deg, #ff453a 0%, #d70015 100%) !important;
+  color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 10px rgba(255, 59, 48, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+  font-weight: 600;
+}
+.glass-button.danger:hover,
+.swift-btn.danger:hover,
+.danger-btn:hover {
+  filter: brightness(1.06);
+}
+.glass-button.danger:active,
+.swift-btn.danger:active,
+.danger-btn:active {
+  transform: scale(0.975);
+}
+
+/* 禁用态按钮 */
+.glass-button:disabled,
+.swift-btn:disabled,
+button:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== iOS 26 / macOS 26 Dynamic Island 灵动浮岛消息 (Toasts) ===== */
+.dynamic-island-toast,
+.swift-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 140px;
+  max-width: 90vw;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  background: rgba(18, 18, 20, 0.88);
+  backdrop-filter: blur(32px) saturate(210%);
+  -webkit-backdrop-filter: blur(32px) saturate(210%);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 500;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+  animation: dynamic-island-bounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.dynamic-island-toast.is-error,
+.swift-toast.is-error {
+  background: rgba(45, 14, 16, 0.92);
+  box-shadow: 0 16px 44px rgba(255, 59, 48, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+.dynamic-island-toast .toast-icon,
+.swift-toast .toast-icon {
+  display: inline-flex;
+  font-size: 16px;
+  color: var(--green);
+}
+.dynamic-island-toast.is-error .toast-icon,
+.swift-toast.is-error .toast-icon {
+  color: var(--red);
+}
+
+@keyframes dynamic-island-bounce {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -24px) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+/* ===== SwiftUI 连续曲线圆角与发丝微边框滚动条 ===== */
+::-webkit-scrollbar { width: 8px; height: 8px; background-color: transparent; }
+::-webkit-scrollbar-track { background-color: transparent; margin-block: .35em; }
+::-webkit-scrollbar-thumb { border-radius: 9999px; background-color: var(--scrollbar); border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover, ::-webkit-scrollbar-thumb:active { background-color: var(--scrollbar-hover); }
+body.dark::-webkit-scrollbar-thumb, body.dark ::-webkit-scrollbar-thumb { background-color: var(--scrollbar-webkit); }
+body.dark::-webkit-scrollbar-thumb:hover, body.dark ::-webkit-scrollbar-thumb:hover { background-color: var(--scrollbar-webkit-hover); }
+:not(.dark) { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
+.dark * { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
+
+/* ===== 动效关键帧 (Animations) ===== */
+@keyframes collfade { 0% { transform: scaleY(.96); transform-origin: 0% 0%; opacity: 0; } 100% { transform: scaleY(1); transform-origin: 0% 0%; opacity: 1; } }
+@keyframes runningAnimation { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: .5; } }
+@keyframes settings-page-signal { 0% { box-shadow: 0 0 0 0 rgba(255, 149, 0, .4); } 50% { box-shadow: 0 0 0 6px transparent; } 100% { box-shadow: 0 0 0 6px transparent; } }
+@keyframes mui-zoom-in { 0% { opacity: 0; transform: scale(.96); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes mui-zoom-out { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.96); } }
+@keyframes mui-fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes mui-slide-up { 0% { opacity: 0; transform: translateY(-8px) scale(.98); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes mui-sheet-in { 0% { opacity: 0; transform: translateY(16px) scale(.97); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes mui-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* 切主题时瞬时过渡 */
+html[data-theme-animations="off"] *,
+html[data-theme-animations="off"] *::before,
+html[data-theme-animations="off"] *::after { transition: none !important; animation: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

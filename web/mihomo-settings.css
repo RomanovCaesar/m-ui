@@ -1,173 +1,404 @@
-/* ===== Mihomo 分流设置页 =====
-   度量全部对齐 3x-ui 2.9.3 的 Ant Design Vue 1.x（@border-radius-base:1rem）：
-   卡片 1.5rem、控件 1rem、菜单/标签项 .5rem、复选框 6px、开关 100px；控件高 32px；
-   表头 500/14px、rgba(0,0,0,.85)、底色 #fafafa；表格行 hover var(--table-hover)。
-   颜色一律走 ant-theme.css 的令牌，本文件不写死任何 hex。 */
+/* ===== Mihomo 分流设置页 (Apple SwiftUI & macOS Sequoia HIG) =====
+   采用 SF Pro 体系、磨砂玻璃拟态、iOS/macOS 胶囊分段拾取器、Apple 聚焦环与圆角系统。 */
 
-.mihomo-settings-page{display:grid;gap:16px}
+.mihomo-settings-page{display:grid;gap:18px}
 
-/* ---- 顶部动作条：等同 Ant 卡片（无阴影，只有 1px 边框 + 1.5rem 圆角） ---- */
-.mihomo-actionbar{display:flex;align-items:center;gap:10px;padding:24px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
-.mihomo-actionbar button:disabled{cursor:not-allowed;opacity:.48}
-.mihomo-actionbar .danger-btn{color:#fff;background:var(--danger);border-color:var(--danger)}
-.mihomo-actionbar .danger-btn:hover{background:var(--danger-hover);border-color:var(--danger-hover)}
+/* ---- 顶部动作条：macOS 浮动玻璃工具栏 ---- */
+.mihomo-actionbar{
+  display:flex;align-items:center;gap:12px;padding:16px 20px;
+  border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:var(--surface);backdrop-filter:blur(24px) saturate(190%);
+  -webkit-backdrop-filter:blur(24px) saturate(190%);
+  box-shadow:var(--shadow);transition:all .3s var(--ease);
+}
+.mihomo-actionbar button:disabled{cursor:not-allowed;opacity:.42}
+.mihomo-actionbar .danger-btn{
+  color:var(--danger);background:rgba(255,59,48,.1);
+  border:1px solid rgba(255,59,48,.25);border-radius:var(--radius-sm);
+  padding:0 16px;height:var(--ctl);font-weight:500;
+  transition:all .2s var(--ease);
+}
+.mihomo-actionbar .danger-btn:hover:not(:disabled){
+  background:var(--danger);color:#ffffff;border-color:var(--danger);
+  box-shadow:0 4px 12px rgba(255,59,48,.28);
+}
 
-/* ---- 未保存提示条：3x-ui 的 .settings-page .alert-msg + settings-page-signal 呼吸光 ---- */
-.mihomo-actionbar .mihomo-warning{display:block;margin:0 0 0 auto;padding:.5rem 1rem;border:0;border-radius:var(--radius-sm);color:#c27512;background:rgb(255 145 0 / 15%);font-size:16px;font-weight:400;text-align:center;cursor:default;transition:all .5s var(--ease);animation:settings-page-signal 3s cubic-bezier(.18,.89,.32,1.28) infinite}
-.mihomo-actionbar .mihomo-warning:hover{transition-duration:.3s;animation:settings-page-signal .9s ease infinite}
+/* ---- 未保存提示条：Apple 呼吸提示胶囊 ---- */
+.mihomo-actionbar .mihomo-warning{
+  display:inline-flex;align-items:center;gap:6px;margin:0 0 0 auto;
+  padding:6px 14px;border:1px solid rgba(255,149,0,.25);border-radius:var(--radius-pill);
+  color:var(--orange);background:rgba(255,149,0,.12);
+  font-size:13px;font-weight:600;text-align:center;cursor:default;
+  transition:all .4s var(--ease);animation:settings-page-signal 3s cubic-bezier(.25,1,.5,1) infinite;
+}
+.mihomo-actionbar .mihomo-warning:hover{animation-duration:1.2s}
 .mihomo-warning::before{content:none}
 
 .mihomo-delay-result{display:block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vpngate-row-status{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;margin-top:5px;text-align:left}.vpngate-row-detail{max-width:240px;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}.mihomo-pill.fallback{color:var(--tag-orange-color);border-color:var(--tag-orange-border);background:var(--tag-orange-bg)}
-.vpngate-modal{width:min(860px,calc(100vw - 32px));max-height:calc(100vh - 34px);overflow:auto}.vpngate-modal .modal-content{padding:24px}.vpngate-modal button:disabled{cursor:not-allowed;opacity:.48}.vpngate-install-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:16px;border:1px solid var(--tag-blue-border);border-radius:var(--radius);background:var(--tag-blue-bg)}.vpngate-install-card p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.5}.vpngate-install-card.installed{border-color:var(--tag-green-border);background:var(--tag-green-bg)}.vpngate-install-card .vpngate-status-error{grid-column:1/-1}.vpngate-status-error{color:var(--danger);font-size:13px;line-height:1.5;overflow-wrap:anywhere}.vpngate-status-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.vpngate-status-row:last-child{border-bottom:0}.vpngate-status-main{display:grid;gap:3px;min-width:0}.vpngate-status-main strong{color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.vpngate-status-main span,.vpngate-status-state{color:var(--muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}.vpngate-status-state{display:flex;align-items:center;flex-wrap:wrap;gap:5px}.vpngate-status-state small{flex-basis:100%}.vpngate-status-row .mihomo-actions{justify-content:flex-end}.vpngate-status-row .outline-btn{height:var(--ctl);padding:0 10px;white-space:nowrap}.vpngate-modal #vpngate-error{margin:0 0 12px;color:var(--danger);overflow-wrap:anywhere}.vpngate-modal #vpngate-form[hidden]{display:none!important}.vpngate-modal #vpngate-isp-note,.vpngate-modal #vpngate-slot-preview{min-height:1.3em}.vpngate-modal .modal-footer{margin-top:16px}.vpngate-modal .ant-select-combobox input{border:0!important;padding:0!important;margin:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;background:transparent!important}
-@media(max-width:680px){.vpngate-modal .modal-content{padding:16px}.vpngate-status-row{grid-template-columns:1fr}.vpngate-status-row .mihomo-actions{justify-content:flex-start}.vpngate-install-card{grid-template-columns:1fr}.vpngate-install-card button{justify-self:start}}
+.vpngate-row-status{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;margin-top:5px;text-align:left}
+.vpngate-row-detail{max-width:240px;overflow:hidden;color:var(--muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.mihomo-pill.fallback{color:var(--tag-orange-color);border-color:var(--tag-orange-border);background:var(--tag-orange-bg)}
 
-#ipinfo-token-status{display:block;margin-top:6px;color:var(--teal);font-size:12px}.setting-secret-control{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}.setting-secret-control input{min-width:0}.setting-secret-control small{grid-column:1/-1}.setting-secret-control button:disabled{cursor:not-allowed;opacity:.45}
+/* ---- VPNGate 弹窗：macOS Sequoia 弹窗 ---- */
+.vpngate-modal{
+  width:min(860px,calc(100vw - 32px));max-height:calc(100vh - 36px);
+  overflow:auto;border-radius:var(--radius-xl);border:1px solid var(--card-border);
+  background:var(--card);backdrop-filter:blur(36px) saturate(190%);
+  -webkit-backdrop-filter:blur(36px) saturate(190%);
+  box-shadow:var(--shadow-pop);
+}
+.vpngate-modal .modal-content{padding:24px}
+.vpngate-modal button:disabled{cursor:not-allowed;opacity:.42}
+.vpngate-install-card{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+  gap:12px;padding:16px;border:1px solid var(--tag-blue-border);
+  border-radius:var(--radius);background:var(--tag-blue-bg);
+}
+.vpngate-install-card p{margin:4px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+.vpngate-install-card.installed{border-color:var(--tag-green-border);background:var(--tag-green-bg)}
+.vpngate-install-card .vpngate-status-error{grid-column:1/-1}
+.vpngate-status-error{color:var(--danger);font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.vpngate-status-row{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) auto;
+  align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);
+}
+.vpngate-status-row:last-child{border-bottom:0}
+.vpngate-status-main{display:grid;gap:3px;min-width:0}
+.vpngate-status-main strong{color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.vpngate-status-main span,.vpngate-status-state{color:var(--muted);font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.vpngate-status-state{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.vpngate-status-state small{flex-basis:100%}
+.vpngate-status-row .mihomo-actions{justify-content:flex-end}
+.vpngate-status-row .outline-btn{height:var(--ctl);padding:0 12px;white-space:nowrap;border-radius:var(--radius-sm)}
+.vpngate-modal #vpngate-error{margin:0 0 12px;color:var(--danger);overflow-wrap:anywhere}
+.vpngate-modal #vpngate-form[hidden]{display:none!important}
+.vpngate-modal #vpngate-isp-note,.vpngate-modal #vpngate-slot-preview{min-height:1.3em}
+.vpngate-modal .modal-footer{margin-top:20px}
+.vpngate-modal .swift-combobox input{border:0!important;padding:0!important;margin:0!important;border-radius:0!important;outline:0!important;box-shadow:none!important;background:transparent!important}
+@media(max-width:680px){
+  .vpngate-modal .modal-content{padding:16px}
+  .vpngate-status-row{grid-template-columns:1fr}
+  .vpngate-status-row .mihomo-actions{justify-content:flex-start}
+  .vpngate-install-card{grid-template-columns:1fr}
+  .vpngate-install-card button{justify-self:start}
+}
+
+#ipinfo-token-status{display:block;margin-top:6px;color:var(--teal);font-size:12px}
+.setting-secret-control{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
+.setting-secret-control input{min-width:0}
+.setting-secret-control small{grid-column:1/-1}
+.setting-secret-control button:disabled{cursor:not-allowed;opacity:.42}
 
 /* ---- WARP 弹窗 ---- */
-.modal-panel.warp-modal{width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto}
+.modal-panel.warp-modal{
+  width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;
+  border-radius:var(--radius-xl);border:1px solid var(--card-border);
+  background:var(--card);backdrop-filter:blur(36px) saturate(190%);
+  -webkit-backdrop-filter:blur(36px) saturate(190%);
+  box-shadow:var(--shadow-pop);
+}
 .warp-modal .modal-content{padding:24px}
 .warp-info{width:100%;table-layout:fixed;margin:16px 0;border-collapse:collapse}
-.warp-info th,.warp-info td{display:table-cell!important;padding:8px 12px;border:0;background:transparent;text-align:left;vertical-align:top;text-transform:none;font-size:14px;letter-spacing:0}
-.warp-info th{width:32%;font-weight:400;color:var(--muted)}
-.warp-info td{overflow-wrap:anywhere;white-space:normal;color:var(--text)}
-.warp-info tr:nth-child(odd){background:var(--surface-2)}
-.warp-divider{display:flex;align-items:center;gap:16px;margin:24px 0 16px;font-size:16px;font-weight:500;color:var(--text-strong);text-align:center}
+.warp-info th,.warp-info td{display:table-cell!important;padding:9px 14px;border:0;background:transparent;text-align:left;vertical-align:top;text-transform:none;font-size:13px;letter-spacing:0}
+.warp-info th{width:32%;font-weight:500;color:var(--muted)}
+.warp-info td{overflow-wrap:anywhere;white-space:normal;color:var(--text);font-weight:500}
+.warp-info tr:nth-child(odd){background:var(--surface-subtle)}
+.warp-divider{display:flex;align-items:center;gap:16px;margin:24px 0 16px;font-size:15px;font-weight:600;color:var(--text-strong);text-align:center}
 .warp-divider::before,.warp-divider::after{content:'';flex:1;border-top:1px solid var(--line)}
-.warp-license{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-#warp-license-form{display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;padding:20px}
-#warp-license-input{min-width:0;width:100%;height:var(--ctl);padding:4px 11px;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);color:var(--text);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.warp-license{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+#warp-license-form{display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;padding:18px}
+#warp-license-input{
+  min-width:0;width:100%;height:var(--ctl);padding:4px 12px;
+  border:1px solid var(--stroke);border-radius:var(--radius-sm);
+  background:var(--surface-subtle);color:var(--text);
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
 #warp-license-input:hover{border-color:var(--teal-3)}
-#warp-license-input:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft);outline:0}
+#warp-license-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);outline:0;background:var(--surface-strong)}
 #warp-license-update{grid-column:2;justify-self:start}
 .warp-outbound-status{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
-.warp-note,#warp-pending,#warp-loading{color:var(--muted);font-size:14px}
-.warp-note a{color:var(--teal)}
+.warp-note,#warp-pending,#warp-loading{color:var(--muted);font-size:13px}
+.warp-note a{color:var(--teal);text-decoration:none}
+.warp-note a:hover{text-decoration:underline}
 #warp-error,#warp-config-error{margin:12px 0;color:var(--danger);overflow-wrap:anywhere}
-.warp-modal button:disabled{opacity:.5;cursor:not-allowed}
-.warp-modal .danger-btn{color:#fff;background:var(--danger);border-color:var(--danger)}
-@media(max-width:600px){.warp-modal .modal-content{padding:16px}.warp-info th{width:37%}.warp-info th,.warp-info td{font-size:13px;padding:5px 4px}#warp-license-form{grid-template-columns:1fr;padding:14px}#warp-license-update{grid-column:1}}
+.warp-modal button:disabled{opacity:.45;cursor:not-allowed}
+.warp-modal .danger-btn{
+  color:var(--danger);background:rgba(255,59,48,.1);border:1px solid rgba(255,59,48,.25);
+  border-radius:var(--radius-sm);height:var(--ctl);padding:0 16px;font-weight:500;
+}
+.warp-modal .danger-btn:hover:not(:disabled){background:var(--danger);color:#ffffff}
+@media(max-width:600px){
+  .warp-modal .modal-content{padding:16px}
+  .warp-info th{width:37%}
+  .warp-info th,.warp-info td{font-size:13px;padding:6px 6px}
+  #warp-license-form{grid-template-columns:1fr;padding:14px}
+  #warp-license-update{grid-column:1}
+}
 
-/* ---- 卡片与标签页 ---- */
-.mihomo-card{padding:24px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
-/* Ant .ant-tabs：bar 有 1px 下边框，ink-bar 由 JS 定位（bottom:1px;height:2px;background:#008771） */
-.mihomo-tabs{position:relative;display:flex;flex-wrap:wrap;gap:0;margin-bottom:16px;border-bottom:1px solid var(--line)}
-.mihomo-tab{display:flex;align-items:center;gap:10px;height:auto;margin:0 32px 0 0;padding:12px 16px;border:0;border-radius:0;background:transparent;color:var(--text);font-size:14px;box-shadow:none;transition:color .3s var(--ease)}
-.mihomo-tab:hover{color:var(--teal-3)}
-.mihomo-tab.active{color:var(--teal);font-weight:500;text-shadow:0 0 .25px currentColor}
+/* ---- 卡片与 SwiftUI 选项卡 ---- */
+.mihomo-card{
+  padding:24px;border:1px solid var(--line);border-radius:var(--radius-xl);
+  background:var(--card);backdrop-filter:blur(24px) saturate(190%);
+  -webkit-backdrop-filter:blur(24px) saturate(190%);
+  box-shadow:var(--shadow);transition:all .3s var(--ease);
+}
+
+/* SwiftUI Segmented Tab Bar */
+.mihomo-tabs{
+  position:relative;display:inline-flex;flex-wrap:wrap;gap:4px;
+  margin-bottom:20px;padding:4px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface-subtle);
+}
+.mihomo-tab{
+  display:inline-flex;align-items:center;gap:8px;height:auto;
+  margin:0;padding:7px 16px;border:0;border-radius:8px;
+  background:transparent;color:var(--muted);font-size:13px;font-weight:500;
+  cursor:pointer;box-shadow:none;transition:all .2s var(--ease);
+}
+.mihomo-tab:hover{color:var(--text-strong);background:rgba(0,0,0,.03)}
+body.dark .mihomo-tab:hover{background:rgba(255,255,255,.05)}
+.mihomo-tab.active{
+  color:var(--text-strong);background:var(--surface-strong);
+  font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
 .mihomo-tab-icon{display:inline-flex;font-size:14px;line-height:1}
-.mihomo-pane{display:none}.mihomo-pane.active{display:block;animation:mui-fade-in .3s var(--ease)}
+.mihomo-pane{display:none}
+.mihomo-pane.active{display:block;animation:mui-fade-in .25s var(--ease)}
 
-/* ---- 工具条与主要按钮（Ant .ant-btn：32px / 0 15px / 1rem） ---- */
-.mihomo-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:16px}
+/* ---- 工具条与主要按钮（SwiftUI 胶囊/圆角样式） ---- */
+.mihomo-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px}
 .mihomo-toolbar .mihomo-spacer{flex:1}
-.mihomo-primary,.mihomo-tool{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:var(--ctl);padding:0 15px;border:1px solid var(--teal);border-radius:var(--radius);color:#fff;background:var(--teal);font-size:14px;font-weight:400;line-height:1.5;white-space:nowrap;cursor:pointer;text-shadow:0 -1px 0 rgba(0,0,0,.12);box-shadow:var(--shadow-btn-primary);transition:all .3s var(--ease)}
-.mihomo-primary:hover,.mihomo-tool:hover{background:var(--teal-3);border-color:var(--teal-3)}
-.mihomo-tool{color:var(--text);background:var(--surface);border-color:var(--stroke);text-shadow:none;box-shadow:var(--shadow-btn)}
-.mihomo-tool:hover{color:var(--teal);background:var(--surface);border-color:var(--teal)}
-.mihomo-tool.placeholder{border-color:var(--stroke);color:var(--muted);background:var(--surface-2)}
+.mihomo-primary,.mihomo-tool{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:var(--ctl);padding:0 16px;border-radius:var(--radius-sm);
+  font-size:13px;font-weight:500;line-height:1.5;white-space:nowrap;
+  cursor:pointer;transition:all .2s var(--ease);
+}
+.mihomo-primary{
+  color:#ffffff;background:var(--teal);border:1px solid var(--teal);
+  box-shadow:0 2px 8px rgba(0,113,227,.28);
+}
+.mihomo-primary:hover{background:var(--teal-3);border-color:var(--teal-3);transform:translateY(-1px)}
+.mihomo-primary:active{transform:scale(.98)}
+.mihomo-tool{
+  color:var(--text);background:var(--surface-subtle);
+  border:1px solid var(--line-strong);box-shadow:0 1px 3px rgba(0,0,0,.03);
+}
+.mihomo-tool:hover{color:var(--teal);background:var(--surface-hover);border-color:var(--teal);transform:translateY(-1px)}
+.mihomo-tool:active{transform:scale(.98)}
+.mihomo-tool.placeholder{border-color:var(--line);color:var(--muted);background:var(--surface-subtle);cursor:default}
 
-/* ---- 表格 ---- */
-.mihomo-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius)}
+/* ---- 表格：macOS Sequoia Table ---- */
+.mihomo-table-wrap{
+  overflow:auto;border:1px solid var(--line);
+  border-radius:var(--radius-lg);background:var(--surface);
+  box-shadow:0 2px 10px rgba(0,0,0,.02);
+}
 .mihomo-table{width:100%;min-width:820px;margin:0;border:0;border-collapse:collapse;border-radius:0}
-.mihomo-table th,.mihomo-table td{padding:16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;vertical-align:middle;transition:background .3s var(--ease)}
+.mihomo-table th,.mihomo-table td{
+  padding:13px 16px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  text-align:center;vertical-align:middle;transition:background-color .2s var(--ease);
+}
 .mihomo-table th:last-child,.mihomo-table td:last-child{border-right:0}
 .mihomo-table tbody tr:last-child td{border-bottom:0}
-.mihomo-table th{color:var(--text-strong);background:var(--surface-2);font-weight:500;font-size:14px;letter-spacing:0;text-transform:none;white-space:nowrap}
+.mihomo-table th{
+  color:var(--muted);background:var(--surface-subtle);font-weight:600;
+  font-size:12px;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;
+}
 .mihomo-table td:first-child{width:auto;background:transparent}
 .mihomo-table tbody tr:hover > td{background:var(--table-hover)}
-.mihomo-name{font-weight:500;color:var(--text-strong)}.mihomo-muted{color:var(--muted)}
+.mihomo-name{font-weight:600;color:var(--text-strong)}.mihomo-muted{color:var(--muted)}
 
-/* ---- Ant tag：0 7px / 12px / line-height 20px / 1rem ---- */
-.mihomo-pill{display:inline-flex;align-items:center;padding:0 7px;border:1px solid var(--tag-purple-border);border-radius:var(--radius);color:var(--tag-purple-color);background:var(--tag-purple-bg);font-size:12px;line-height:20px}
-body.dark .mihomo-pill{color:var(--tag-purple-color);border-color:var(--tag-purple-border);background:var(--tag-purple-bg)}
+/* ---- Apple 胶囊标签 ---- */
+.mihomo-pill{
+  display:inline-flex;align-items:center;padding:2px 10px;
+  border:1px solid var(--tag-purple-border);border-radius:var(--radius-pill);
+  color:var(--tag-purple-color);background:var(--tag-purple-bg);
+  font-size:12px;font-weight:600;line-height:18px;letter-spacing:.01em;
+}
 .mihomo-pill.group{color:var(--tag-green-color);border-color:var(--tag-green-border);background:var(--tag-green-bg)}
 
-/* ---- 行内图标按钮：Ant .ant-btn-icon-only.ant-btn-sm（24×24 / 1rem） ---- */
-.mihomo-actions{display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
-.mihomo-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:1px solid var(--stroke);border-radius:var(--radius);color:var(--text);background:var(--surface);font-size:14px;cursor:pointer;box-shadow:var(--shadow-btn);transition:all .3s var(--ease)}
-.mihomo-icon:hover{color:var(--teal);border-color:var(--teal)}
-.mihomo-icon.danger:hover{color:var(--danger);border-color:var(--danger)}
-.mihomo-icon:disabled{cursor:not-allowed;opacity:.35}
-.mihomo-empty{padding:48px 16px;color:var(--muted-2);text-align:center}
-.mihomo-empty strong{display:block;margin-bottom:8px;color:var(--text);font-size:16px}
+/* ---- 行内图标按钮：Apple macOS 动作按钮 ---- */
+.mihomo-actions{display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.mihomo-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;padding:0;border:1px solid var(--line);
+  border-radius:8px;color:var(--muted);background:var(--surface-subtle);
+  font-size:13px;cursor:pointer;transition:all .18s var(--ease);
+}
+.mihomo-icon:hover{color:var(--teal);border-color:var(--teal);background:var(--surface-hover);transform:scale(1.06)}
+.mihomo-icon.danger:hover{color:var(--danger);border-color:var(--danger);background:rgba(255,59,48,.1)}
+.mihomo-icon:active{transform:scale(.94)}
+.mihomo-icon:disabled{cursor:not-allowed;opacity:.32}
+.mihomo-empty{padding:48px 16px;color:var(--muted);text-align:center}
+.mihomo-empty strong{display:block;margin-bottom:8px;color:var(--text-strong);font-size:16px;font-weight:600}
 
 /* ---- Outbound / Rule 弹窗 ---- */
-.mihomo-modal{width:min(820px,calc(100vw - 32px));max-height:calc(100vh - 34px);overflow:auto}
+.mihomo-modal{
+  width:min(820px,calc(100vw - 32px));max-height:calc(100vh - 36px);overflow:auto;
+  border-radius:var(--radius-xl);border:1px solid var(--card-border);
+  background:var(--card);backdrop-filter:blur(36px) saturate(190%);
+  -webkit-backdrop-filter:blur(36px) saturate(190%);
+  box-shadow:var(--shadow-pop);
+}
 .mihomo-modal .modal-content{padding:24px}
 .mihomo-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .mihomo-field{display:grid;gap:6px}.mihomo-field.full{grid-column:1/-1}
-.mihomo-field>span{font-weight:500;color:var(--text-strong)}.mihomo-field small{color:var(--muted)}
-.mihomo-field input,.mihomo-field select,.mihomo-field textarea{width:100%;height:var(--ctl);padding:4px 11px;border:1px solid var(--stroke);border-radius:var(--radius);color:var(--text);background:var(--surface);outline:none;transition:border-color .3s var(--ease),box-shadow .3s var(--ease),background .3s var(--ease)}
-.mihomo-field textarea{height:auto;min-height:76px;resize:vertical}
+.mihomo-field>span{font-weight:500;color:var(--text-strong);font-size:13px}.mihomo-field small{color:var(--muted);font-size:12px}
+.mihomo-field input,.mihomo-field select,.mihomo-field textarea{
+  width:100%;height:var(--ctl);padding:4px 12px;border:1px solid var(--stroke);
+  border-radius:var(--radius-sm);color:var(--text);background:var(--surface-subtle);
+  outline:none;font-size:13px;transition:border-color .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease);
+}
+.mihomo-field textarea{height:auto;min-height:80px;resize:vertical}
 .mihomo-field select[multiple]{height:auto;min-height:140px}
 .mihomo-field input:hover,.mihomo-field select:hover,.mihomo-field textarea:hover{border-color:var(--teal-3)}
-.mihomo-field input:focus,.mihomo-field select:focus,.mihomo-field textarea:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
-.mihomo-checks{display:flex;flex-wrap:wrap;gap:10px 20px;padding:10px 0}
-.mihomo-check{display:flex;align-items:center;gap:8px;color:var(--text)}
+.mihomo-field input:focus,.mihomo-field select:focus,.mihomo-field textarea:focus{
+  border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);background:var(--surface-strong);
+}
+.mihomo-checks{display:flex;flex-wrap:wrap;gap:12px 24px;padding:8px 0}
+.mihomo-check{display:flex;align-items:center;gap:8px;color:var(--text);font-size:13px;font-weight:500}
 .mihomo-check input{width:16px;height:16px;accent-color:var(--teal)}
-/* Ant .ant-alert（info）：8px 15px、1rem、1px 边框、淡蓝底 */
-.mihomo-form-note{margin-bottom:16px;padding:8px 15px;border:1px solid var(--tag-blue-border);border-radius:var(--radius);color:var(--text);background:var(--tag-blue-bg);line-height:1.5}
+.mihomo-form-note{
+  margin-bottom:16px;padding:10px 16px;border:1px solid var(--tag-blue-border);
+  border-radius:var(--radius);color:var(--text);background:var(--tag-blue-bg);
+  line-height:1.5;font-size:13px;
+}
 .mihomo-member-summary{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mihomo-rule-payload{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono)}
-.mihomo-dirty-dot{display:none;width:6px;height:6px;border-radius:50%;background:var(--orange)}
+.mihomo-dirty-dot{display:none;width:7px;height:7px;border-radius:50%;background:var(--orange)}
 .mihomo-dirty .mihomo-dirty-dot{display:inline-block;animation:runningAnimation 2s infinite}
 
-/* ---- Basics 折叠面板（Ant Collapse：#fafafa 底、1rem 外框、header 10px 16px 10px 40px + left 16px 箭头） ---- */
-.basics-sections{border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface-2);overflow:hidden}
-.basics-section+ .basics-section{border-top:1px solid var(--stroke)}
-.basics-section>summary{position:relative;list-style:none;cursor:pointer;padding:10px 16px 10px 40px;font-size:14px;line-height:22px;color:var(--text-strong);background:transparent}
+/* ---- Basics 折叠面板：SwiftUI Inset Grouped Section ---- */
+.basics-sections{
+  border:1px solid var(--line);border-radius:var(--radius-lg);
+  background:var(--surface);overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.02);
+}
+.basics-section+ .basics-section{border-top:1px solid var(--line)}
+.basics-section>summary{
+  position:relative;list-style:none;cursor:pointer;
+  padding:12px 18px 12px 42px;font-size:14px;font-weight:600;
+  line-height:22px;color:var(--text-strong);background:var(--surface-subtle);
+  transition:background-color .2s var(--ease);
+}
+.basics-section>summary:hover{background:var(--surface-hover)}
 .basics-section>summary::-webkit-details-marker{display:none}
-/* Ant Collapse 的箭头：left 16px 垂直居中，折叠指向右，展开转 90° 指向下 */
-.basics-section>summary::before{content:'';position:absolute;top:50%;left:16px;width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-50%) rotate(-45deg);transition:transform .24s var(--ease)}
+.basics-section>summary::before{
+  content:'';position:absolute;top:50%;left:18px;width:7px;height:7px;
+  border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+  transform:translateY(-50%) rotate(-45deg);transition:transform .24s var(--ease);
+}
 .basics-section[open]>summary::before{transform:translateY(-50%) rotate(45deg)}
-.basics-section-body{padding:16px;border-top:1px solid var(--stroke);background:var(--surface);overflow-x:auto;animation:collfade .3s var(--ease)}
-.basics-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:24px;padding:12px 0;border-bottom:1px solid var(--line)}
+.basics-section-body{
+  padding:16px 20px;border-top:1px solid var(--line);
+  background:var(--surface);overflow-x:auto;animation:collfade .25s var(--ease);
+}
+.basics-row{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  align-items:center;gap:24px;padding:12px 0;border-bottom:1px solid var(--line);
+}
 .basics-row:last-child{border-bottom:0}
-.basics-row label,.basics-row span{font-size:14px;color:var(--text-strong)}
-.basics-row p{margin:4px 0 0;font-size:14px;color:var(--muted);line-height:1.5}
+.basics-row label,.basics-row span{font-size:14px;color:var(--text-strong);font-weight:500}
+.basics-row p{margin:4px 0 0;font-size:13px;color:var(--muted);line-height:1.5}
 .basics-control{min-width:0}
-.basics-control>input,.basics-control>select{width:100%;height:var(--ctl);padding:4px 11px;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);color:var(--text);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.basics-control>input,.basics-control>select{
+  width:100%;height:var(--ctl);padding:4px 12px;border:1px solid var(--stroke);
+  border-radius:var(--radius-sm);background:var(--surface-subtle);color:var(--text);
+  font-size:13px;transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
 .basics-control>input:hover,.basics-control>select:hover{border-color:var(--teal-3)}
-.basics-control>input:focus,.basics-control>select:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft);outline:0}
+.basics-control>input:focus,.basics-control>select:focus{
+  border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);outline:0;background:var(--surface-strong);
+}
 .basics-control.switch-control{display:flex;justify-content:flex-start}
 .basics-control input:disabled{cursor:not-allowed}
-.basics-control .switch:has(input:disabled){opacity:.6;cursor:not-allowed}
-.basics-mode-warning{padding:8px 15px;border:1px solid var(--tag-orange-border);border-radius:var(--radius);color:var(--tag-orange-color);background:var(--tag-orange-bg)}
+.basics-control .switch:has(input:disabled){opacity:.55;cursor:not-allowed}
+.basics-mode-warning{
+  padding:10px 16px;border:1px solid var(--tag-orange-border);border-radius:var(--radius);
+  color:var(--tag-orange-color);background:var(--tag-orange-bg);font-size:13px;
+}
 .basics-reset{padding:24px}
-.basics-tags{display:flex;flex-wrap:wrap;gap:6px;padding:3px 7px;min-height:var(--ctl);border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+.basics-tags{
+  display:flex;flex-wrap:wrap;gap:6px;padding:4px 8px;min-height:var(--ctl);
+  border:1px solid var(--stroke);border-radius:var(--radius-sm);
+  background:var(--surface-subtle);transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
 .basics-tags:hover{border-color:var(--teal-3)}
-.basics-tags:focus-within{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
+.basics-tags:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);background:var(--surface-strong)}
 .basics-tags [data-tag-items]{display:contents}
-.basics-tags input{flex:1;min-width:100px;max-width:100%;height:24px;padding:0 4px;outline:0;border:0;color:var(--text);background:transparent}
-/* Ant .ant-tag：0 7px / 12px / line-height 20px / 1rem */
-.basics-tag{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:0 7px;border:1px solid var(--tag-border);border-radius:var(--radius);background:var(--tag-bg);color:var(--tag-color);font-size:12px;line-height:20px;overflow-wrap:anywhere}
-.basics-tag button{flex:none;display:inline-flex;align-items:center;padding:0;border:0;color:var(--muted);background:transparent;font-size:12px;cursor:pointer;transition:color .3s var(--ease)}
+.basics-tags input{flex:1;min-width:100px;max-width:100%;height:24px;padding:0 4px;outline:0;border:0;color:var(--text);background:transparent;font-size:13px}
+.basics-tag{
+  display:inline-flex;align-items:center;gap:4px;max-width:100%;
+  padding:2px 8px;border:1px solid var(--tag-border);border-radius:var(--radius-pill);
+  background:var(--tag-bg);color:var(--tag-color);font-size:12px;line-height:18px;overflow-wrap:anywhere;font-weight:500;
+}
+.basics-tag button{
+  flex:none;display:inline-flex;align-items:center;padding:0;border:0;
+  color:var(--muted);background:transparent;font-size:12px;cursor:pointer;
+  transition:color .2s var(--ease);
+}
 .basics-tag button:hover{color:var(--danger)}
 
-@media(max-width:760px){.basics-section-body{padding:8px 14px 14px}.basics-row{grid-template-columns:1fr;gap:9px}.basics-row p{font-size:13px}.mihomo-tabs{gap:0}.mihomo-tab{margin-right:16px;padding:12px 8px;font-size:14px}}
+@media(max-width:760px){
+  .basics-section-body{padding:10px 14px 14px}
+  .basics-row{grid-template-columns:1fr;gap:10px}
+  .basics-row p{font-size:12px}
+  .mihomo-tabs{gap:3px;display:flex;width:100%}
+  .mihomo-tab{flex:1;justify-content:center;padding:8px 10px;font-size:12px}
+}
 
 /* ---- Form / YAML 编辑器标签页 ---- */
-.mihomo-editor-tabs{position:relative;display:flex;gap:0;margin:0 0 16px;border-bottom:1px solid var(--line)}
-.mihomo-editor-tabs button{margin:0 32px 0 0;padding:12px 16px;border:0;border-bottom:0;background:transparent;color:var(--text);font-size:14px;cursor:pointer;transition:color .3s var(--ease)}
-.mihomo-editor-tabs button:hover{color:var(--teal-3)}
-.mihomo-editor-tabs button[aria-selected="true"]{color:var(--teal);font-weight:500;text-shadow:0 0 .25px currentColor}
+.mihomo-editor-tabs{
+  position:relative;display:inline-flex;gap:4px;margin:0 0 16px;
+  padding:3px;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface-subtle);
+}
+.mihomo-editor-tabs button{
+  margin:0;padding:6px 14px;border:0;border-radius:7px;
+  background:transparent;color:var(--muted);font-size:13px;font-weight:500;
+  cursor:pointer;transition:all .2s var(--ease);
+}
+.mihomo-editor-tabs button:hover{color:var(--text-strong)}
+.mihomo-editor-tabs button[aria-selected="true"]{
+  background:var(--surface-strong);color:var(--text-strong);
+  font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.06);
+}
 
-/* ---- Link 解析行（Ant Input.Group 观感：32px 高、1rem 圆角） ---- */
-.outbound-link-row{display:flex;align-items:center;width:100%;height:var(--ctl);margin-bottom:16px;overflow:hidden;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--surface);transition:border-color .3s var(--ease),box-shadow .3s var(--ease)}
+/* ---- Link 解析行 ---- */
+.outbound-link-row{
+  display:flex;align-items:center;width:100%;height:var(--ctl);margin-bottom:16px;
+  overflow:hidden;border:1px solid var(--stroke);border-radius:var(--radius-sm);
+  background:var(--surface-subtle);transition:border-color .2s var(--ease),box-shadow .2s var(--ease);
+}
 .outbound-link-row:hover{border-color:var(--teal-3)}
-.outbound-link-row:focus-within{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-soft)}
-.outbound-link-row label{flex:none;padding:0 11px;border-right:1px solid var(--line);color:var(--muted);font-size:14px}
-.outbound-link-row input{flex:1;min-width:0;height:100%;padding:4px 11px;border:0;background:transparent;color:var(--text);outline-offset:-2px}
-.outbound-link-row button{flex:none;display:inline-flex;align-items:center;justify-content:center;width:40px;height:100%;border:0;border-left:1px solid var(--line);background:var(--surface-2);color:var(--teal);font-size:14px;cursor:pointer;transition:background .3s var(--ease)}
-.outbound-link-row button:hover{background:var(--surface-3)}
-.outbound-link-row button:disabled{opacity:.5;cursor:wait}
+.outbound-link-row:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);background:var(--surface-strong)}
+.outbound-link-row label{flex:none;padding:0 12px;border-right:1px solid var(--line);color:var(--muted);font-size:13px;font-weight:500}
+.outbound-link-row input{flex:1;min-width:0;height:100%;padding:4px 12px;border:0;background:transparent;color:var(--text);font-size:13px;outline:0}
+.outbound-link-row button{
+  flex:none;display:inline-flex;align-items:center;justify-content:center;
+  width:42px;height:100%;border:0;border-left:1px solid var(--line);
+  background:var(--surface-subtle);color:var(--teal);font-size:14px;
+  cursor:pointer;transition:background-color .2s var(--ease);
+}
+.outbound-link-row button:hover{background:var(--surface-hover)}
+.outbound-link-row button:disabled{opacity:.45;cursor:wait}
 
 /* ---- YAML 编辑器 ---- */
-.outbound-yaml-editor{display:grid;grid-template-columns:48px minmax(0,1fr);height:360px;max-height:52vh;overflow:hidden;border:1px solid var(--stroke);border-radius:var(--radius);background:var(--code-bg)}
-.outbound-yaml-editor pre,.outbound-yaml-editor textarea{margin:0;padding:12px;font:14px/22px var(--font-mono);tab-size:2;letter-spacing:0}
-.outbound-yaml-editor pre{overflow:hidden;text-align:right;color:var(--muted);background:var(--surface-2);border-right:1px solid var(--line);user-select:none}
-.outbound-yaml-editor textarea{width:100%;height:100%;min-width:0;resize:none;overflow:auto;border:0;border-radius:0;outline-offset:-2px;white-space:pre;color:var(--code-color);background:transparent}
+.outbound-yaml-editor{
+  display:grid;grid-template-columns:48px minmax(0,1fr);height:360px;max-height:52vh;
+  overflow:hidden;border:1px solid var(--line);border-radius:var(--radius);
+  background:var(--code-bg);
+}
+.outbound-yaml-editor pre,.outbound-yaml-editor textarea{margin:0;padding:12px;font:13px/22px var(--font-mono);tab-size:2;letter-spacing:0}
+.outbound-yaml-editor pre{overflow:hidden;text-align:right;color:var(--muted);background:var(--surface-subtle);border-right:1px solid var(--line);user-select:none}
+.outbound-yaml-editor textarea{width:100%;height:100%;min-width:0;resize:none;overflow:auto;border:0;border-radius:0;outline:0;white-space:pre;color:var(--code-color);background:transparent}
 #outbound-import-error{margin-top:16px;color:var(--danger);white-space:pre-wrap;overflow-wrap:anywhere}
 #outbound-yaml-panel[hidden],#outbound-form-panel[hidden]{display:none!important}
-@media(max-width:760px){.mihomo-actionbar{align-items:flex-start;flex-wrap:wrap;padding:16px}.mihomo-actionbar .mihomo-warning{width:100%;margin:8px 0 0;font-size:14px}.mihomo-card{padding:14px}.mihomo-tabs .mihomo-tab{margin-right:12px}.mihomo-form-grid{grid-template-columns:1fr}.mihomo-field.full{grid-column:auto}}
+@media(max-width:760px){
+  .mihomo-actionbar{align-items:flex-start;flex-wrap:wrap;padding:14px}
+  .mihomo-actionbar .mihomo-warning{width:100%;margin:8px 0 0;font-size:13px}
+  .mihomo-card{padding:16px}
+  .mihomo-form-grid{grid-template-columns:1fr}
+  .mihomo-field.full{grid-column:auto}
+}
+

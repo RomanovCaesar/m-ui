@@ -11,3 +11,4 @@ mihomo.exe
 .env
 .claude/
 cookies.txt
+web/static/

@@ -12,188 +12,439 @@
     } catch {}
   </script>
   <style>
-    /* ===== 令牌：全部取自 3x-ui 2.9.3 的 antd.min.css（@border-radius-base:1rem）与 custom.min.css。
-       浅色 = Ant 默认；暗色 = 3x-ui 的海军蓝 --dark-color-*；超暗色 = 中性灰一套。
-       本页由订阅路由直接吐出、不经过面板 mux，取不到 static/ant-theme.css，所以令牌在此自带一份。 */
+    /* ===== Apple Wallet / SwiftUI Design Tokens =====
+       Sub page styled as an Apple Passbook / Wallet Pass card.
+       Uses SF Pro typography, frosted glass materials, Apple squircle radii, and Cupertino system colors. */
     :root{
       color-scheme:light;
-      --page:#f0f2f5;                 /* Ant 布局底色 */
-      --card:#fff;--card-border:#f0f0f0;
-      --surface:#fafafa;              /* .ant-table th / .ant-tag 底色 */
-      --surface-strong:#fff;          /* .ant-popover-inner / .ant-dropdown-menu */
-      --text:rgba(0,0,0,.65);--text-strong:rgba(0,0,0,.85);--muted:rgba(0,0,0,.45);
-      --line:#e8e8e8;                 /* Ant 分割线 */
-      --line-strong:#d9d9d9;          /* Ant 控件边框 */
-      --primary:#008771;              /* --color-primary-100 */
-      --primary-hover:#18947b;        /* .ant-btn-primary:hover */
-      --primary-soft:#e8f4f2;         /* custom.min.css 的浅色 hover 底 */
-      --purple:#722ed1;--purple-soft:#f9f0ff;--purple-line:#d3adf7;   /* .ant-tag-purple */
-      --shadow:none;                  /* .ant-card 默认无阴影 */
-      --card-hover-shadow:0 2px 8px rgba(0,0,0,.09);   /* .ant-card-hoverable:hover */
-      --menu-shadow:0 2px 8px rgba(0,0,0,.15);         /* .ant-popover-inner */
-      --btn-bg:#fff;--btn-border:#d9d9d9;--btn-color:rgba(0,0,0,.65);
-      --btn-hover-bg:#fff;--btn-hover-border:#008771;--btn-hover-color:#008771;
-      --select-hover-bg:#e8f4f2;--item-hover:#e8f4f2;
-      /* 内联 ant-select 增强器用的令牌（与 ant-theme.css 同名） */
-      --stroke:#d9d9d9;--teal:#008771;--teal-3:#18947b;--teal-soft:rgba(0,135,113,.2);--muted-2:rgba(0,0,0,.25);
-      --shadow-pop:0 2px 8px rgba(0,0,0,.15);
-      --select-bg:#fff;--select-hover:#e8f4f2;--select-item-hover:#e8f4f2;--select-item-selected:#fafafa;--select-item-color:rgba(0,0,0,.65);
-      --switch-off:rgba(0,0,0,.25);--checkbox-bg:#fff;--checkbox-border:#d9d9d9;
-      --node-bg:rgba(0,0,0,.03);--node-border:rgba(0,0,0,.08);--node-color:rgba(0,0,0,.85);
-      --node-hover-bg:rgba(0,0,0,.05);--node-hover-border:rgba(0,0,0,.14);
-      --qr-frame:linear-gradient(var(--tr-rotate),#76ccb4,transparent,#d5bed2);
-      --qr-plate:#fff;--qr-plate-hover:rgb(255 255 255 / 60%);--qr-plate-active:rgb(255 255 255 / 30%);
-      --qr-cv:#fff0;
-      --msg-bg:#fff;--msg-border:#fff0;
-      --scrollbar:#9a9a9a;--scrollbar-hover:#7d7d7d;
-      --font:-apple-system,BlinkMacSystemFont,"Segoe UI",PingFang SC,"Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",Helvetica,Arial,sans-serif;
-      --font-mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
-      --ease:cubic-bezier(.645,.045,.355,1);
-      --radius-xs:6px;--radius-sm:.5rem;--radius:1rem;--radius-lg:1.5rem;
+      --page:#f2f2f7;
+      --card:rgba(255,255,255,.84);
+      --card-border:rgba(0,0,0,.08);
+      --card-shadow:0 24px 64px -12px rgba(0,0,0,.09),0 2px 6px rgba(0,0,0,.04);
+      --surface:rgba(255,255,255,.7);
+      --surface-hover:rgba(255,255,255,.9);
+      --surface-strong:rgba(255,255,255,.96);
+      --surface-subtle:rgba(0,0,0,.03);
+      --text:#1d1d1f;
+      --text-strong:#000000;
+      --muted:#86868b;
+      --muted-2:#aeaeb2;
+      --line:rgba(60,60,67,.12);
+      --line-strong:rgba(60,60,67,.24);
+      --primary:#0071e3;
+      --primary-hover:#0077ed;
+      --primary-soft:rgba(0,113,227,.1);
+      --primary-soft-hover:rgba(0,113,227,.16);
+      --green:#34c759;
+      --green-soft:rgba(52,199,89,.12);
+      --orange:#ff9500;
+      --orange-soft:rgba(255,149,0,.12);
+      --purple:#af52de;
+      --purple-soft:rgba(175,82,222,.1);
+      --purple-line:rgba(175,82,222,.24);
+      --shadow:0 8px 24px rgba(0,0,0,.05);
+      --card-hover-shadow:0 12px 32px rgba(0,0,0,.08);
+      --menu-shadow:0 16px 40px rgba(0,0,0,.14);
+      --btn-bg:rgba(255,255,255,.8);
+      --btn-border:rgba(60,60,67,.18);
+      --btn-color:#1d1d1f;
+      --btn-hover-bg:#ffffff;
+      --btn-hover-border:#0071e3;
+      --btn-hover-color:#0071e3;
+      --stroke:rgba(60,60,67,.16);
+      --teal:#0071e3;
+      --teal-3:#0077ed;
+      --teal-soft:rgba(0,113,227,.18);
+      --shadow-pop:0 14px 36px rgba(0,0,0,.14);
+      --select-bg:rgba(255,255,255,.9);
+      --select-hover:rgba(0,113,227,.08);
+      --select-item-hover:rgba(0,113,227,.08);
+      --select-item-selected:rgba(0,113,227,.12);
+      --select-item-color:#1d1d1f;
+      --switch-off:rgba(120,120,128,.2);
+      --checkbox-bg:#ffffff;
+      --checkbox-border:rgba(60,60,67,.25);
+      --node-bg:rgba(255,255,255,.65);
+      --node-border:rgba(60,60,67,.12);
+      --node-color:#1d1d1f;
+      --node-hover-bg:rgba(255,255,255,.92);
+      --node-hover-border:rgba(0,113,227,.35);
+      --qr-plate:#ffffff;
+      --qr-plate-hover:#ffffff;
+      --qr-plate-active:rgba(255,255,255,.9);
+      --qr-cv:#ffffff;
+      --msg-bg:rgba(28,28,30,.92);
+      --msg-color:#ffffff;
+      --msg-border:rgba(255,255,255,.14);
+      --scrollbar:rgba(0,0,0,.2);
+      --scrollbar-hover:rgba(0,0,0,.35);
+      --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","SF Pro","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+      --font-mono:"SF Mono",SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,monospace;
+      --ease:cubic-bezier(.25,1,.5,1);
+      --radius-xs:6px;
+      --radius-sm:10px;
+      --radius:14px;
+      --radius-lg:20px;
+      --radius-xl:26px;
+      --radius-pill:9999px;
       background:var(--page);color:var(--text);font:14px/1.5 var(--font);
     }
     html[data-theme="dark"]{
       color-scheme:dark;
-      --page:#0a1222;                 /* --dark-color-background */
-      --card:#151f31;--card-border:#0a1222;            /* surface-100 / .dark .ant-card-bordered */
-      --surface:#222d42;              /* surface-200：控件与表头底 */
-      --surface-strong:#222d42;       /* .dark .ant-popover-inner / .ant-dropdown-menu */
-      --text:rgba(255,255,255,.75);--text-strong:rgba(255,255,255,.85);--muted:rgba(255,255,255,.45);
-      --line:rgba(255,255,255,.1);    /* surface-400 */
-      --line-strong:#2c3950;          /* surface-300 */
-      --primary:#008771;--primary-hover:#18947b;--primary-soft:rgb(0 135 113 / .3);
-      --purple:#d988cd;--purple-soft:#201425;--purple-line:#5a2969;   /* --dark-color-tag-purple-* */
-      --shadow:none;--card-hover-shadow:0 2px 8px #fff0;   /* .dark .ant-card-hoverable:hover */
-      --menu-shadow:0 2px 8px rgba(0,0,0,.45);
-      --btn-bg:rgb(10 117 87 / 30%);--btn-border:#008771;--btn-color:rgba(255,255,255,.75);
-      --btn-hover-bg:rgb(10 117 87 / 50%);--btn-hover-border:#008771;--btn-hover-color:#fff;
-      --select-hover-bg:rgb(0 135 113 / .3);--item-hover:#313f5a;    /* surface-600 */
-      --stroke:#2c3950;--teal:#008771;--teal-3:#18947b;--teal-soft:rgb(0 135 113 / .3);--muted-2:rgba(255,255,255,.25);
-      --shadow-pop:0 2px 8px rgba(0,0,0,.45);
-      --select-bg:#222d42;--select-hover:rgb(0 135 113 / .3);--select-item-hover:rgb(0 93 78 / .3);--select-item-selected:#2c3950;--select-item-color:rgba(255,255,255,.85);
-      --switch-off:rgb(0 135 113 / .3);--checkbox-bg:rgb(0 135 113 / .3);--checkbox-border:rgb(0 135 113 / .3);
-      --node-bg:rgba(0,0,0,.2);--node-border:rgba(255,255,255,.1);--node-color:#fff;
-      --node-hover-bg:rgba(0,0,0,.3);--node-hover-border:rgba(255,255,255,.2);
-      --qr-frame:linear-gradient(var(--tr-rotate),#195141,transparent,#5a2969);
-      --qr-plate:#111929;--qr-plate-hover:rgba(17,25,41,.5);--qr-plate-active:rgba(17,25,41,.2);
-      --qr-cv:#fff;                   /* .dark .qr-cv：白色二维码贴在 surface-700 底板上 */
-      --msg-bg:#222d42;--msg-border:#2c3950;           /* .dark .ant-message-notice-content */
-      --scrollbar:#7484a0;--scrollbar-hover:#90a4c7;
+      --page:#161618;
+      --card:rgba(28,28,30,.86);
+      --card-border:rgba(255,255,255,.12);
+      --card-shadow:0 28px 70px -12px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.08);
+      --surface:rgba(44,44,46,.72);
+      --surface-hover:rgba(58,58,60,.85);
+      --surface-strong:rgba(36,36,38,.96);
+      --surface-subtle:rgba(255,255,255,.05);
+      --text:rgba(255,255,255,.88);
+      --text-strong:#ffffff;
+      --muted:rgba(235,235,245,.6);
+      --muted-2:rgba(235,235,245,.3);
+      --line:rgba(255,255,255,.1);
+      --line-strong:rgba(255,255,255,.2);
+      --primary:#0a84ff;
+      --primary-hover:#409cff;
+      --primary-soft:rgba(10,132,255,.16);
+      --primary-soft-hover:rgba(10,132,255,.24);
+      --green:#30d158;
+      --green-soft:rgba(48,209,88,.16);
+      --orange:#ff9f0a;
+      --orange-soft:rgba(255,159,10,.16);
+      --purple:#bf5af2;
+      --purple-soft:rgba(191,90,242,.16);
+      --purple-line:rgba(191,90,242,.32);
+      --shadow:0 8px 28px rgba(0,0,0,.35);
+      --card-hover-shadow:0 14px 40px rgba(0,0,0,.45);
+      --menu-shadow:0 18px 48px rgba(0,0,0,.5);
+      --btn-bg:rgba(255,255,255,.08);
+      --btn-border:rgba(255,255,255,.15);
+      --btn-color:rgba(255,255,255,.88);
+      --btn-hover-bg:rgba(255,255,255,.14);
+      --btn-hover-border:#0a84ff;
+      --btn-hover-color:#0a84ff;
+      --stroke:rgba(255,255,255,.15);
+      --teal:#0a84ff;
+      --teal-3:#409cff;
+      --teal-soft:rgba(10,132,255,.22);
+      --shadow-pop:0 16px 44px rgba(0,0,0,.5);
+      --select-bg:rgba(36,36,38,.96);
+      --select-hover:rgba(10,132,255,.18);
+      --select-item-hover:rgba(10,132,255,.18);
+      --select-item-selected:rgba(10,132,255,.24);
+      --select-item-color:rgba(255,255,255,.92);
+      --switch-off:rgba(120,120,128,.32);
+      --checkbox-bg:rgba(255,255,255,.08);
+      --checkbox-border:rgba(255,255,255,.25);
+      --node-bg:rgba(44,44,46,.65);
+      --node-border:rgba(255,255,255,.1);
+      --node-color:rgba(255,255,255,.9);
+      --node-hover-bg:rgba(58,58,60,.82);
+      --node-hover-border:rgba(10,132,255,.45);
+      --qr-plate:#1e1e20;
+      --qr-plate-hover:#242426;
+      --qr-plate-active:#2c2c2e;
+      --qr-cv:#ffffff;
+      --msg-bg:rgba(40,40,42,.94);
+      --msg-color:#ffffff;
+      --msg-border:rgba(255,255,255,.18);
+      --scrollbar:rgba(255,255,255,.2);
+      --scrollbar-hover:rgba(255,255,255,.35);
     }
-    /* Ultra Dark：3x-ui 的中性灰一套（比暗色更"平"而不是更蓝），只在 dark 之上叠加。 */
     html[data-theme="dark"][data-ultra-dark="true"]{
-      --page:#21242a;--card:#0c0e12;--card-border:#21242a;
-      --surface:#222327;--surface-strong:#222327;
-      --text:rgb(255 255 255 / 85%);--text-strong:rgb(255 255 255 / 92%);--muted:rgb(255 255 255 / 50%);
-      --line:rgba(255,255,255,.1);--line-strong:#202025;
-      --stroke:#202025;--select-bg:#222327;--select-item-selected:#32353b;
-      --purple:#d686ca;--purple-soft:#241121;--purple-line:#5a2969;
-      --item-hover:#505663;
-      --qr-plate:#101113;--qr-plate-hover:rgba(16,17,19,.5);--qr-plate-active:rgba(16,17,19,.2);
-      --msg-bg:#222327;--msg-border:#32353b;
-      --scrollbar:#9f9f9f;--scrollbar-hover:#d1d1d1;
+      --page:#000000;
+      --card:rgba(18,18,18,.92);
+      --card-border:rgba(255,255,255,.09);
+      --card-shadow:0 30px 80px -10px rgba(0,0,0,.85),0 0 0 1px rgba(255,255,255,.06);
+      --surface:rgba(28,28,30,.8);
+      --surface-hover:rgba(38,38,40,.9);
+      --surface-strong:rgba(24,24,26,.98);
+      --surface-subtle:rgba(255,255,255,.04);
+      --line:rgba(255,255,255,.08);
+      --line-strong:rgba(255,255,255,.16);
+      --stroke:rgba(255,255,255,.12);
+      --select-bg:rgba(24,24,26,.98);
+      --node-bg:rgba(24,24,26,.8);
+      --node-border:rgba(255,255,255,.08);
+      --qr-plate:#141416;
+      --msg-bg:rgba(28,28,30,.96);
     }
     *{box-sizing:border-box}
-    /* .qr-bg-sub 的流光边框：@property 与 keyframes 直接照抄 custom.min.css */
-    @property --tr-rotate{syntax:'<angle>';initial-value:45deg;inherits:false}
-    @keyframes tr-rotate-gradient{from{--tr-rotate:45deg}to{--tr-rotate:405deg}}
-    body{margin:0;min-height:100vh;padding:24px;background:var(--page);color:var(--text);transition:background-color .3s var(--ease),color .3s var(--ease)}
+    body{
+      margin:0;min-height:100vh;padding:36px 16px;background:var(--page);color:var(--text);
+      font-family:var(--font);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+      transition:background-color .3s var(--ease),color .3s var(--ease);
+      display:flex;align-items:flex-start;justify-content:center;
+    }
     button,select{font:inherit}
-    /* 3x-ui 切主题时给 <html> 打 data-theme-animations="off"，抑制整页过渡 */
     html[data-theme-animations="off"] *,html[data-theme-animations="off"] *::before,html[data-theme-animations="off"] *::after{transition:none!important;animation:none!important}
-    /* 3x-ui 的细滚动条：10px、圆角滑块、content-box 裁出 2px 间隙 */
-    ::-webkit-scrollbar{width:10px;height:10px}
-    ::-webkit-scrollbar-track{background:#fff0}
-    ::-webkit-scrollbar-thumb{border:2px solid #fff0;border-radius:9999px;background-color:var(--scrollbar);background-clip:content-box}
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:var(--radius-pill);background-color:var(--scrollbar);background-clip:content-box}
     ::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-hover)}
     *{scrollbar-width:thin;scrollbar-color:var(--scrollbar) transparent}
-    /* Ant .ant-card（3x-ui 里是 hoverable）：1.5rem 圆角、head 48px、body 24px */
-    .card{width:min(1280px,100%);margin:0 auto;padding:0;border:1px solid var(--card-border);border-radius:var(--radius-lg);background:var(--card);box-shadow:var(--shadow);transition:background-color .3s var(--ease),border-color .3s var(--ease),box-shadow .3s var(--ease)}
-    .card:hover{box-shadow:var(--card-hover-shadow)}
-    .head{position:relative;display:flex;align-items:center;gap:8px;min-height:48px;padding:0 24px;border-bottom:1px solid var(--line);color:var(--text-strong);font-size:16px;font-weight:500}
-    /* .token = a-tag：0 7px / 12px / line-height 20px / 1rem */
-    .token{max-width:min(55vw,460px);overflow:hidden;padding:0 7px;border:1px solid var(--line-strong);border-radius:var(--radius);color:var(--text);background:var(--surface);font-size:12px;line-height:20px;text-overflow:ellipsis;white-space:nowrap}
-    /* .gear = a-button shape="circle" icon="setting"：32×32、border-radius:50% */
-    .gear{margin-left:auto;width:32px;height:32px;min-width:32px;flex:none;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--btn-border);border-radius:50%;color:var(--btn-color);background:var(--btn-bg);font-size:16px;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.015);transition:all .3s var(--ease)}
-    .gear:hover,.gear[aria-expanded="true"]{color:var(--btn-hover-color);border-color:var(--btn-hover-border);background:var(--btn-hover-bg)}
-    .gear:focus-visible,.theme-switch input:focus-visible+span,.ultra-check input:focus-visible+span,.language-select:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+    /* ===== Apple Wallet Pass Card ===== */
+    .card{
+      width:min(900px,100%);
+      margin:0 auto;
+      padding:0 0 28px;
+      border:1px solid var(--card-border);
+      border-radius:var(--radius-xl);
+      background:var(--card);
+      backdrop-filter:blur(32px) saturate(190%);
+      -webkit-backdrop-filter:blur(32px) saturate(190%);
+      box-shadow:var(--card-shadow);
+      position:relative;
+      overflow:hidden;
+      transition:background-color .3s var(--ease),border-color .3s var(--ease),box-shadow .3s var(--ease);
+    }
+    .card::before{
+      content:"";position:absolute;top:0;left:0;right:0;height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.35) 20%,rgba(255,255,255,.35) 80%,transparent);
+      pointer-events:none;
+    }
+
+    /* Pass Header */
+    .head{
+      position:relative;display:flex;align-items:center;gap:12px;
+      min-height:60px;padding:0 24px;border-bottom:1px solid var(--line);
+      color:var(--text-strong);font-size:17px;font-weight:600;letter-spacing:-.015em;
+    }
+    .token{
+      max-width:min(50vw,420px);overflow:hidden;padding:3px 10px;
+      border:1px solid var(--line);border-radius:var(--radius-pill);
+      color:var(--muted);background:var(--surface-subtle);
+      font-family:var(--font-mono);font-size:12px;font-weight:500;
+      line-height:18px;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .gear{
+      margin-left:auto;width:34px;height:34px;min-width:34px;flex:none;
+      display:inline-flex;align-items:center;justify-content:center;padding:0;
+      border:1px solid var(--line);border-radius:50%;color:var(--muted);
+      background:var(--surface-subtle);font-size:16px;cursor:pointer;
+      transition:all .2s var(--ease);
+    }
+    .gear:hover,.gear[aria-expanded="true"]{
+      color:var(--text-strong);border-color:var(--line-strong);background:var(--surface-hover);
+      transform:scale(1.04);
+    }
+    .gear:active{transform:scale(.96)}
+    .gear:focus-visible,.theme-switch input:focus-visible+span,.ultra-check input:focus-visible+span,.language-select:focus-visible{
+      outline:2px solid var(--primary);outline-offset:2px;
+    }
     .gear svg{width:16px;height:16px}
-    /* Ant .ant-popover-inner：1rem 圆角、无边框、0 2px 8px rgba(0,0,0,.15) */
-    .settings-menu{position:absolute;z-index:20;top:calc(100% + 12px);right:0;width:min(270px,calc(100vw - 48px));padding:0 0 12px;border:0;border-radius:var(--radius);background:var(--surface-strong);box-shadow:var(--menu-shadow);transform:translateY(-8px) scale(.98);transform-origin:top right;opacity:0;visibility:hidden;transition:transform .2s var(--ease),opacity .2s var(--ease),visibility .2s}
+
+    /* macOS Sequoia Popover Menu */
+    .settings-menu{
+      position:absolute;z-index:20;top:calc(100% + 10px);right:16px;
+      width:min(280px,calc(100vw - 48px));padding:6px 0 14px;
+      border:1px solid var(--card-border);border-radius:var(--radius-lg);
+      background:var(--surface-strong);backdrop-filter:blur(36px) saturate(190%);
+      -webkit-backdrop-filter:blur(36px) saturate(190%);
+      box-shadow:var(--menu-shadow);
+      transform:translateY(-8px) scale(.98);transform-origin:top right;
+      opacity:0;visibility:hidden;
+      transition:transform .2s var(--ease),opacity .2s var(--ease),visibility .2s;
+    }
     .settings-menu.open{transform:translateY(0) scale(1);opacity:1;visibility:visible}
-    .settings-menu::before{position:absolute;top:-5px;right:16px;width:10px;height:10px;border-radius:2px;background:var(--surface-strong);transform:rotate(45deg);content:""}
-    /* Ant .ant-popover-title：min-height 32px、5px 16px 4px、500/14px、1px 下边框 */
-    .settings-title{position:relative;min-height:32px;padding:5px 16px 4px;border-bottom:1px solid var(--line);color:var(--text-strong);font-size:14px;font-weight:500;line-height:22px}
-    /* Ant .ant-popover-inner-content：12px 16px；内部是 a-space vertical :size="10" */
-    .theme-options{display:grid;gap:10px;padding:12px 16px 0}
-    .theme-option{display:flex;align-items:center;gap:8px;color:var(--text);font-size:14px;cursor:pointer}
-    /* display:flex 会压过 UA 的 [hidden]{display:none}：浅色下超暗色行必须真的藏起来 */
+    .settings-title{
+      position:relative;padding:8px 18px;border-bottom:1px solid var(--line);
+      color:var(--text-strong);font-size:13px;font-weight:600;letter-spacing:-.01em;
+    }
+    .theme-options{display:grid;gap:12px;padding:14px 18px 6px}
+    .theme-option{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--text);font-size:14px;cursor:pointer}
     .theme-option[hidden]{display:none}
-    /* Ant .ant-switch-small：28×16、滑块 12px、all .36s cubic-bezier(.78,.14,.15,.86) */
-    .theme-switch{position:relative;width:28px;height:16px;min-width:28px;flex:none}
+
+    /* iOS 18 Toggle Switch */
+    .theme-switch{position:relative;width:44px;height:24px;min-width:44px;flex:none}
     .theme-switch input,.ultra-check input{position:absolute;inset:0;margin:0;opacity:0;pointer-events:none}
-    .theme-switch span{position:absolute;inset:0;border-radius:100px;background:var(--switch-off);cursor:pointer;transition:all .36s cubic-bezier(.78,.14,.15,.86)}
-    .theme-switch span::after{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:12px;background:#fff;box-shadow:0 2px 4px 0 rgba(0,35,11,.2);content:"";transition:all .36s cubic-bezier(.78,.14,.15,.86)}
-    .theme-switch input:checked+span{background:var(--primary)}
-    .theme-switch input:checked+span::after{left:100%;margin-left:-2px;transform:translateX(-100%)}
-    /* Ant .ant-checkbox：16×16、1px #d9d9d9、6px 圆角（custom.min.css 覆盖）、选中 #008771 + 2px 白勾 */
-    .ultra-check{position:relative;display:inline-flex;width:16px;height:16px;flex:none}
-    .ultra-check span{position:absolute;inset:0;border:1px solid var(--checkbox-border);border-radius:var(--radius-xs);background:var(--checkbox-bg);pointer-events:none;transition:all .3s var(--ease)}
-    .ultra-check span::after{position:absolute;top:50%;left:50%;width:5px;height:9px;border:2px solid #fff;border-top:0;border-left:0;transform:rotate(45deg) scale(0) translate(-50%,-50%);transform-origin:center;opacity:0;content:"";transition:all .2s cubic-bezier(.12,.4,.29,1.46) .1s}
+    .theme-switch span{position:absolute;inset:0;border-radius:var(--radius-pill);background:var(--switch-off);cursor:pointer;transition:background-color .3s var(--ease)}
+    .theme-switch span::after{
+      position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
+      background:#ffffff;box-shadow:0 2px 4px rgba(0,0,0,.2),0 0 1px rgba(0,0,0,.15);
+      content:"";transition:transform .3s var(--ease);
+    }
+    .theme-switch input:checked+span{background:var(--green)}
+    .theme-switch input:checked+span::after{transform:translateX(20px)}
+
+    /* iOS Squircle Checkbox */
+    .ultra-check{position:relative;display:inline-flex;width:18px;height:18px;flex:none}
+    .ultra-check span{
+      position:absolute;inset:0;border:1.5px solid var(--checkbox-border);
+      border-radius:6px;background:var(--checkbox-bg);pointer-events:none;
+      transition:all .2s var(--ease);
+    }
+    .ultra-check span::after{
+      position:absolute;top:50%;left:50%;width:4px;height:8px;
+      border:2px solid #fff;border-top:0;border-left:0;
+      transform:rotate(45deg) scale(0) translate(-50%,-50%);transform-origin:center;
+      opacity:0;content:"";transition:transform .2s var(--ease),opacity .2s;
+    }
     .ultra-check input:checked+span{border-color:var(--primary);background:var(--primary)}
     .ultra-check input:checked+span::after{transform:rotate(45deg) scale(1) translate(-50%,-50%);opacity:1}
-    .language-label{padding:12px 16px 8px;color:var(--text);font-size:14px}
-    /* 选择框观感由内联的 ant-select 增强器提供，这里只管宽度与外边距 */
-    .language-select{width:calc(100% - 32px);margin:0 16px}
-    /* 3x-ui subpage.html：tr-qr-box.qr-box 宽 220px，两列 a-row :gutter="[8,8]" */
-    .codes{display:grid;grid-template-columns:repeat(2,220px);justify-content:center;gap:8px;margin:24px 24px 16px}
-    .code-card{display:flex;flex-direction:column;align-items:center;width:220px;text-align:center}
-    /* .code-title = a-tag color="purple" + .qr-tag（width:100%;margin-bottom:10px） */
-    .code-title{width:100%;overflow:hidden;margin:0 0 10px;padding:0 7px;border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--purple);background:var(--purple-soft);font-size:12px;line-height:20px;text-align:center}
-    /* .qr = .qr-bg-sub（padding:1px 的渐变描边框），::after 顶替 .qr-bg-sub-inner（.8rem 底板） */
-    .qr{position:relative;width:220px;height:220px;margin:0 auto;padding:1px;border:0;border-radius:var(--radius);background-image:var(--qr-frame);cursor:pointer}
-    .qr:hover{animation:tr-rotate-gradient 3.5s linear infinite}
-    .qr::after{position:absolute;inset:1px;border-radius:var(--radius);background:var(--qr-plate);content:"";pointer-events:none;transition:all .1s}
-    .qr:hover::after{background:var(--qr-plate-hover);backdrop-filter:blur(25px)}
-    .qr:active::after{background:var(--qr-plate-active)}
-    .qr canvas{position:relative;z-index:1;width:100%;height:100%;padding:.8rem;border-radius:.25rem;background-color:var(--qr-cv);background-clip:content-box;cursor:pointer}
-    /* .url 借用 3x-ui .subscription-link-box 的皮肤（12px 圆角、13px 等宽、点击复制、hover 加深、
-       0 4px 6px 阴影）。3x-ui 里那个盒子占满整行所以内边距是 25px 20px 15px，
-       这里被压在 220px 的二维码栏下面，内边距收到 12px，其余照抄。 */
-    .url{width:100%;margin-top:10px;padding:12px;border:1px solid var(--node-border);border-radius:12px;color:var(--node-color);background:var(--node-bg);font:13px/1.5 var(--font-mono);text-align:left;word-break:break-all;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,.1);transition:all .3s var(--ease)}
-    .url:hover{background:var(--node-hover-bg);border-color:var(--node-hover-border)}
-    .clients{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:0 24px 8px}
+
+    .language-label{padding:12px 18px 6px;color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+    .language-select{width:calc(100% - 36px);margin:0 18px}
+
+    /* Passbook QR Cards */
+    .codes{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      justify-content:center;gap:16px;margin:28px 24px 20px;
+    }
+    .code-card{
+      display:flex;flex-direction:column;align-items:center;padding:20px 16px;
+      border:1px solid var(--line);border-radius:var(--radius-lg);
+      background:var(--surface);text-align:center;
+      box-shadow:0 4px 16px rgba(0,0,0,.03);transition:all .3s var(--ease);
+    }
+    .code-card:hover{
+      transform:translateY(-2px);border-color:var(--line-strong);
+      box-shadow:0 8px 24px rgba(0,0,0,.06);
+    }
+    .code-title{
+      display:inline-flex;align-items:center;justify-content:center;
+      margin:0 0 14px;padding:3px 14px;border:1px solid var(--purple-line);
+      border-radius:var(--radius-pill);color:var(--purple);background:var(--purple-soft);
+      font-size:12px;font-weight:600;letter-spacing:.02em;text-align:center;
+    }
+    .qr{
+      position:relative;width:210px;height:210px;margin:0 auto;padding:10px;
+      border:1px solid var(--line);border-radius:var(--radius);
+      background:#ffffff;box-shadow:0 4px 16px rgba(0,0,0,.04);
+      cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s var(--ease);
+    }
+    .qr:hover{transform:scale(1.02);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    .qr:active{transform:scale(.98)}
+    .qr canvas{display:block;width:100%!important;height:100%!important;border-radius:8px;background-color:#ffffff}
+    .url{
+      width:100%;margin-top:14px;padding:10px 12px;
+      border:1px solid var(--line);border-radius:var(--radius-sm);
+      color:var(--muted);background:var(--surface-subtle);
+      font:12px/1.5 var(--font-mono);text-align:center;word-break:break-all;
+      cursor:pointer;transition:all .2s var(--ease);
+    }
+    .url:hover{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
+    .url:active{transform:scale(.99)}
+
+    /* SwiftUI Segmented Clients Buttons */
+    .clients{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:0 24px 12px}
     .client-drop{position:relative}
-    /* 3x-ui：.subscription-page .ant-btn.ant-btn-primary.ant-btn-lg.ant-dropdown-trigger{border-radius:4rem;padding:0 20px} */
-    .client-btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 20px;border:1px solid var(--primary);border-radius:4rem;color:#fff;background:var(--primary);font-size:16px;font-weight:400;line-height:1.5;white-space:nowrap;cursor:pointer;text-shadow:0 -1px 0 rgba(0,0,0,.12);box-shadow:0 2px 0 rgba(0,0,0,.045);transition:all .3s var(--ease)}
-    .client-btn:hover,.client-btn[aria-expanded="true"]{color:#fff;background:var(--primary-hover);border-color:var(--primary-hover)}
+    .client-btn{
+      display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 18px;
+      border:1px solid var(--line-strong);border-radius:var(--radius-pill);
+      color:var(--text-strong);background:var(--surface);
+      font-size:14px;font-weight:500;line-height:1.5;white-space:nowrap;
+      cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.03);
+      transition:all .2s var(--ease);
+    }
+    .client-btn:hover{
+      background:var(--primary-soft);border-color:var(--primary);color:var(--primary);
+      transform:translateY(-1px);
+    }
+    .client-btn[aria-expanded="true"]{
+      background:var(--primary);border-color:var(--primary);color:#ffffff;
+    }
     .client-btn svg{width:16px;height:16px;flex:none}
-    .client-btn .chev{width:12px;height:12px;transition:transform .3s var(--ease)}
+    .client-btn .chev{width:11px;height:11px;transition:transform .24s var(--ease)}
     .client-btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
     .client-btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-    /* Ant .ant-dropdown-menu：padding .5rem、1rem 圆角；item 5px 12px + .5rem 圆角 */
-    .client-menu{position:absolute;z-index:20;left:50%;top:calc(100% + 8px);min-width:200px;padding:.5rem;border:0;border-radius:var(--radius);background:var(--surface-strong);box-shadow:var(--menu-shadow);transform:translate(-50%,-8px) scale(.98);transform-origin:top center;opacity:0;visibility:hidden;transition:transform .2s var(--ease),opacity .2s var(--ease),visibility .2s}
+
+    /* Client Popover Menu */
+    .client-menu{
+      position:absolute;z-index:20;left:50%;top:calc(100% + 8px);min-width:200px;
+      padding:6px;border:1px solid var(--card-border);border-radius:var(--radius);
+      background:var(--surface-strong);backdrop-filter:blur(32px) saturate(190%);
+      -webkit-backdrop-filter:blur(32px) saturate(190%);
+      box-shadow:var(--menu-shadow);
+      transform:translate(-50%,-6px) scale(.98);transform-origin:top center;
+      opacity:0;visibility:hidden;
+      transition:transform .2s var(--ease),opacity .2s var(--ease),visibility .2s;
+    }
     .client-menu.open{transform:translate(-50%,0) scale(1);opacity:1;visibility:visible}
-    .client-item{display:block;width:100%;margin:0;padding:5px 12px;border:0;border-radius:var(--radius-sm);color:var(--text);background:transparent;text-align:left;font:inherit;font-size:14px;font-weight:400;line-height:22px;white-space:nowrap;cursor:pointer;transition:all .3s var(--ease)}
-    .client-item:hover,.client-item:focus-visible{background:var(--item-hover);outline:none}
-    /* Ant .ant-table：1rem 圆角、单元格 16px、1px #e8e8e8 下边框；首列充当表头（500/14px/#fafafa） */
-    table{width:calc(100% - 48px);margin:24px 24px 0;overflow:hidden;border:1px solid var(--line);border-spacing:0;border-collapse:separate;border-radius:var(--radius)}
-    td{padding:16px;border-bottom:1px solid var(--line)}tr:last-child td{border-bottom:0}td:first-child{width:42%;color:var(--text-strong);background:var(--surface);font-weight:500}
-    /* .status = a-tag（purple）：0 7px / 12px / line-height 20px / 1rem */
-    .status{display:inline-block;padding:0 7px;border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--purple);background:var(--purple-soft);font-size:12px;line-height:20px}
-    .nodes{margin:24px 24px 0;padding-bottom:24px}
-    /* .node = 3x-ui .subscription-link-box：12px 圆角、25px 20px 15px、13px 等宽、点击复制 */
-    .node{position:relative;margin-top:20px;padding:25px 20px 15px;border:1px solid var(--node-border);border-radius:12px;color:var(--node-color);background:var(--node-bg);font:13px/1.5 var(--font-mono);text-align:left;word-break:break-all;cursor:pointer;box-shadow:0 4px 6px rgba(0,0,0,.1);transition:all .3s var(--ease)}
-    .node:hover{background:var(--node-hover-bg);border-color:var(--node-hover-border)}
-    /* .node-title = 3x-ui 那个 a-tag：内联 margin-bottom:-10px + position:relative + z-index:2 +
-       box-shadow:0 2px 4px rgba(0,0,0,.2)，配 .subscription-link-box 的 margin-top:-12px，
-       结果是标签顶边与盒子顶边齐平、整个压在 25px 的上内边距里。这里用 margin:0 0 3px 直接得到同样位置。 */
-    .node-title{position:relative;z-index:2;display:inline-block;margin:0 0 3px;padding:0 7px;border:1px solid var(--purple-line);border-radius:var(--radius);color:var(--purple);background:var(--purple-soft);font:12px/20px var(--font);box-shadow:0 2px 4px rgba(0,0,0,.2)}
-    /* Ant .ant-message：顶部居中、10px 16px、1rem、0 4px 12px rgba(0,0,0,.15)、带 success 图标 */
-    .copy-toast{position:fixed;z-index:30;top:8px;left:50%;display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid var(--msg-border);border-radius:var(--radius);color:var(--text);background:var(--msg-bg);box-shadow:0 4px 12px rgba(0,0,0,.15);font-size:14px;transform:translate(-50%,-100%);opacity:0;pointer-events:none;transition:transform .3s var(--ease),opacity .3s var(--ease)}
-    .copy-toast.show{transform:translate(-50%,0);opacity:1}
-    .copy-toast svg{width:16px;height:16px;flex:none;color:var(--primary)}
-    @media(max-width:700px){body{padding:10px}.head{min-height:44px;padding:0 14px;font-size:14px}.codes,.clients,table,.nodes{margin-left:14px;margin-right:14px}.codes{grid-template-columns:minmax(0,1fr)}.code-card{width:100%}.qr{width:min(220px,100%);height:auto;aspect-ratio:1}.settings-menu{right:-2px}td{padding:12px}.node{padding:18px 14px 12px}.url{padding:10px}}
+    .client-item{
+      display:block;width:100%;margin:0;padding:7px 12px;border:0;
+      border-radius:8px;color:var(--text);background:transparent;
+      text-align:left;font:inherit;font-size:13px;font-weight:500;line-height:20px;
+      white-space:nowrap;cursor:pointer;transition:all .15s var(--ease);
+    }
+    .client-item:hover,.client-item:focus-visible{
+      background:var(--primary-soft);color:var(--primary);outline:none;
+    }
+
+    /* SwiftUI Inset Grouped Table (Form Section) */
+    table{
+      width:calc(100% - 48px);margin:24px 24px 0;overflow:hidden;
+      border:1px solid var(--line);border-spacing:0;border-collapse:separate;
+      border-radius:var(--radius-lg);background:var(--surface);
+      box-shadow:0 2px 10px rgba(0,0,0,.02);
+    }
+    td{padding:13px 18px;border-bottom:1px solid var(--line);font-size:14px;transition:background-color .2s var(--ease)}
+    tr:last-child td{border-bottom:0}
+    td:first-child{
+      width:40%;color:var(--muted);background:var(--surface-subtle);
+      font-weight:500;border-right:1px solid var(--line);
+    }
+    td:last-child{color:var(--text-strong);font-weight:500}
+    tr:hover td{background:var(--surface-hover)}
+
+    /* Status Capsule Tag */
+    .status{
+      display:inline-flex;align-items:center;padding:2px 10px;
+      border:1px solid rgba(52,199,89,.3);border-radius:var(--radius-pill);
+      color:var(--green);background:var(--green-soft);font-size:12px;font-weight:600;
+    }
+
+    /* Node Link Cards */
+    .nodes{margin:24px 24px 0;padding-bottom:12px}
+    .node{
+      position:relative;margin-top:12px;padding:14px 18px;
+      border:1px solid var(--node-border);border-radius:var(--radius);
+      color:var(--node-color);background:var(--node-bg);
+      font:12px/1.5 var(--font-mono);text-align:left;word-break:break-all;
+      cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.02);
+      transition:all .2s var(--ease);
+    }
+    .node:hover{
+      background:var(--node-hover-bg);border-color:var(--node-hover-border);
+      transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.06);
+    }
+    .node:active{transform:scale(.995)}
+    .node-title{
+      display:inline-flex;align-items:center;margin:0 0 6px;padding:2px 10px;
+      border:1px solid rgba(0,113,227,.25);border-radius:var(--radius-pill);
+      color:var(--primary);background:var(--primary-soft);
+      font:600 12px/18px var(--font);letter-spacing:.01em;
+    }
+
+    /* Apple Dynamic Island Top Center Pill Toast */
+    .copy-toast{
+      position:fixed;z-index:100;top:20px;left:50%;
+      display:flex;align-items:center;gap:8px;padding:9px 20px;
+      border:1px solid var(--msg-border);border-radius:var(--radius-pill);
+      color:var(--msg-color);background:var(--msg-bg);
+      backdrop-filter:blur(28px) saturate(190%);
+      -webkit-backdrop-filter:blur(28px) saturate(190%);
+      box-shadow:0 12px 36px rgba(0,0,0,.25);font-size:14px;font-weight:500;
+      transform:translate(-50%,-20px) scale(.94);opacity:0;pointer-events:none;
+      transition:transform .28s var(--ease),opacity .28s var(--ease);
+    }
+    .copy-toast.show{transform:translate(-50%,0) scale(1);opacity:1}
+    .copy-toast svg{width:16px;height:16px;flex:none;color:var(--green)}
+
+    @media(max-width:700px){
+      body{padding:12px}
+      .card{border-radius:var(--radius-lg)}
+      .head{min-height:50px;padding:0 16px;font-size:15px}
+      .codes,.clients,table,.nodes{margin-left:14px;margin-right:14px}
+      .codes{grid-template-columns:1fr;gap:12px}
+      .qr{width:180px;height:180px}
+      .settings-menu{right:0}
+      td{padding:11px 14px}
+      .node{padding:12px 14px}
+    }
   </style>
 </head>
 <body>
@@ -201,7 +452,7 @@
     <header class="head">
       <span data-i18n="title">Subscription info</span><span class="token">{{.Token}}</span>
       <button class="gear" id="settings-button" type="button" aria-label="Panel Settings" aria-controls="settings-menu" aria-expanded="false">
-        <svg class="anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M924.8 625.7l-65.5-56c3.1-19 4.7-38.4 4.7-57.8s-1.6-38.8-4.7-57.8l65.5-56a32.03 32.03 0 0 0 9.3-35.2l-.9-2.6a443.74 443.74 0 0 0-79.7-137.9l-1.8-2.1a32.12 32.12 0 0 0-35.1-9.5l-81.3 28.9c-30-24.6-63.5-44-99.7-57.6l-15.7-85a32.05 32.05 0 0 0-25.8-25.7l-2.7-.5c-52.1-9.4-106.9-9.4-159 0l-2.7.5a32.05 32.05 0 0 0-25.8 25.7l-15.8 85.4a351.86 351.86 0 0 0-99 57.4l-81.9-29.1a32 32 0 0 0-35.1 9.5l-1.8 2.1a446.02 446.02 0 0 0-79.7 137.9l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.3 56.6c-3.1 18.8-4.6 38-4.6 57.1 0 19.2 1.5 38.4 4.6 57.1L99 625.5a32.03 32.03 0 0 0-9.3 35.2l.9 2.6c18.1 50.4 44.9 96.9 79.7 137.9l1.8 2.1a32.12 32.12 0 0 0 35.1 9.5l81.9-29.1c29.8 24.5 63.1 43.9 99 57.4l15.8 85.4a32.05 32.05 0 0 0 25.8 25.7l2.7.5a449.4 449.4 0 0 0 159 0l2.7-.5a32.05 32.05 0 0 0 25.8-25.7l15.7-85a350 350 0 0 0 99.7-57.6l81.3 28.9a32 32 0 0 0 35.1-9.5l1.8-2.1c34.8-41.1 61.6-87.5 79.7-137.9l.9-2.6c4.5-12.3.8-26.3-9.3-35zM788.3 465.9c2.5 15.1 3.8 30.6 3.8 46.1s-1.3 31-3.8 46.1l-6.6 40.1 74.7 63.9a370.03 370.03 0 0 1-42.6 73.6L721 702.8l-31.4 25.8c-23.9 19.6-50.5 35-79.3 45.8l-38.1 14.3-17.9 97a377.5 377.5 0 0 1-85 0l-17.9-97.2-37.8-14.5c-28.5-10.8-55-26.2-78.7-45.7l-31.4-25.9-93.4 33.2c-17-22.9-31.2-47.6-42.6-73.6l75.5-64.5-6.5-40c-2.4-14.9-3.7-30.3-3.7-45.5 0-15.3 1.2-30.6 3.7-45.5l6.5-40-75.5-64.5c11.3-26.1 25.6-50.7 42.6-73.6l93.4 33.2 31.4-25.9c23.7-19.5 50.2-34.9 78.7-45.7l37.9-14.3 17.9-97.2c28.1-3.2 56.8-3.2 85 0l17.9 97 38.1 14.3c28.7 10.8 55.4 26.2 79.3 45.8l31.4 25.8 92.8-32.9c17 22.9 31.2 47.6 42.6 73.6L781.8 426l6.5 39.9zM512 326c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176zm79.2 255.2A111.6 111.6 0 0 1 512 614c-29.9 0-58-11.7-79.2-32.8A111.6 111.6 0 0 1 400 502c0-29.9 11.7-58 32.8-79.2C454 401.6 482.1 390 512 390c29.9 0 58 11.6 79.2 32.8A111.6 111.6 0 0 1 624 502c0 29.9-11.7 58-32.8 79.2z"/></svg>
+        <svg class="sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M924.8 625.7l-65.5-56c3.1-19 4.7-38.4 4.7-57.8s-1.6-38.8-4.7-57.8l65.5-56a32.03 32.03 0 0 0 9.3-35.2l-.9-2.6a443.74 443.74 0 0 0-79.7-137.9l-1.8-2.1a32.12 32.12 0 0 0-35.1-9.5l-81.3 28.9c-30-24.6-63.5-44-99.7-57.6l-15.7-85a32.05 32.05 0 0 0-25.8-25.7l-2.7-.5c-52.1-9.4-106.9-9.4-159 0l-2.7.5a32.05 32.05 0 0 0-25.8 25.7l-15.8 85.4a351.86 351.86 0 0 0-99 57.4l-81.9-29.1a32 32 0 0 0-35.1 9.5l-1.8 2.1a446.02 446.02 0 0 0-79.7 137.9l-.9 2.6c-4.5 12.5-.8 26.5 9.3 35.2l66.3 56.6c-3.1 18.8-4.6 38-4.6 57.1 0 19.2 1.5 38.4 4.6 57.1L99 625.5a32.03 32.03 0 0 0-9.3 35.2l.9 2.6c18.1 50.4 44.9 96.9 79.7 137.9l1.8 2.1a32.12 32.12 0 0 0 35.1 9.5l81.9-29.1c29.8 24.5 63.1 43.9 99 57.4l15.8 85.4a32.05 32.05 0 0 0 25.8 25.7l2.7.5a449.4 449.4 0 0 0 159 0l2.7-.5a32.05 32.05 0 0 0 25.8-25.7l15.7-85a350 350 0 0 0 99.7-57.6l81.3 28.9a32 32 0 0 0 35.1-9.5l1.8-2.1c34.8-41.1 61.6-87.5 79.7-137.9l.9-2.6c4.5-12.3.8-26.3-9.3-35zM788.3 465.9c2.5 15.1 3.8 30.6 3.8 46.1s-1.3 31-3.8 46.1l-6.6 40.1 74.7 63.9a370.03 370.03 0 0 1-42.6 73.6L721 702.8l-31.4 25.8c-23.9 19.6-50.5 35-79.3 45.8l-38.1 14.3-17.9 97a377.5 377.5 0 0 1-85 0l-17.9-97.2-37.8-14.5c-28.5-10.8-55-26.2-78.7-45.7l-31.4-25.9-93.4 33.2c-17-22.9-31.2-47.6-42.6-73.6l75.5-64.5-6.5-40c-2.4-14.9-3.7-30.3-3.7-45.5 0-15.3 1.2-30.6 3.7-45.5l6.5-40-75.5-64.5c11.3-26.1 25.6-50.7 42.6-73.6l93.4 33.2 31.4-25.9c23.7-19.5 50.2-34.9 78.7-45.7l37.9-14.3 17.9-97.2c28.1-3.2 56.8-3.2 85 0l17.9 97 38.1 14.3c28.7 10.8 55.4 26.2 79.3 45.8l31.4 25.8 92.8-32.9c17 22.9 31.2 47.6 42.6 73.6L781.8 426l6.5 39.9zM512 326c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176zm79.2 255.2A111.6 111.6 0 0 1 512 614c-29.9 0-58-11.7-79.2-32.8A111.6 111.6 0 0 1 400 502c0-29.9 11.7-58 32.8-79.2C454 401.6 482.1 390 512 390c29.9 0 58 11.6 79.2 32.8A111.6 111.6 0 0 1 624 502c0 29.9-11.7 58-32.8 79.2z"/></svg>
       </button>
       <section class="settings-menu" id="settings-menu" aria-hidden="true">
         <div class="settings-title" data-i18n="settings">Panel Settings</div>
@@ -220,25 +471,25 @@
     <section class="clients" data-toggles='{{.ClientToggles}}'>
       <div class="client-drop">
         <button class="client-btn" id="android-btn" type="button" aria-haspopup="true" aria-controls="android-menu" aria-expanded="false">
-          <svg class="anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M448.3 225.2c-18.6 0-32 13.4-32 31.9s13.5 31.9 32 31.9c18.6 0 32-13.4 32-31.9.1-18.4-13.4-31.9-32-31.9zm393.9 96.4c-13.8-13.8-32.7-21.5-53.2-21.5-3.9 0-7.4.4-10.7 1v-1h-3.6c-5.5-30.6-18.6-60.5-38.1-87.4-18.7-25.7-43-47.9-70.8-64.9l25.1-35.8v-3.3c0-.8.4-2.3.7-3.8.6-2.4 1.4-5.5 1.4-8.9 0-18.5-13.5-31.9-32-31.9-9.8 0-19.5 5.7-25.9 15.4l-29.3 42.1c-30-9.8-62.4-15-93.8-15-31.3 0-63.7 5.2-93.8 15L389 79.4c-6.6-9.6-16.1-15.4-26-15.4-18.6 0-32 13.4-32 31.9 0 6.2 2.5 12.8 6.7 17.4l22.6 32.3c-28.7 17-53.5 39.4-72.2 65.1-19.4 26.9-32 56.8-36.7 87.4h-5.5v1c-3.2-.6-6.7-1-10.7-1-20.3 0-39.2 7.5-53.1 21.3-13.8 13.8-21.5 32.6-21.5 53v235c0 20.3 7.5 39.1 21.4 52.9 13.8 13.8 32.8 21.5 53.2 21.5 3.9 0 7.4-.4 10.7-1v93.5c0 29.2 23.9 53.1 53.2 53.1H331v58.3c0 20.3 7.5 39.1 21.4 52.9 13.8 13.8 32.8 21.5 53.2 21.5 20.3 0 39.2-7.5 53.1-21.3 13.8-13.8 21.5-32.6 21.5-53v-58.2H544v58.1c0 20.3 7.5 39.1 21.4 52.9 13.8 13.8 32.8 21.5 53.2 21.5 20.4 0 39.2-7.5 53.1-21.6 13.8-13.8 21.5-32.6 21.5-53v-58.2h31.9c29.3 0 53.2-23.8 53.2-53.1v-91.4c3.2.6 6.7 1 10.7 1 20.3 0 39.2-7.5 53.1-21.3 13.8-13.8 21.5-32.6 21.5-53v-235c-.1-20.3-7.6-39-21.4-52.9zM246 609.6c0 6.8-3.9 10.6-10.7 10.6-6.8 0-10.7-3.8-10.7-10.6V374.5c0-6.8 3.9-10.6 10.7-10.6 6.8 0 10.7 3.8 10.7 10.6v235.1zm131.1-396.8c37.5-27.3 85.3-42.3 135-42.3s97.5 15.1 135 42.5c32.4 23.7 54.2 54.2 62.7 87.5H314.4c8.5-33.4 30.5-64 62.7-87.7zm39.3 674.7c-.6 5.6-4.4 8.7-10.5 8.7-6.8 0-10.7-3.8-10.7-10.6v-58.2h21.2v60.1zm202.3 8.7c-6.8 0-10.7-3.8-10.7-10.6v-58.2h21.2v60.1c-.6 5.6-4.3 8.7-10.5 8.7zm95.8-132.6H309.9V364h404.6v399.6zm85.2-154c0 6.8-3.9 10.6-10.7 10.6-6.8 0-10.7-3.8-10.7-10.6V374.5c0-6.8 3.9-10.6 10.7-10.6 6.8 0 10.7 3.8 10.7 10.6v235.1zM576.1 225.2c-18.6 0-32 13.4-32 31.9s13.5 31.9 32 31.9c18.6 0 32.1-13.4 32.1-32-.1-18.6-13.4-31.8-32.1-31.8z"/></svg>
+          <svg class="sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M448.3 225.2c-18.6 0-32 13.4-32 31.9s13.5 31.9 32 31.9c18.6 0 32-13.4 32-31.9.1-18.4-13.4-31.9-32-31.9zm393.9 96.4c-13.8-13.8-32.7-21.5-53.2-21.5-3.9 0-7.4.4-10.7 1v-1h-3.6c-5.5-30.6-18.6-60.5-38.1-87.4-18.7-25.7-43-47.9-70.8-64.9l25.1-35.8v-3.3c0-.8.4-2.3.7-3.8.6-2.4 1.4-5.5 1.4-8.9 0-18.5-13.5-31.9-32-31.9-9.8 0-19.5 5.7-25.9 15.4l-29.3 42.1c-30-9.8-62.4-15-93.8-15-31.3 0-63.7 5.2-93.8 15L389 79.4c-6.6-9.6-16.1-15.4-26-15.4-18.6 0-32 13.4-32 31.9 0 6.2 2.5 12.8 6.7 17.4l22.6 32.3c-28.7 17-53.5 39.4-72.2 65.1-19.4 26.9-32 56.8-36.7 87.4h-5.5v1c-3.2-.6-6.7-1-10.7-1-20.3 0-39.2 7.5-53.1 21.3-13.8 13.8-21.5 32.6-21.5 53v235c0 20.3 7.5 39.1 21.4 52.9 13.8 13.8 32.8 21.5 53.2 21.5 3.9 0 7.4-.4 10.7-1v93.5c0 29.2 23.9 53.1 53.2 53.1H331v58.3c0 20.3 7.5 39.1 21.4 52.9 13.8 13.8 32.8 21.5 53.2 21.5 20.3 0 39.2-7.5 53.1-21.3 13.8-13.8 21.5-32.6 21.5-53v-58.2H544v58.1c0 20.3 7.5 39.1 21.4 52.9 13.8 13.8 32.8 21.5 53.2 21.5 20.4 0 39.2-7.5 53.1-21.6 13.8-13.8 21.5-32.6 21.5-53v-58.2h31.9c29.3 0 53.2-23.8 53.2-53.1v-91.4c3.2.6 6.7 1 10.7 1 20.3 0 39.2-7.5 53.1-21.3 13.8-13.8 21.5-32.6 21.5-53v-235c-.1-20.3-7.6-39-21.4-52.9zM246 609.6c0 6.8-3.9 10.6-10.7 10.6-6.8 0-10.7-3.8-10.7-10.6V374.5c0-6.8 3.9-10.6 10.7-10.6 6.8 0 10.7 3.8 10.7 10.6v235.1zm131.1-396.8c37.5-27.3 85.3-42.3 135-42.3s97.5 15.1 135 42.5c32.4 23.7 54.2 54.2 62.7 87.5H314.4c8.5-33.4 30.5-64 62.7-87.7zm39.3 674.7c-.6 5.6-4.4 8.7-10.5 8.7-6.8 0-10.7-3.8-10.7-10.6v-58.2h21.2v60.1zm202.3 8.7c-6.8 0-10.7-3.8-10.7-10.6v-58.2h21.2v60.1c-.6 5.6-4.3 8.7-10.5 8.7zm95.8-132.6H309.9V364h404.6v399.6zm85.2-154c0 6.8-3.9 10.6-10.7 10.6-6.8 0-10.7-3.8-10.7-10.6V374.5c0-6.8 3.9-10.6 10.7-10.6 6.8 0 10.7 3.8 10.7 10.6v235.1zM576.1 225.2c-18.6 0-32 13.4-32 31.9s13.5 31.9 32 31.9c18.6 0 32.1-13.4 32.1-32-.1-18.6-13.4-31.8-32.1-31.8z"/></svg>
           <span>Android</span>
-          <svg class="chev anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"/></svg>
+          <svg class="chev sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"/></svg>
         </button>
         <div class="client-menu" id="android-menu" role="menu" aria-hidden="true"></div>
       </div>
       <div class="client-drop">
         <button class="client-btn" id="ios-btn" type="button" aria-haspopup="true" aria-controls="ios-menu" aria-expanded="false">
-          <svg class="anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M747.4 535.7c-.4-68.2 30.5-119.6 92.9-157.5-34.9-50-87.7-77.5-157.3-82.8-65.9-5.2-138 38.4-164.4 38.4-27.9 0-91.7-36.6-141.9-36.6C273.1 298.8 163 379.8 163 544.6c0 48.7 8.9 99 26.7 150.8 23.8 68.2 109.6 235.3 199.1 232.6 46.8-1.1 79.9-33.2 140.8-33.2 59.1 0 89.7 33.2 141.9 33.2 90.3-1.3 167.9-153.2 190.5-221.6-121.1-57.1-114.6-167.2-114.6-170.7zm-10.6 267c-14.3 19.9-28.7 35.6-41.9 45.7-10.5 8-18.6 11.4-24 11.6-9-.1-17.7-2.3-34.7-8.8-1.2-.5-2.5-1-4.2-1.6l-4.4-1.7c-17.4-6.7-27.8-10.3-41.1-13.8-18.6-4.8-37.1-7.4-56.9-7.4-20.2 0-39.2 2.5-58.1 7.2-13.9 3.5-25.6 7.4-42.7 13.8-.7.3-8.1 3.1-10.2 3.9-3.5 1.3-6.2 2.3-8.7 3.2-10.4 3.6-17 5.1-22.9 5.2-.7 0-1.3-.1-1.8-.2-1.1-.2-2.5-.6-4.1-1.3-4.5-1.8-9.9-5.1-16-9.8-14-10.9-29.4-28-45.1-49.9-27.5-38.6-53.5-89.8-66-125.7-15.4-44.8-23-87.7-23-128.6 0-60.2 17.8-106 48.4-137.1 26.3-26.6 61.7-41.5 97.8-42.3 5.9.1 14.5 1.5 25.4 4.5 8.6 2.3 18 5.4 30.7 9.9 3.8 1.4 16.9 6.1 18.5 6.7 7.7 2.8 13.5 4.8 19.2 6.6 18.2 5.8 32.3 9 47.6 9 15.5 0 28.8-3.3 47.7-9.8 7.1-2.4 32.9-12 37.5-13.6 25.6-9.1 44.5-14 60.8-15.2 4.8-.4 9.1-.4 13.2-.1 22.7 1.8 42.1 6.3 58.6 13.8-37.6 43.4-57 96.5-56.9 158.4-.3 14.7.9 31.7 5.1 51.8 6.4 30.5 18.6 60.7 37.9 89 14.7 21.5 32.9 40.9 54.7 57.8-11.5 23.7-25.6 48.2-40.4 68.8zm-94.5-572c50.7-60.2 46.1-115 44.6-134.7-44.8 2.6-96.6 30.5-126.1 64.8-32.5 36.8-51.6 82.3-47.5 133.6 48.4 3.7 92.6-21.2 129-63.7z"/></svg>
+          <svg class="sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M747.4 535.7c-.4-68.2 30.5-119.6 92.9-157.5-34.9-50-87.7-77.5-157.3-82.8-65.9-5.2-138 38.4-164.4 38.4-27.9 0-91.7-36.6-141.9-36.6C273.1 298.8 163 379.8 163 544.6c0 48.7 8.9 99 26.7 150.8 23.8 68.2 109.6 235.3 199.1 232.6 46.8-1.1 79.9-33.2 140.8-33.2 59.1 0 89.7 33.2 141.9 33.2 90.3-1.3 167.9-153.2 190.5-221.6-121.1-57.1-114.6-167.2-114.6-170.7zm-10.6 267c-14.3 19.9-28.7 35.6-41.9 45.7-10.5 8-18.6 11.4-24 11.6-9-.1-17.7-2.3-34.7-8.8-1.2-.5-2.5-1-4.2-1.6l-4.4-1.7c-17.4-6.7-27.8-10.3-41.1-13.8-18.6-4.8-37.1-7.4-56.9-7.4-20.2 0-39.2 2.5-58.1 7.2-13.9 3.5-25.6 7.4-42.7 13.8-.7.3-8.1 3.1-10.2 3.9-3.5 1.3-6.2 2.3-8.7 3.2-10.4 3.6-17 5.1-22.9 5.2-.7 0-1.3-.1-1.8-.2-1.1-.2-2.5-.6-4.1-1.3-4.5-1.8-9.9-5.1-16-9.8-14-10.9-29.4-28-45.1-49.9-27.5-38.6-53.5-89.8-66-125.7-15.4-44.8-23-87.7-23-128.6 0-60.2 17.8-106 48.4-137.1 26.3-26.6 61.7-41.5 97.8-42.3 5.9.1 14.5 1.5 25.4 4.5 8.6 2.3 18 5.4 30.7 9.9 3.8 1.4 16.9 6.1 18.5 6.7 7.7 2.8 13.5 4.8 19.2 6.6 18.2 5.8 32.3 9 47.6 9 15.5 0 28.8-3.3 47.7-9.8 7.1-2.4 32.9-12 37.5-13.6 25.6-9.1 44.5-14 60.8-15.2 4.8-.4 9.1-.4 13.2-.1 22.7 1.8 42.1 6.3 58.6 13.8-37.6 43.4-57 96.5-56.9 158.4-.3 14.7.9 31.7 5.1 51.8 6.4 30.5 18.6 60.7 37.9 89 14.7 21.5 32.9 40.9 54.7 57.8-11.5 23.7-25.6 48.2-40.4 68.8zm-94.5-572c50.7-60.2 46.1-115 44.6-134.7-44.8 2.6-96.6 30.5-126.1 64.8-32.5 36.8-51.6 82.3-47.5 133.6 48.4 3.7 92.6-21.2 129-63.7z"/></svg>
           <span>iOS</span>
-          <svg class="chev anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"/></svg>
+          <svg class="chev sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"/></svg>
         </button>
         <div class="client-menu" id="ios-menu" role="menu" aria-hidden="true"></div>
       </div>
       <div class="client-drop">
         <button class="client-btn" id="mac-btn" type="button" aria-haspopup="true" aria-controls="mac-menu" aria-expanded="false">
-          <svg class="anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M928 140H96c-17.7 0-32 14.3-32 32v496c0 17.7 14.3 32 32 32h380v112H304c-8.8 0-16 7.2-16 16v48c0 4.4 3.6 8 8 8h432c4.4 0 8-3.6 8-8v-48c0-8.8-7.2-16-16-16H548V700h380c17.7 0 32-14.3 32-32V172c0-17.7-14.3-32-32-32zm-40 488H136V212h752v416z"/></svg>
+          <svg class="sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M928 140H96c-17.7 0-32 14.3-32 32v496c0 17.7 14.3 32 32 32h380v112H304c-8.8 0-16 7.2-16 16v48c0 4.4 3.6 8 8 8h432c4.4 0 8-3.6 8-8v-48c0-8.8-7.2-16-16-16H548V700h380c17.7 0 32-14.3 32-32V172c0-17.7-14.3-32-32-32zm-40 488H136V212h752v416z"/></svg>
           <span>macOS</span>
-          <svg class="chev anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"/></svg>
+          <svg class="chev sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"/></svg>
         </button>
         <div class="client-menu" id="mac-menu" role="menu" aria-hidden="true"></div>
       </div>
@@ -258,41 +509,34 @@
   <div class="copy-toast" id="copy-toast" role="status" aria-live="polite">Copied</div>
   <script src="{{.StaticURL}}"></script>
   <script>
-/* ===== Ant Select 增强器 =====
-   3x-ui 的下拉是 Ant Design Vue 1.x 的 a-select：1rem 圆角选择框、body 级浮层菜单、
-   .5rem 圆角菜单项、选中项加粗浅底。本文件把页面里的原生 <select> 升级成同一观感：
-   原生 select 原样留在 DOM 里（表单数据源、name/value/change 语义全部不变），
-   外面套一层 .ant-select 外壳，菜单挂到 body 上用 fixed 定位，避免被抽屉 / 弹窗裁切。
-   度量取自 3x-ui-2.9.3/web/assets/ant-design-vue/antd.min.css 与 custom.min.css。 */
+/* ===== SwiftUI Picker 下拉选择器增强系统 =====
+   专为 Apple SwiftUI & iOS 26 / macOS 26 (Tahoe) Liquid Glass 设计哲学打造：
+   原生 <select> 完整保留在 DOM 内保证数据与事件完整性；
+   外层构建 .swift-picker 平滑连续圆角容器与高透磨砂浮层菜单。 */
 (function(){
   'use strict';
 
-  var STYLE_ID='mui-ant-select-style';
-  var ARROW='<svg class="anticon mui-select-arrow" viewBox="64 64 896 896" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 651 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z" fill="currentColor"></path></svg>';
+  var STYLE_ID='mui-swift-picker-style';
+  var ARROW='<svg class="sf-symbol mui-select-arrow" viewBox="64 64 896 896" aria-hidden="true"><path d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 651 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z" fill="currentColor"></path></svg>';
   var CSS=[
-    /* 外壳只做几何：:where() 零优先级，页面自己的宽度 / 外边距类（如 .language-select）能覆盖 */
-    ':where(.ant-select){position:relative;display:block;width:100%;min-width:0}',
-    '.ant-select .mui-native-select{position:absolute;top:0;left:0;width:1px;height:1px;margin:0;padding:0;border:0;opacity:0;pointer-events:none;appearance:none;-webkit-appearance:none}',
-    '.ant-select[hidden]{display:none}',
-    /* .ant-select-selection：32px、4px 11px、1rem 圆角、1px #d9d9d9 */
-    '.ant-select-selection{display:flex;align-items:center;height:var(--ctl,32px);padding:0 28px 0 11px;border:1px solid var(--stroke,#d9d9d9);border-radius:var(--radius,1rem);background:var(--select-bg,var(--surface,#fff));color:var(--text,rgba(0,0,0,.65));font-size:14px;cursor:pointer;transition:border-color .3s var(--ease,cubic-bezier(.645,.045,.355,1)),background-color .3s var(--ease,cubic-bezier(.645,.045,.355,1)),box-shadow .3s var(--ease,cubic-bezier(.645,.045,.355,1))}',
-    '.mui-select-value{flex:1;min-width:0;overflow:hidden;line-height:30px;text-overflow:ellipsis;white-space:nowrap}',
-    '.ant-select-selection:hover{border-color:var(--teal-3,#18947b);background-color:var(--select-hover,#e8f4f2)}',
-    '.ant-select-open .ant-select-selection,.ant-select:focus-visible .ant-select-selection{border-color:var(--teal,#008771);box-shadow:0 0 0 2px var(--teal-soft,rgba(0,135,113,.2));outline:0}',
-    '.ant-select-disabled .ant-select-selection{background:var(--surface-2,#f5f5f5);color:var(--muted,rgba(0,0,0,.45));cursor:not-allowed}',
-    '.ant-select-disabled .ant-select-selection:hover{border-color:var(--stroke,#d9d9d9);background:var(--surface-2,#f5f5f5)}',
-    /* 箭头：right 11px、12px、rgba(0,0,0,.25)，展开转 180° */
-    '.mui-select-arrow{position:absolute;top:50%;right:11px;margin-top:-6px;width:12px;height:12px;color:var(--muted-2,rgba(0,0,0,.25));pointer-events:none;transition:transform .3s var(--ease,cubic-bezier(.645,.045,.355,1))}',
-    '.ant-select-open .mui-select-arrow{transform:rotate(180deg)}',
-    /* .ant-select-dropdown：1rem 圆角、.5rem 内边距、0 2px 8px 阴影、max-height 250 */
-    '.mui-select-menu{position:fixed;z-index:1050;margin:0;padding:.5rem;list-style:none;max-height:250px;overflow:auto;border-radius:var(--radius,1rem);background:var(--select-bg,var(--surface,#fff));box-shadow:var(--shadow-pop,0 2px 8px rgba(0,0,0,.15));animation:mui-select-in .15s var(--ease,cubic-bezier(.645,.045,.355,1))}',
+    ':where(.swift-picker){position:relative;display:block;width:100%;min-width:0}',
+    '.swift-picker .mui-native-select{position:absolute;top:0;left:0;width:1px;height:1px;margin:0;padding:0;border:0;opacity:0;pointer-events:none;appearance:none;-webkit-appearance:none}',
+    '.swift-picker[hidden]{display:none}',
+    '.swift-picker-selection{display:flex;align-items:center;height:var(--ctl,34px);padding:0 28px 0 12px;border:1px solid var(--stroke,rgba(60,60,67,.18));border-radius:var(--radius-sm,10px);background:var(--select-bg,rgba(255,255,255,.9));color:var(--text,#1d1d1f);font-size:13px;font-weight:500;cursor:pointer;transition:border-color .2s var(--ease),background-color .2s var(--ease),box-shadow .2s var(--ease)}',
+    '.mui-select-value{flex:1;min-width:0;overflow:hidden;line-height:32px;text-overflow:ellipsis;white-space:nowrap}',
+    '.swift-picker-selection:hover{border-color:var(--teal-3,#0077ed);background-color:var(--select-hover,rgba(0,113,227,.06))}',
+    '.swift-picker-open .swift-picker-selection,.swift-picker:focus-visible .swift-picker-selection{border-color:var(--teal,#0071e3);box-shadow:0 0 0 3px var(--teal-soft,rgba(0,113,227,.2));outline:0}',
+    '.swift-picker-disabled .swift-picker-selection{background:var(--surface-subtle,rgba(0,0,0,.04));color:var(--muted,#86868b);cursor:not-allowed}',
+    '.swift-picker-disabled .swift-picker-selection:hover{border-color:var(--stroke,rgba(60,60,67,.18));background:var(--surface-subtle,rgba(0,0,0,.04))}',
+    '.mui-select-arrow{position:absolute;top:50%;right:11px;margin-top:-6px;width:12px;height:12px;color:var(--muted-2,rgba(60,60,67,.4));pointer-events:none;transition:transform .24s var(--ease)}',
+    '.swift-picker-open .mui-select-arrow{transform:rotate(180deg)}',
+    '.mui-select-menu{position:fixed;z-index:1050;margin:0;padding:6px;list-style:none;max-height:260px;overflow:auto;border:1px solid var(--card-border,rgba(0,0,0,.1));border-radius:var(--radius,14px);background:var(--select-bg,rgba(255,255,255,.96));backdrop-filter:blur(32px) saturate(190%);-webkit-backdrop-filter:blur(32px) saturate(190%);box-shadow:var(--shadow-pop,0 16px 40px rgba(0,0,0,.16));animation:mui-select-in .15s var(--ease)}',
     '.mui-select-menu[hidden]{display:none}',
-    '@keyframes mui-select-in{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:translateY(0)}}',
-    /* .ant-select-dropdown-menu-item：5px 12px、22px 行高、.5rem 圆角、选中 600 + 浅底 */
-    '.mui-select-menu li{margin:2px 0;padding:5px 12px;border-radius:var(--radius-sm,.5rem);color:var(--select-item-color,var(--text,rgba(0,0,0,.65)));font-size:14px;line-height:22px;cursor:pointer;transition:background-color .3s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-    '.mui-select-menu li:hover,.mui-select-menu li.mui-active{background:var(--select-item-hover,#e8f4f2)}',
-    '.mui-select-menu li.mui-selected{background:var(--select-item-selected,#fafafa);font-weight:600}',
-    '.mui-select-menu li:empty::after{content:"None";font-weight:400;color:var(--muted-2,rgba(0,0,0,.25))}'
+    '@keyframes mui-select-in{0%{opacity:0;transform:translateY(-6px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}',
+    '.mui-select-menu li{margin:1px 0;padding:6px 12px;border-radius:8px;color:var(--select-item-color,var(--text,#1d1d1f));font-size:13px;font-weight:500;line-height:20px;cursor:pointer;transition:background-color .15s var(--ease);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+    '.mui-select-menu li:hover,.mui-select-menu li.mui-active{background:var(--select-item-hover,rgba(0,113,227,.1))}',
+    '.mui-select-menu li.mui-selected{background:var(--select-item-selected,rgba(0,113,227,.14));color:var(--teal,#0071e3);font-weight:600}',
+    '.mui-select-menu li:empty::after{content:"None";font-weight:400;color:var(--muted-2,rgba(60,60,67,.4))}'
   ].join('\n');
 
   function injectStyle(){
@@ -307,7 +551,7 @@
   var openWrap=null;
 
   function isSkipped(select){
-    return select.multiple||select.size>1||!!select.querySelector('optgroup')||select.hasAttribute('data-no-ant-select');
+    return select.multiple||select.size>1||!!select.querySelector('optgroup')||select.hasAttribute('data-no-swift-picker');
   }
   function isHiddenSelect(select){
     return select.hidden||select.style.display==='none';
@@ -323,7 +567,7 @@
 
   function closeAll(){
     if(!openWrap)return;
-    openWrap.classList.remove('ant-select-open');
+    openWrap.classList.remove('swift-picker-open');
     openWrap.mui.menu.hidden=true;
     openWrap=null;
   }
@@ -344,7 +588,7 @@
     closeAll();
     rebuild(wrap);
     openWrap=wrap;
-    wrap.classList.add('ant-select-open');
+    wrap.classList.add('swift-picker-open');
     position(wrap);
     var active=wrap.mui.menu.querySelector('.mui-selected')||wrap.mui.menu.querySelector('li');
     if(active)wrap.mui.menu.scrollTop=Math.max(0,active.offsetTop-wrap.mui.menu.clientHeight/2+active.offsetHeight/2);
@@ -364,7 +608,7 @@
   function refresh(wrap){
     var select=wrap.mui.select;
     wrap.hidden=isHiddenSelect(select);
-    wrap.classList.toggle('ant-select-disabled',select.disabled);
+    wrap.classList.toggle('swift-picker-disabled',select.disabled);
     var option=select.options[select.selectedIndex];
     wrap.mui.value.textContent=option?option.textContent:'';
     if(signature(select)!==wrap.mui.sig)rebuild(wrap);
@@ -387,10 +631,10 @@
   }
 
   function upgrade(select){
-    if(select.dataset.antSelect||isSkipped(select)||isHiddenSelect(select))return;
-    select.dataset.antSelect='1';
+    if(select.dataset.swiftPicker||isSkipped(select)||isHiddenSelect(select))return;
+    select.dataset.swiftPicker='1';
     var wrap=document.createElement('div');
-    wrap.className=('ant-select '+(select.className||'')).trim();
+    wrap.className=('swift-picker '+(select.className||'')).trim();
     wrap.tabIndex=0;
     wrap.setAttribute('role','combobox');
     if(select.style.width)wrap.style.width=select.style.width;
@@ -398,7 +642,7 @@
     wrap.appendChild(select);
     select.classList.add('mui-native-select');
     var selection=document.createElement('span');
-    selection.className='ant-select-selection';
+    selection.className='swift-picker-selection';
     var value=document.createElement('span');
     value.className='mui-select-value';
     selection.appendChild(value);
@@ -410,7 +654,6 @@
     document.body.appendChild(menu);
     wrap.mui={select:select,menu:menu,value:value,sig:''};
 
-    /* 代码里 select.value=… 的赋值也要刷新外壳 */
     Object.defineProperty(select,'value',{
       configurable:true,
       get:function(){return valueDesc.get.call(this);},
@@ -423,7 +666,7 @@
       if(event.key==='Escape'){closeAll();return;}
       if(event.key!=='ArrowDown'&&event.key!=='ArrowUp')return;
       event.preventDefault();
-      if(!wrap.classList.contains('ant-select-open')){open(wrap);return;}
+      if(!wrap.classList.contains("swift-picker-open")){open(wrap);return;}
       var items=[].slice.call(wrap.mui.menu.children).filter(function(item){return !item.classList.contains('mui-empty');});
       if(!items.length)return;
       var current=items.findIndex(function(item){return item.classList.contains('mui-active');});
@@ -449,7 +692,7 @@
       pending.delete(select);
       var wrap=select.parentElement;
       if(wrap&&wrap.mui&&wrap.mui.select===select)refresh(wrap);
-      else if(!select.dataset.antSelect)upgrade(select);
+      else if(!select.dataset.swiftPicker)upgrade(select);
     });
   }
 
@@ -458,7 +701,6 @@
   }
 
   document.addEventListener('pointerdown',function(event){
-    // 菜单挂在 body 上、不在 wrap 内；点菜单自身（含选项）不能触发外部关闭，否则 click 到达前菜单已消失
     if(openWrap&&!openWrap.contains(event.target)&&!openWrap.mui.menu.contains(event.target))closeAll();
   },true);
   document.addEventListener('keydown',function(event){
@@ -470,7 +712,6 @@
   window.addEventListener('resize',function(){
     if(openWrap)position(openWrap);
   });
-  /* form.reset() 不触发 change，重置后统一刷新外壳 */
   document.addEventListener('reset',function(event){
     var form=event.target;
     if(!(form instanceof HTMLFormElement))return;
@@ -513,8 +754,8 @@
       uk:{title:'Інформація про підписку',settings:'Налаштування панелі',dark:'Темна',ultraDark:'Дуже темна',language:'Мова',subscription:'Підписка',subscriptionId:'ID підписки',status:'Статус',downloaded:'Завантажено',uploaded:'Вивантажено',usage:'Використано',totalQuota:'Загальний ліміт',lastOnline:'Останній онлайн',expiry:'Термін дії',Unlimited:'Безлімітний',Active:'Активна',Expired:'Закінчилася',Never:'Ніколи','No expiry':'Безстроково',copied:'Скопійовано'},
       'pt-BR':{title:'Informações da Assinatura',settings:'Configurações do Painel',dark:'Escuro',ultraDark:'Muito Escuro',language:'Idioma',subscription:'Assinatura',subscriptionId:'ID da Assinatura',status:'Status',downloaded:'Baixado',uploaded:'Enviado',usage:'Uso',totalQuota:'Cota total',lastOnline:'Última conexão',expiry:'Validade',Unlimited:'Ilimitado',Active:'Ativa',Expired:'Expirada',Never:'Nunca','No expiry':'Sem expiração',copied:'Copiado'}
     };
-    /* Ant message 的 success 图标（与主面板 ant-icons.js 里的 ai-check-circle 同一份 path） */
-    const CHECK_ICON='<svg class="anticon" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M699 353h-46.9c-10.2 0-19.9 4.9-25.9 13.3L469 584.3l-71.2-98.8c-6-8.3-15.6-13.3-25.9-13.3H325c-6.5 0-10.3 7.4-6.5 12.7l124.6 172.8a31.8 31.8 0 0 0 51.7 0l210.6-292c3.9-5.3.1-12.7-6.4-12.7z"/><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"/></svg>';
+    /* Apple Dynamic Island 成功状态提示图标 */
+    const CHECK_ICON='<svg class="sf-symbol" viewBox="64 64 896 896" fill="currentColor" aria-hidden="true"><path d="M699 353h-46.9c-10.2 0-19.9 4.9-25.9 13.3L469 584.3l-71.2-98.8c-6-8.3-15.6-13.3-25.9-13.3H325c-6.5 0-10.3 7.4-6.5 12.7l124.6 172.8a31.8 31.8 0 0 0 51.7 0l210.6-292c3.9-5.3.1-12.7-6.4-12.7z"/><path d="M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z"/></svg>';
     const storage={get(key){try{return localStorage.getItem(key)}catch{return null}},set(key,value){try{localStorage.setItem(key,value)}catch{}}};
     function applyUltraDark(persist=true){root.dataset.ultraDark=darkMode.checked&&ultraDark.checked?'true':'false';if(persist)storage.set('mui-is-ultra-dark',String(ultraDark.checked));}
     function applyTheme(theme,persist=true){const dark=theme!=='light';root.dataset.theme=dark?'dark':'light';darkMode.checked=dark;ultraDarkRow.hidden=!dark;applyUltraDark(false);if(persist)storage.set('mui-theme',dark?'dark':'light');}
@@ -557,7 +798,7 @@
     function persistGlobalLanguage(language){languageSave=languageSave.catch(()=>{}).then(async()=>{const response=await fetch('/api/language',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({language})});if(!response.ok)throw new Error('failed to save language');});return languageSave;}
     languageSelect.addEventListener('change',()=>{const language=languageSelect.value;applyLanguage(language);persistGlobalLanguage(language).catch(error=>console.error(error));});
     ultraDark.checked=storage.get('mui-is-ultra-dark')==='true';applyTheme(storage.get('mui-theme')||'light',false);applyLanguage(storage.get('mui-language')||root.dataset.defaultLanguage||'zh-CN');
-    /* 3x-ui 的 aThemeSwitch：在主题控件上 mousedown 就关掉过渡，mouseleave/touchend 再打开 */
+    /* Apple Design 主题切换：在主题控件上 mousedown 关掉过渡，mouseleave/touchend 恢复 */
     for(const option of document.querySelectorAll('.theme-option')){
       option.addEventListener('mousedown',()=>root.setAttribute('data-theme-animations','off'));
       option.addEventListener('mouseleave',()=>root.removeAttribute('data-theme-animations'));

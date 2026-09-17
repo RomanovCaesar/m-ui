@@ -5,7 +5,7 @@
   if (!action) {
     action = document.createElement('button');
     action.type = 'button'; action.dataset.general = 'sync-inbound';
-    action.innerHTML = '<span class="general-icon">'+AI('sync')+'</span><span class="general-text" data-i18n="inbounds.sync">Sync Inbound</span>';
+    action.innerHTML = '<span class="general-icon">'+SF('sync')+'</span><span class="general-text" data-i18n="inbounds.sync">Sync Inbound</span>';
     const delBtn = menu.querySelector('[data-general="delete-depleted"]');
     if (delBtn) menu.insertBefore(action, delBtn);
     else menu.appendChild(action);
@@ -13,7 +13,7 @@
   let data = null, selected = new Set(), peers = new Set(), lastJob = '', pollTimer = null, posting = false, pendingRequest = null, lastJobState = null;
   const createModal = (id, className, titleKey, content) => {
     const modal = document.createElement('div'); modal.id = id; modal.className = 'modal-backdrop';
-    modal.innerHTML = `<section class="modal-panel ${className}" role="dialog" aria-modal="true" aria-labelledby="${id}-title"><header class="modal-titlebar"><span id="${id}-title" data-i18n="${titleKey}">${muiT(titleKey)}</span><button type="button" class="modal-close" data-si-close aria-label="关闭" data-i18n-aria="common.close">${AI('close')}</button></header>${content}</section>`;
+    modal.innerHTML = `<section class="modal-panel ${className}" role="dialog" aria-modal="true" aria-labelledby="${id}-title"><header class="modal-titlebar"><span id="${id}-title" data-i18n="${titleKey}">${muiT(titleKey)}</span><button type="button" class="modal-close" data-si-close aria-label="关闭" data-i18n-aria="common.close">${SF('close')}</button></header>${content}</section>`;
     document.body.appendChild(modal); return modal;
   };
   const picker = createModal('sync-inbound-modal', 'si-picker', 'inbounds.sync', `<div class="si-layout"><aside class="si-panels"><h3 data-i18n="si.targetPanels">目标面板</h3><label class="si-panel-all" data-i18n-multi="si.allPanels"><input id="si-all-panels" type="checkbox">全选面板</label><div id="si-panels"></div></aside><div class="si-matrix-pane"><h3 data-i18n="si.matrixTitle">Username × Inbound</h3><div class="si-legend"><span data-i18n-multi="si.legendOn"><i class="si-swatch on"></i>已选择</span><span data-i18n-multi="si.legendOff"><i class="si-swatch"></i>未选择</span><span data-i18n-multi="si.legendNa"><i class="si-swatch na"></i>无对应 Client</span></div><div class="si-matrix-wrap" id="si-matrix"></div><p class="si-note" data-i18n="si.note1">点击 Username、Inbound 或单个格子选择。仅同步实际存在的 Client；SS、Snell 等单 Client 入站只有一个有效格子。重复同步合并选中的 Client，保留目标其余 Client 和流量统计。</p><p class="si-note" data-i18n="si.note2">将同步入站端口、配置及认证信息（包含所用证书与私钥）。目标有名称或端口冲突时会报错；保存后需在目标重启 Mihomo 生效。</p><div class="si-error" id="si-error" role="alert" hidden></div></div></div><footer class="modal-footer"><span class="si-footer-summary" id="si-summary"></span><button type="button" class="outline-btn" id="si-cancel" data-i18n="common.cancel">取消</button><button type="button" class="primary-btn" id="si-sync" disabled data-i18n="si.sync">同步</button></footer>`);
@@ -42,7 +42,7 @@
   function updateSelection() {
     syncCheckbox($('#si-all-panels'), data.peers.map(peer => peer.id), peers);
     $$('[data-si-peer]', picker).forEach(box => { box.checked = peers.has(box.dataset.siPeer); });
-    $$('[data-si-cell]', picker).forEach(button => { const on = selected.has(button.dataset.siCell); button.setAttribute('aria-pressed', String(on)); button.innerHTML = button.disabled ? '—' : on ? AI('check-circle') : ''; });
+    $$('[data-si-cell]', picker).forEach(button => { const on = selected.has(button.dataset.siCell); button.setAttribute('aria-pressed', String(on)); button.innerHTML = button.disabled ? '—' : on ? SF('check-circle') : ''; });
     $$('[data-si-row]', picker).forEach(box => syncCheckbox(box, validKeys(Number(box.dataset.siRow)), selected));
     $$('[data-si-col]', picker).forEach(box => syncCheckbox(box, validKeys(null, Number(box.dataset.siCol)), selected));
     const all = $('#si-all-cells'); if (all) syncCheckbox(all,validKeys(),selected);

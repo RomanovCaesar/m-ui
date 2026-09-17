@@ -535,7 +535,7 @@
 
   /* ===== 5. iOS 26 / macOS 26 Liquid Glass 可拖动分段滑块与手势切换系统 ===== */
   function initDraggableLiquidSliders(){
-    var selectors = ['.settings-tabbar', '.mihomo-tabs', '#inbound-status-tabs'];
+    var selectors = ['.settings-tabbar', '.mihomo-tabs', '#inbound-status-tabs', '.mihomo-editor-tabs'];
 
     function setupBar(bar){
       if(!bar || bar.dataset.liquidSliderInit) return;
@@ -561,7 +561,7 @@
       }
 
       function getActiveButton(){
-        return bar.querySelector('button.active') || getButtons()[0];
+        return bar.querySelector('button.active, button[aria-selected="true"]') || getButtons()[0];
       }
 
       function syncSlider(instant){
@@ -569,17 +569,21 @@
         if(!active) return;
         var barRect = bar.getBoundingClientRect();
         var btnRect = active.getBoundingClientRect();
-        if(btnRect.width === 0) return;
+        if(btnRect.width === 0 || btnRect.height === 0) return;
 
-        var left = btnRect.left - barRect.left;
-        var top = btnRect.top - barRect.top;
+        var barStyle = window.getComputedStyle(bar);
+        var borderLeft = parseFloat(barStyle.borderLeftWidth) || 0;
+        var borderTop = parseFloat(barStyle.borderTopWidth) || 0;
+
+        var left = btnRect.left - barRect.left - borderLeft;
+        var top = btnRect.top - barRect.top - borderTop;
         var width = btnRect.width;
         var height = btnRect.height;
 
         if(instant){
           slider.style.transition = 'none';
         } else {
-          slider.style.transition = 'transform 0.32s cubic-bezier(0.22, 1.35, 0.36, 1), width 0.32s cubic-bezier(0.22, 1.35, 0.36, 1), height 0.32s cubic-bezier(0.22, 1.35, 0.36, 1)';
+          slider.style.transition = 'transform 0.32s cubic-bezier(0.18, 1.45, 0.32, 1), width 0.32s cubic-bezier(0.18, 1.45, 0.32, 1), height 0.32s cubic-bezier(0.18, 1.45, 0.32, 1)';
         }
         slider.style.transform = 'translate3d(' + left.toFixed(1) + 'px, ' + top.toFixed(1) + 'px, 0)';
         slider.style.width = width.toFixed(1) + 'px';
@@ -592,7 +596,7 @@
       var startX = 0;
       var startY = 0;
       var baseLeft = 0;
-      var baseTop = 4;
+      var baseTop = 0;
       var currentWidth = 0;
       var lastProposedLeft = 0;
       var activePointerId = null;
@@ -609,8 +613,11 @@
         if(active){
           var barRect = bar.getBoundingClientRect();
           var btnRect = active.getBoundingClientRect();
-          baseLeft = btnRect.left - barRect.left;
-          baseTop = btnRect.top - barRect.top;
+          var barStyle = window.getComputedStyle(bar);
+          var borderLeft = parseFloat(barStyle.borderLeftWidth) || 0;
+          var borderTop = parseFloat(barStyle.borderTopWidth) || 0;
+          baseLeft = btnRect.left - barRect.left - borderLeft;
+          baseTop = btnRect.top - barRect.top - borderTop;
           currentWidth = btnRect.width;
           lastProposedLeft = baseLeft;
         }
@@ -635,9 +642,14 @@
 
         if(isDragging){
           var barRect = bar.getBoundingClientRect();
+          var barStyle = window.getComputedStyle(bar);
+          var borderLeft = parseFloat(barStyle.borderLeftWidth) || 0;
+          var padLeft = parseFloat(barStyle.paddingLeft) || 4;
+          var padRight = parseFloat(barStyle.paddingRight) || 4;
+          var borderRight = parseFloat(barStyle.borderRightWidth) || 0;
           var buttons = getButtons();
-          var minLeft = 4;
-          var maxRight = barRect.width - 4;
+          var minLeft = padLeft;
+          var maxRight = barRect.width - borderLeft - borderRight - padRight;
 
           var proposedLeft = baseLeft + dx;
           if(proposedLeft < minLeft){
@@ -658,7 +670,7 @@
           var closestDist = Infinity;
           buttons.forEach(function(btn){
             var bRect = btn.getBoundingClientRect();
-            var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
+            var bCenter = (bRect.left - barRect.left - borderLeft) + bRect.width / 2;
             var dist = Math.abs(pillCenter - bCenter);
             if(dist < closestDist){
               closestDist = dist;
@@ -670,7 +682,7 @@
             buttons.forEach(function(b){
               if(b === closestBtn){
                 b.style.color = 'var(--text-strong)';
-              } else if(!b.classList.contains('active')){
+              } else if(!b.classList.contains('active') && b.getAttribute('aria-selected') !== 'true'){
                 b.style.color = '';
               }
             });
@@ -694,13 +706,15 @@
 
           var buttons = getButtons();
           var barRect = bar.getBoundingClientRect();
+          var barStyle = window.getComputedStyle(bar);
+          var borderLeft = parseFloat(barStyle.borderLeftWidth) || 0;
           var pillCenter = lastProposedLeft + currentWidth / 2;
           var closestBtn = null;
           var closestDist = Infinity;
 
           buttons.forEach(function(btn){
             var bRect = btn.getBoundingClientRect();
-            var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
+            var bCenter = (bRect.left - barRect.left - borderLeft) + bRect.width / 2;
             var dist = Math.abs(pillCenter - bCenter);
             if(dist < closestDist){
               closestDist = dist;

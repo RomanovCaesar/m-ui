@@ -15,9 +15,9 @@
   --surface-2: #f6f6f9;          /* Tertiary Inset Fills / Table Header */
   --surface-3: #e8e8ed;          /* Inset Hover / Segmented Track */
   --surface-4: #dedee3;          /* Inset Active State */
-  --surface-glass: rgba(255, 255, 255, 0.65);
-  --surface-glass-heavy: rgba(255, 255, 255, 0.82);
-  --surface-modal: rgba(255, 255, 255, 0.90);
+  --surface-glass: rgba(255, 255, 255, 0.45);
+  --surface-glass-heavy: rgba(255, 255, 255, 0.65);
+  --surface-modal: rgba(255, 255, 255, 0.88);
   --line: rgba(60, 60, 67, 0.12);/* Apple Separator Color (Hairline) */
   --stroke: rgba(60, 60, 67, 0.18);
   --stroke-2: rgba(60, 60, 67, 0.28);
@@ -47,11 +47,11 @@
   --cyan: #32ade6;
 
   /* ===== Liquid Glass 光学质感与动态反射 ===== */
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.70);
   --glass-blur: blur(32px) saturate(210%);
-  --glass-caustic: inset 0 1px 1.5px rgba(255, 255, 255, 0.8), inset 0 -1px 1px rgba(0, 0, 0, 0.06);
-  --glass-specular: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.35), transparent 70%);
+  --glass-caustic: inset 0 1.5px 1.5px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+  --glass-specular: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.45), transparent 70%);
 
   /* ===== 表格与列表 ===== */
   --table-hover: rgba(0, 0, 0, 0.035);
@@ -120,9 +120,9 @@ body.dark {
   --surface-2: #28282b;          /* Fills / Rows */
   --surface-3: #323236;          /* Hover State */
   --surface-4: #3c3c42;          /* Active State */
-  --surface-glass: rgba(28, 28, 32, 0.68);
-  --surface-glass-heavy: rgba(34, 34, 38, 0.86);
-  --surface-modal: rgba(28, 28, 32, 0.92);
+  --surface-glass: rgba(26, 28, 34, 0.52);
+  --surface-glass-heavy: rgba(32, 34, 42, 0.70);
+  --surface-modal: rgba(26, 28, 34, 0.90);
   --line: rgba(255, 255, 255, 0.09); /* Apple Hairline Separator */
   --stroke: rgba(255, 255, 255, 0.14);
   --stroke-2: rgba(255, 255, 255, 0.22);
@@ -149,10 +149,10 @@ body.dark {
   --mint: #63e6e2;
   --cyan: #64d2ff;
 
-  --glass-bg: rgba(28, 28, 32, 0.68);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-caustic: inset 0 1px 1px rgba(255, 255, 255, 0.18), inset 0 -1px 1px rgba(0, 0, 0, 0.35);
-  --glass-specular: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.14), transparent 70%);
+  --glass-bg: rgba(26, 28, 34, 0.52);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --glass-caustic: inset 0 1.5px 1px rgba(255, 255, 255, 0.28), inset 0 -1px 2px rgba(0, 0, 0, 0.45);
+  --glass-specular: radial-gradient(circle 140px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.20), transparent 70%);
 
   --table-hover: rgba(255, 255, 255, 0.04);
   --table-ring: rgba(255, 255, 255, 0.06);
@@ -461,11 +461,11 @@ body.dark::-webkit-scrollbar-thumb:hover, body.dark ::-webkit-scrollbar-thumb:ho
   align-items: center !important;
   padding: 4px !important;
   border-radius: var(--radius-pill) !important;
-  background: rgba(120, 120, 128, 0.12) !important;
+  background: rgba(142, 142, 147, 0.12) !important;
   backdrop-filter: blur(28px) saturate(210%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(210%) !important;
-  border: 1px solid var(--glass-border) !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 0 rgba(255, 255, 255, 0.8) !important;
   user-select: none !important;
   -webkit-user-select: none !important;
   touch-action: pan-y !important;
@@ -483,36 +483,51 @@ body.dark::-webkit-scrollbar-thumb:hover, body.dark ::-webkit-scrollbar-thumb:ho
 body.dark .settings-tabbar,
 body.dark .mihomo-tabs,
 body.dark .inbound-status-tabs {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }
 
 /* 浮动液态玻璃胶囊滑块 (Draggable Liquid Glass Pill - Jello Morphing) */
 .liquid-pill-slider {
-  position: absolute;
-  top: 4px;
-  left: 4px;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 0.5px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.95);
-  transition: transform 0.32s cubic-bezier(0.22, 1.35, 0.36, 1), width 0.32s cubic-bezier(0.22, 1.35, 0.36, 1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.32) 100%) !important;
+  backdrop-filter: blur(20px) saturate(200%) contrast(106%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(200%) contrast(106%) !important;
+  border: 0.5px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.07),
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 1),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.05),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.6) !important;
+  transition: transform 0.32s cubic-bezier(0.18, 1.45, 0.32, 1), width 0.32s cubic-bezier(0.18, 1.45, 0.32, 1), height 0.32s cubic-bezier(0.18, 1.45, 0.32, 1);
   z-index: 1;
   pointer-events: none !important;
 }
 body.dark .liquid-pill-slider {
-  background: rgba(255, 255, 255, 0.20);
-  border-color: rgba(255, 255, 255, 0.28);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    inset 0 1.5px 1.5px rgba(255, 255, 255, 0.40),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.15) !important;
 }
 
 /* 拖动中：弹性拉伸与镜面光泽增强 */
 .liquid-pill-slider.is-dragging {
   transition: none !important;
-  box-shadow: 0 8px 26px rgba(0, 122, 255, 0.30), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
-  transform: scaleY(0.96);
+  box-shadow:
+    0 8px 28px rgba(0, 122, 255, 0.35),
+    0 2px 6px rgba(0, 122, 255, 0.2),
+    inset 0 2px 2px rgba(255, 255, 255, 1),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* 液态微折射流光 */
@@ -520,8 +535,13 @@ body.dark .liquid-pill-slider {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, transparent 60%);
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.15) 32%, rgba(255, 255, 255, 0.0) 58%, rgba(255, 255, 255, 0.28) 100%);
+  mix-blend-mode: overlay;
   pointer-events: none;
+}
+body.dark .liquid-pill-sheen {
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 35%, transparent 60%, rgba(255, 255, 255, 0.12) 100%);
+  mix-blend-mode: screen;
 }
 
 /* 选项卡按钮：透明底以透出滑块，确保点击无阻碍 */
@@ -558,6 +578,17 @@ body.dark .inbound-status-tabs button.active {
 }
 
 /* ===== Apple Inset Grouped Section (Panel Settings & Mihomo 统一表单规范) ===== */
+.settings-pane,
+.mihomo-pane {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
 #settings-form,
 #credentials-form,
 #subscription-settings-form,
@@ -568,7 +599,7 @@ body.dark .inbound-status-tabs button.active {
   background: var(--surface) !important;
   overflow: hidden !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
-  margin-bottom: 20px !important;
+  margin-bottom: 0 !important;
 }
 .setting-section,
 .basics-section {

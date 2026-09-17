@@ -15,7 +15,7 @@ import (
 const defaultMihomoTestURL = "https://www.gstatic.com/generate_204"
 
 var (
-	mihomoProxyTypes = []string{"direct", "ss", "socks5", "http", "vmess", "vless", "trojan", "hysteria2", "tuic", "wireguard", "openvpn"}
+	mihomoProxyTypes = []string{"direct", "ss", "snell", "socks5", "http", "vmess", "vless", "trojan", "hysteria2", "tuic", "wireguard", "openvpn"}
 	mihomoGroupTypes = []string{"select", "url-test", "fallback", "load-balance"}
 	mihomoRuleTypes  = []string{
 		"DOMAIN", "DOMAIN-SUFFIX", "DOMAIN-KEYWORD", "DOMAIN-WILDCARD", "DOMAIN-REGEX", "GEOSITE",
@@ -71,6 +71,13 @@ type MihomoOutbound struct {
 	RoutingMark       int    `json:"routingMark,omitempty"`
 	TFO               bool   `json:"tfo,omitempty"`
 	MPTCP             bool   `json:"mptcp,omitempty"`
+
+	// Snell fields. Advanced wrapper modes remain available through native YAML.
+	SnellPSK      string `json:"snellPsk,omitempty"`
+	SnellVersion  int    `json:"snellVersion,omitempty"`
+	SnellReuse    bool   `json:"snellReuse,omitempty"`
+	SnellObfsMode string `json:"snellObfsMode,omitempty"`
+	SnellObfsHost string `json:"snellObfsHost,omitempty"`
 
 	// WireGuard fields. The form covers Mihomo's common single-peer form; the
 	// YAML editor remains available for multi-peer and AmneziaWG options.
@@ -265,6 +272,9 @@ func normalizeMihomoOutbounds(input []MihomoOutbound) ([]MihomoOutbound, error) 
 		item.Flow = strings.TrimSpace(item.Flow)
 		item.Encryption = strings.TrimSpace(item.Encryption)
 		item.ClientFingerprint = strings.TrimSpace(item.ClientFingerprint)
+		item.SnellPSK = strings.TrimSpace(item.SnellPSK)
+		item.SnellObfsMode = strings.ToLower(strings.TrimSpace(item.SnellObfsMode))
+		item.SnellObfsHost = strings.TrimSpace(item.SnellObfsHost)
 		item.IPVersion = strings.ToLower(strings.TrimSpace(item.IPVersion))
 		item.DialerProxy = strings.TrimSpace(item.DialerProxy)
 		item.InterfaceName = strings.TrimSpace(item.InterfaceName)
@@ -368,7 +378,7 @@ func validateMihomoProxy(item MihomoOutbound) error {
 	if !containsString(mihomoProxyTypes, item.Type) && !(item.Native != nil && containsString(nativeTypes, item.Type)) {
 		return fmt.Errorf("不支持代理类型 %q", item.Type)
 	}
-	if item.Native != nil && containsString([]string{"dns", "reject", "rematch", "tailscale", "zerotier"}, item.Type) {
+	if item.Native != nil && containsString([]string{"snell", "dns", "reject", "rematch", "tailscale", "zerotier"}, item.Type) {
 		return nil
 	}
 	if item.Native != nil && item.Type == "wireguard" && item.Native["peers"] != nil {
@@ -409,6 +419,29 @@ func validateMihomoProxy(item MihomoOutbound) error {
 	case "ss":
 		if item.Password == "" || item.Cipher == "" {
 			return fmt.Errorf("Shadowsocks 需要 Cipher 和 Password")
+		}
+	case "snell":
+		version := item.SnellVersion
+		if version == 0 {
+			version = 1
+		}
+		if item.SnellPSK == "" {
+			return fmt.Errorf("Snell 需要 PSK")
+		}
+		if version < 1 || version > 5 {
+			return fmt.Errorf("Snell 版本必须在 1-5 之间")
+		}
+		if item.UDP && version < 3 {
+			return fmt.Errorf("Snell v%d 不支持 UDP，请改用 v3 及以上版本", version)
+		}
+		if item.SnellReuse && version < 4 {
+			return fmt.Errorf("Snell Reuse 仅支持 v4/v5")
+		}
+		if !containsString([]string{"", "http", "tls"}, item.SnellObfsMode) {
+			return fmt.Errorf("Snell Obfs Mode 不受 Mihomo 支持")
+		}
+		if item.SnellObfsHost != "" && strings.ContainsAny(item.SnellObfsHost, " \t/\r\n") {
+			return fmt.Errorf("Snell Obfs Host 必须是域名或 IP，不能包含协议、路径或空格")
 		}
 	case "vmess", "vless":
 		if !regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`).MatchString(item.UUID) {
@@ -875,6 +908,22 @@ func mihomoProxyConfig(item MihomoOutbound) map[string]any {
 		result["cipher"], result["password"] = item.Cipher, item.Password
 		if item.UDP {
 			result["udp"] = true
+		}
+	case "snell":
+		result["psk"] = item.SnellPSK
+		version := item.SnellVersion
+		if version == 0 {
+			version = 1
+		}
+		result["version"] = version
+		if item.UDP {
+			result["udp"] = true
+		}
+		if item.SnellReuse {
+			result["reuse"] = true
+		}
+		if item.SnellObfsMode != "" {
+			result["obfs-opts"] = map[string]any{"mode": item.SnellObfsMode, "host": valueOr(item.SnellObfsHost, "bing.com")}
 		}
 	case "socks5", "http":
 		writeAuth()

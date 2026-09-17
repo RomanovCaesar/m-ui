@@ -255,8 +255,9 @@ var listenerYAMLOrder = func() map[string]int {
 
 var proxyYAMLOrder = func() map[string]int {
 	ordered := []string{
-		"name", "type", "server", "port", "username", "uuid", "password", "token", "alterId", "cipher", "flow", "encryption",
+		"name", "type", "server", "port", "username", "uuid", "password", "psk", "token", "version", "reuse", "alterId", "cipher", "flow", "encryption",
 		"udp", "network", "ws-opts", "grpc-opts", "tls", "servername", "sni", "alpn", "skip-cert-verify", "client-fingerprint",
+		"obfs-opts",
 		"up", "down", "obfs", "obfs-password", "congestion-controller", "udp-relay-mode",
 		"ip-version", "dialer-proxy", "interface-name", "routing-mark", "tfo", "mptcp",
 		"ip", "ipv6", "private-key", "public-key", "pre-shared-key", "reserved", "persistent-keepalive", "workers", "mtu",

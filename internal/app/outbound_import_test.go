@@ -124,6 +124,101 @@ func TestOutboundOpenVPNAliasesNormalize(t *testing.T) {
 	}
 }
 
+func TestOutboundFormSnellRoundTripAndValidation(t *testing.T) {
+	item := MihomoOutbound{
+		ID: "snell-1", Kind: "proxy", Name: "Snell", Type: "snell",
+		Server: "snell.example.com", Port: 44046, SnellPSK: "snell-secret",
+		SnellVersion: 4, SnellReuse: true, SnellObfsMode: "tls", SnellObfsHost: "bing.com", UDP: true,
+	}
+	items, err := normalizeMihomoOutbounds([]MihomoOutbound{item})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := mihomoOutboundYAML(items)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, expected := range []string{
+		`type: "snell"`, `psk: "snell-secret"`, `version: 4`, `udp: true`, `reuse: true`,
+		`obfs-opts:`, `mode: "tls"`, `host: "bing.com"`,
+	} {
+		if !strings.Contains(string(data), expected) {
+			t.Fatalf("Snell YAML missing %q:\n%s", expected, data)
+		}
+	}
+	parsed, err := parseMihomoOutboundYAML(string(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := parsed[0]
+	if got.Type != "snell" || got.SnellPSK != item.SnellPSK || got.SnellVersion != 4 || !got.SnellReuse || !got.UDP || got.SnellObfsMode != "tls" || got.SnellObfsHost != "bing.com" {
+		t.Fatalf("Snell round trip changed fields: %#v", got)
+	}
+
+	invalid := []struct {
+		name string
+		edit func(*MihomoOutbound)
+	}{
+		{"missing PSK", func(value *MihomoOutbound) { value.SnellPSK = "" }},
+		{"bad version", func(value *MihomoOutbound) { value.SnellVersion = 6 }},
+		{"UDP below v3", func(value *MihomoOutbound) { value.SnellVersion = 2 }},
+		{"reuse below v4", func(value *MihomoOutbound) { value.SnellVersion = 3; value.UDP = false }},
+		{"unknown obfs", func(value *MihomoOutbound) { value.SnellObfsMode = "salamander" }},
+		{"bad obfs host", func(value *MihomoOutbound) { value.SnellObfsHost = "https://bing.com/path" }},
+	}
+	for _, test := range invalid {
+		t.Run(test.name, func(t *testing.T) {
+			candidate := item
+			test.edit(&candidate)
+			if _, err := normalizeMihomoOutbounds([]MihomoOutbound{candidate}); err == nil {
+				t.Fatal("invalid Snell outbound was accepted")
+			}
+		})
+	}
+}
+
+func TestOutboundFormSnellWithMihomo(t *testing.T) {
+	core := os.Getenv("MUI_TEST_CORE")
+	if core == "" {
+		t.Skip("MUI_TEST_CORE is not set")
+	}
+	state := defaultState()
+	state.Inbounds = nil
+	state.Outbounds = []MihomoOutbound{{
+		Kind: "proxy", Name: "Snell", Type: "snell", Server: "snell.example.com", Port: 44046,
+		SnellPSK: "snell-secret", SnellVersion: 4, SnellReuse: true, SnellObfsMode: "http", SnellObfsHost: "bing.com", UDP: true,
+	}}
+	manager := &CoreManager{dataDir: t.TempDir(), state: state}
+	data, err := manager.renderConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := filepath.Join(manager.dataDir, "config.yaml")
+	if err = os.WriteFile(file, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if output, err := exec.Command(core, "-d", manager.dataDir, "-t", "-f", file).CombinedOutput(); err != nil {
+		t.Fatalf("Mihomo rejected Snell outbound: %v\n%s", err, output)
+	}
+}
+
+func TestOutboundSnellFormFrontendContract(t *testing.T) {
+	data, err := os.ReadFile("web/mihomo-settings.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := string(data)
+	for _, required := range []string{
+		"['snell','Snell']", `name="snellPsk"`, `name="snellVersion"`, `name="snellReuse"`,
+		`name="snellObfsMode"`, `name="snellObfsHost"`, "syncSnellOutboundForm()",
+		"version<3", "version<4",
+	} {
+		if !strings.Contains(source, required) {
+			t.Fatalf("Snell outbound form is missing %q", required)
+		}
+	}
+}
+
 func TestOutboundImportGroupsAndDraftReferences(t *testing.T) {
 	context, _, err := convertOutboundInput(mihomoYAMLParseRequest{YAML: nativeImportFixture})
 	if err != nil {

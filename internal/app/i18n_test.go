@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -72,7 +73,7 @@ func TestEnglishTableHasNoLeftoverChinese(t *testing.T) {
 }
 
 func TestEveryAdditionalLocaleCoversTheFullCatalog(t *testing.T) {
-	languages := []string{"ru", "fa", "vi", "es"}
+	languages := []string{"zh-TW", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"}
 	placeholder := regexp.MustCompile(`\{[A-Za-z0-9_]+\}|\$\d+`)
 	for _, language := range languages {
 		messages, ok := messagesLocalized[language]
@@ -81,10 +82,13 @@ func TestEveryAdditionalLocaleCoversTheFullCatalog(t *testing.T) {
 		}
 		for source, english := range messagesEN {
 			translated := messages[source]
-			if strings.TrimSpace(translated) == "" || hasCJK(translated) || strings.ContainsRune(translated, '\uFFFD') {
+			if strings.TrimSpace(translated) == "" || (language != "zh-TW" && language != "ja" && hasCJK(translated)) || strings.ContainsRune(translated, '\uFFFD') {
 				t.Fatalf("%s backend message %q is invalid: %q", language, source, translated)
 			}
-			if !reflect.DeepEqual(placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)) {
+			englishPlaceholders, translatedPlaceholders := placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)
+			slices.Sort(englishPlaceholders)
+			slices.Sort(translatedPlaceholders)
+			if !reflect.DeepEqual(englishPlaceholders, translatedPlaceholders) {
 				t.Fatalf("%s backend message %q changed placeholders: %q", language, source, translated)
 			}
 			if len(translated) > len(english)*8+160 {
@@ -97,10 +101,13 @@ func TestEveryAdditionalLocaleCoversTheFullCatalog(t *testing.T) {
 		}
 		for index, translated := range patterns {
 			english := messagePatternsEN[index].to
-			if strings.TrimSpace(translated) == "" || hasCJK(translated) || strings.ContainsRune(translated, '\uFFFD') {
+			if strings.TrimSpace(translated) == "" || (language != "zh-TW" && language != "ja" && hasCJK(translated)) || strings.ContainsRune(translated, '\uFFFD') {
 				t.Fatalf("%s pattern #%d is invalid: %q", language, index, translated)
 			}
-			if !reflect.DeepEqual(placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)) {
+			englishPlaceholders, translatedPlaceholders := placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)
+			slices.Sort(englishPlaceholders)
+			slices.Sort(translatedPlaceholders)
+			if !reflect.DeepEqual(englishPlaceholders, translatedPlaceholders) {
 				t.Fatalf("%s pattern #%d changed placeholders: %q", language, index, translated)
 			}
 			if len(translated) > len(english)*8+160 {
@@ -135,7 +142,7 @@ func TestEveryAdditionalLocaleCoversTheFullUICatalog(t *testing.T) {
 	}
 	text := string(generated)
 	entry := regexp.MustCompile(`(?m)^\s*("(?:\\.|[^"\\])*"):\s*("(?:\\.|[^"\\])*"),?\s*$`)
-	for _, language := range []string{"ru", "fa", "vi", "es"} {
+	for _, language := range []string{"zh-TW", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"} {
 		marker := strings.Index(text, `"`+language+`": {`)
 		if marker < 0 {
 			t.Fatalf("web/i18n-locales.js has no %s catalog", language)
@@ -155,7 +162,7 @@ func TestEveryAdditionalLocaleCoversTheFullUICatalog(t *testing.T) {
 		}
 		for key := range englishKeys {
 			value, ok := catalog[key]
-			if !ok || strings.TrimSpace(value) == "" || hasCJK(value) || strings.ContainsRune(value, '\uFFFD') || strings.Contains(value, "@@") {
+			if !ok || strings.TrimSpace(value) == "" || (language != "zh-TW" && language != "ja" && hasCJK(value)) || strings.ContainsRune(value, '\uFFFD') || strings.Contains(value, "@@") {
 				t.Fatalf("%s UI key %q is missing or invalid: %q", language, key, value)
 			}
 		}
@@ -259,7 +266,7 @@ func TestAPIMessagesFollowThePanelLanguage(t *testing.T) {
 	if message := call(); message == "" || hasCJK(message) {
 		t.Fatalf("the English panel must not show Chinese, got %q", message)
 	}
-	for _, raw := range []string{"", "  ", "fr", "zh-TW"} {
+	for _, raw := range []string{"", "  ", "fr", "zh-HK"} {
 		if got := normalizeLanguage(raw); got != defaultLanguage {
 			t.Fatalf("normalizeLanguage(%q) = %q, want %q", raw, got, defaultLanguage)
 		}
@@ -267,12 +274,12 @@ func TestAPIMessagesFollowThePanelLanguage(t *testing.T) {
 	if got := normalizeLanguage(" en "); got != "en" {
 		t.Fatalf("normalizeLanguage must trim the stored value, got %q", got)
 	}
-	for _, language := range []string{"ru", "fa", "vi", "es"} {
+	for _, language := range []string{"zh-TW", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"} {
 		if got := normalizeLanguage(" " + language + " "); got != language {
 			t.Fatalf("normalizeLanguage(%q) = %q, want %q", language, got, language)
 		}
 		i18nSetLanguage(app, language)
-		if message := call(); message == "" || hasCJK(message) {
+		if message := call(); message == "" || (language != "zh-TW" && language != "ja" && hasCJK(message)) {
 			t.Fatalf("the %s panel must not show Chinese, got %q", language, message)
 		}
 	}
@@ -318,7 +325,7 @@ func TestPublicLanguageUpdatePersistsFromPanelAndSubscriptionPorts(t *testing.T)
 	}
 
 	// The login page uses the panel-relative endpoint before authentication.
-	for _, language := range []string{"en", "ru", "fa", "vi", "es"} {
+	for _, language := range []string{"en", "zh-TW", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"} {
 		if response := post(app.panelRoutes(false), "/hidden/api/language", language); response.Code != http.StatusOK {
 			t.Fatalf("login-page %s language update: %d %s", language, response.Code, response.Body.String())
 		}
@@ -360,16 +367,35 @@ func TestStandalonePagesSupportEveryLanguage(t *testing.T) {
 			t.Fatal(err)
 		}
 		page := string(data)
-		for _, language := range []string{"ru", "fa", "vi", "es"} {
+		for _, language := range []string{"zh-TW", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"} {
 			if !strings.Contains(page, `value="`+language+`"`) {
 				t.Fatalf("%s has no %s language option", name, language)
 			}
-			if !strings.Contains(page, language+":{") && !strings.Contains(page, language+": {") {
+			if !strings.Contains(page, language+":{") && !strings.Contains(page, language+": {") && !strings.Contains(page, `"`+language+`":{`) && !strings.Contains(page, `"`+language+`": {`) && !strings.Contains(page, `'`+language+`':{`) && !strings.Contains(page, `'`+language+`': {`) {
 				t.Fatalf("%s has no %s message catalog", name, language)
 			}
 		}
 		if !strings.Contains(page, "lang === 'fa' ? 'rtl' : 'ltr'") && !strings.Contains(page, "lang==='fa'?'rtl':'ltr'") {
 			t.Fatalf("%s must switch Persian to RTL", name)
+		}
+	}
+}
+
+func TestTraditionalChineseIsSecondInEveryLanguageList(t *testing.T) {
+	for _, name := range []string{"web/index.html", "web/login.html", "web/subscription.html"} {
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		page := string(data)
+		zhCN := strings.Index(page, `<option value="zh-CN">🇨🇳 简体中文</option>`)
+		zhTW := strings.Index(page, `<option value="zh-TW">🇹🇼 繁體中文</option>`)
+		en := strings.Index(page, `<option value="en">🇺🇸 English</option>`)
+		ja := strings.Index(page, `<option value="ja">🇯🇵 日本語</option>`)
+		uk := strings.Index(page, `<option value="uk">🇺🇦 Українська</option>`)
+		ptBR := strings.Index(page, `<option value="pt-BR">🇧🇷 Português</option>`)
+		if zhCN < 0 || zhTW < 0 || en < 0 || ja < 0 || uk < 0 || ptBR < 0 || !(zhCN < zhTW && zhTW < en && en < ja && ja < uk && uk < ptBR) {
+			t.Fatalf("%s language order must start with zh-CN, zh-TW, en, ja and end with uk, pt-BR", name)
 		}
 	}
 }
@@ -573,7 +599,7 @@ func TestTranslatableOptionsCarryTranslationKeys(t *testing.T) {
 			// 协议关键字（tcp、bbr、aes-256-gcm）本来就不该翻，会读的只有中文和
 			// "Default ..." 这一族"沿用内核默认值"的说明文字。
 			translatable := hasCJK(label) || strings.HasPrefix(label, "Default")
-			if !translatable || strings.Contains(attributes, `value="zh-CN"`) {
+			if !translatable || strings.Contains(attributes, `value="zh-CN"`) || strings.Contains(attributes, `value="zh-TW"`) || strings.Contains(attributes, `value="ja"`) {
 				continue
 			}
 			found := key.FindStringSubmatch(attributes)

@@ -23,7 +23,16 @@ func settingsLanguage(s Settings) string {
 // normalizeLanguage 把设置里的界面语言收敛到 supportedLanguages，空值和非法值都
 // 退回 defaultLanguage。
 func normalizeLanguage(raw string) string {
-	if language := strings.TrimSpace(raw); containsString(supportedLanguages, language) {
+	language := strings.TrimSpace(raw)
+	switch language {
+	case "ja-JP":
+		language = "ja"
+	case "uk-UA":
+		language = "uk"
+	case "pt":
+		language = "pt-BR"
+	}
+	if containsString(supportedLanguages, language) {
 		return language
 	}
 	return defaultLanguage
@@ -50,6 +59,14 @@ func (m *CoreManager) lang() string {
 
 func (m *CoreManager) updateLanguage(raw string) error {
 	language := strings.TrimSpace(raw)
+	switch language {
+	case "ja-JP":
+		language = "ja"
+	case "uk-UA":
+		language = "uk"
+	case "pt":
+		language = "pt-BR"
+	}
 	if !containsString(supportedLanguages, language) {
 		return fmt.Errorf("界面语言无效")
 	}
@@ -385,6 +402,9 @@ var messagesEN = map[string]string{
 	"Snell 至少需要一个启用且填写了 PSK 的客户端":                                                "Snell needs at least one enabled client with a PSK",
 	"Snell 版本必须在 1-5 之间":                                                         "The Snell version must be between 1 and 5",
 	"Snell Obfs Mode 不受 Mihomo 支持":                                               "Mihomo does not support this Snell Obfs Mode",
+	"Snell 需要 PSK":                                                               "Snell requires a PSK",
+	"Snell Reuse 仅支持 v4/v5":                                                      "Snell Reuse only supports v4/v5",
+	"Snell Obfs Host 必须是域名或 IP，不能包含协议、路径或空格":                                     "The Snell Obfs Host must be a domain or IP without a scheme, path or spaces",
 	"Snell 的 ShadowTLS / RestTLS / JLS 互斥，只能启用一种":                                "Snell's ShadowTLS / RestTLS / JLS are mutually exclusive — enable only one",
 	"Snell 的 Obfs 与 ShadowTLS / RestTLS / JLS 互斥，只能启用一种":                         "Snell's Obfs and ShadowTLS / RestTLS / JLS are mutually exclusive — enable only one",
 	"JLS 必须配置有效的目标地址，例如 example.com:443":                                         "JLS needs a valid destination, for example example.com:443",
@@ -393,20 +413,20 @@ var messagesEN = map[string]string{
 	"Trojan SS 加密方式无效":                                                           "Invalid Trojan SS method",
 	"Trojan SS 必须配置密码":                                                           "Trojan SS needs a password",
 	"Reality 必须配置目标地址和私钥":                                                        "Reality needs a destination and a private key",
-	"XHTTP Mode 无效":                         "Invalid XHTTP Mode",
-	"XHTTP Padding Placement 无效":            "Invalid XHTTP Padding Placement",
-	"XHTTP Padding Method 无效":               "Invalid XHTTP Padding Method",
-	"XHTTP Uplink HTTP Method 无效":           "Invalid XHTTP Uplink HTTP Method",
-	"XHTTP Session Placement 无效":            "Invalid XHTTP Session Placement",
-	"XHTTP Sequence Placement 无效":           "Invalid XHTTP Sequence Placement",
-	"XHTTP Uplink Data Placement 无效":        "Invalid XHTTP Uplink Data Placement",
-	"VMess 的 mKCP 与 Mekya 不能同时启用":           "VMess cannot run mKCP and Mekya at the same time",
-	"VMess Mekya 不能与 WebSocket 或 gRPC 同时启用": "VMess Mekya cannot run together with WebSocket or gRPC",
-	"VMess mKCP 不能与 WebSocket 或 gRPC 同时启用":  "VMess mKCP cannot run together with WebSocket or gRPC",
-	"VMess mKCP Header 无效":                  "Invalid VMess mKCP Header",
-	"VMess Mekya KCP Header 无效":             "Invalid VMess Mekya KCP Header",
-	"VMess Mekya 必须配置 URL":                  "VMess Mekya needs a URL",
-	"VMess Mekya URL 必须是完整的 HTTPS URL":      "The VMess Mekya URL must be a complete HTTPS URL",
+	"XHTTP Mode 无效":                                                              "Invalid XHTTP Mode",
+	"XHTTP Padding Placement 无效":                                                 "Invalid XHTTP Padding Placement",
+	"XHTTP Padding Method 无效":                                                    "Invalid XHTTP Padding Method",
+	"XHTTP Uplink HTTP Method 无效":                                                "Invalid XHTTP Uplink HTTP Method",
+	"XHTTP Session Placement 无效":                                                 "Invalid XHTTP Session Placement",
+	"XHTTP Sequence Placement 无效":                                                "Invalid XHTTP Sequence Placement",
+	"XHTTP Uplink Data Placement 无效":                                             "Invalid XHTTP Uplink Data Placement",
+	"VMess 的 mKCP 与 Mekya 不能同时启用":                                                "VMess cannot run mKCP and Mekya at the same time",
+	"VMess Mekya 不能与 WebSocket 或 gRPC 同时启用":                                      "VMess Mekya cannot run together with WebSocket or gRPC",
+	"VMess mKCP 不能与 WebSocket 或 gRPC 同时启用":                                       "VMess mKCP cannot run together with WebSocket or gRPC",
+	"VMess mKCP Header 无效":                                                       "Invalid VMess mKCP Header",
+	"VMess Mekya KCP Header 无效":                                                  "Invalid VMess Mekya KCP Header",
+	"VMess Mekya 必须配置 URL":                                                       "VMess Mekya needs a URL",
+	"VMess Mekya URL 必须是完整的 HTTPS URL":                                           "The VMess Mekya URL must be a complete HTTPS URL",
 
 	// —— 协议专项校验 ——
 	"TLSMirror 借用真实 TLS 服务器的握手，不能同时配置证书和私钥":                                "TLSMirror borrows a real TLS server's handshake — it cannot also carry a certificate and private key",

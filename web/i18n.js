@@ -1,11 +1,11 @@
 /*
-m-ui 界面多语言核心（简体中文 / English / Русский / فارسی / Tiếng Việt / Español）。
+m-ui 界面多语言核心（简体中文 / 繁體中文 / English / 日本語 / Русский / فارسی / Tiếng Việt / Español / Türkçe / Українська / Português）。
 机制：
 - DICT 按语言存全部 key；muiT(key, params) 取词，缺 key 时回退另一语言再回退 key 本身。
 - muiApply 两遍扫描：先处理已打标的 data-i18n* 属性，再对未打标元素按“原始文案精确匹配”
   （SOURCE/SOURCE_PH/SOURCE_TITLE/SOURCE_ARIA）翻译文本节点并打标，之后切换语言只走打标路径。
 - 语言存 localStorage['mui-language']（与 Panel Settings 的 language 设置、登录页
-  data-default-language 注入值同值域：zh-CN / en / ru / fa / vi / es），切换后广播 window 事件 mui-langchange，
+  data-default-language 注入值同值域：zh-CN / zh-TW / en / ja / ru / fa / vi / es / tr / uk / pt-BR），切换后广播 window 事件 mui-langchange，
   index 主脚本与卫星脚本监听该事件重渲染动态内容。
 本文件由 index.html 以 <script src="static/i18n.js"> 引入，须在其余卫星脚本之前。
 */
@@ -127,6 +127,11 @@ m-ui 界面多语言核心（简体中文 / English / Русский / فارس�
       'mihomo.tabRouting': '分流规则',
       'mihomo.addOutbound': '添加出站',
       'mihomo.addRule': '添加规则',
+      'mihomo.snellPsk': 'PSK',
+      'mihomo.snellVersion': '版本',
+      'mihomo.snellReuse': '连接复用（v4/v5）',
+      'mihomo.snellObfsMode': '混淆模式',
+      'mihomo.snellObfsHost': '混淆域名',
       'mihomo.ruleHint': '规则自上而下匹配；MATCH 永远在最后。',
       'mihomo.secStatistics': '统计',
       'mihomo.secLog': '日志',
@@ -933,6 +938,11 @@ m-ui 界面多语言核心（简体中文 / English / Русский / فارس�
       'mihomo.tabRouting': 'Routing Rules',
       'mihomo.addOutbound': 'Add Outbound',
       'mihomo.addRule': 'Add Rule',
+      'mihomo.snellPsk': 'PSK',
+      'mihomo.snellVersion': 'Version',
+      'mihomo.snellReuse': 'Connection Reuse (v4/v5)',
+      'mihomo.snellObfsMode': 'Obfs Mode',
+      'mihomo.snellObfsHost': 'Obfs Host',
       'mihomo.ruleHint': 'Rules match from top to bottom; MATCH is always last.',
       'mihomo.secStatistics': 'Statistics',
       'mihomo.secLog': 'Log',
@@ -1630,6 +1640,19 @@ m-ui 界面多语言核心（简体中文 / English / Русский / فارس�
   /* Human-reviewed overrides for the most visible controls. The generated
      locale catalog below supplies every remaining key. */
   var LOCALIZED = {
+    'zh-TW': {
+      'nav.overview':'儀表板','nav.inbounds':'入站','nav.panelSettings':'面板設定','settings.secCerts':'憑證','settings.descLanguage':'介面語言；切換後立即生效，儲存設定時會同步寫回伺服器。'
+    },
+    tr: {
+      'common.save':'Kaydet','common.cancel':'İptal','common.import':'İçe Aktar','common.close':'Kapat','common.create':'Oluştur','common.delete':'Sil','common.copy':'Kopyala','common.confirm':'Onayla','common.enable':'Etkinleştir','common.enabled':'Etkin','common.never':'Asla','common.hourly':'Saatlik','common.daily':'Günlük','common.weekly':'Haftalık','common.monthly':'Aylık','common.general':'Genel','common.refreshTitle':'Yenile','common.backTopTitle':'Başa dön',
+      'nav.theme':'Tema','nav.dark':'Koyu','nav.ultraDark':'Çok Koyu','nav.overview':'Genel Bakış','nav.inbounds':'Girişler','nav.mihomoSettings':'Mihomo Ayarları','nav.panelSettings':'Panel Ayarları','nav.logOut':'Çıkış Yap','nav.collapseTitle':'Menüyü daralt/genişlet','nav.menuTitle':'Menü','topbar.refresh':'Yenile',
+      'banner.securityTitle':'Güvenlik Bildirimi','dash.start':'Başlat','dash.stop':'Durdur','dash.restart':'Yeniden Başlat','dash.manage':'Yönet','dash.logs':'Günlükler','dash.config':'Yapılandırma','dash.backup':'Yedekleme','dash.documentation':'Belgeler','dash.uptime':'Çalışma Süresi','dash.systemLoad':'Sistem Yükü','dash.usage':'Kullanım','dash.overallSpeed':'Toplam Hız','dash.upload':'Yükleme','dash.download':'İndirme','dash.totalData':'Toplam Veri','dash.sent':'Gönderilen','dash.received':'Alınan','dash.ipAddresses':'IP Adresleri','dash.connStats':'Bağlantı İstatistikleri','dash.cpuHistory':'CPU Geçmişi','dash.coreRunning':'Çalışıyor','dash.coreStopped':'Durduruldu','dash.unknown':'Bilinmiyor',
+      'inbounds.totalTraffic':'Toplam Gönderilen/Alınan','inbounds.totalUsage':'Toplam Kullanım','inbounds.allTimeUsage':'Tüm Zamanların Kullanımı','inbounds.totalInbounds':'Toplam Giriş','inbounds.clients':'İstemciler','inbounds.add':'Giriş Ekle','inbounds.generalActions':'Genel İşlemler','inbounds.import':'Giriş İçe Aktar','inbounds.exportUrls':'Tüm URL’leri Dışa Aktar','inbounds.exportSubs':'Tüm Abonelikleri Dışa Aktar','inbounds.testConfig':'Yapılandırmayı Test Et','inbounds.resetInbounds':'Giriş Trafiğini Sıfırla','inbounds.resetClients':'İstemci Trafiğini Sıfırla','inbounds.sync':'Girişi Eşitle','inbounds.deleteDepleted':'Kotası Tükenen İstemcileri Sil','inbounds.searchPh':'Ara','inbounds.statusNone':'Yok','inbounds.statusDisabled':'Devre Dışı','inbounds.statusEnded':'Sona Erdi','inbounds.statusOnline':'Çevrimiçi',
+      'conn.eyebrow':'Canlı Bağlantılar','conn.title':'Canlı Bağlantılar','conn.closeAll':'Tüm Bağlantıları Kapat','conn.list':'Bağlantılar','conn.autoRefresh':'Her 5 saniyede yenile','logs.eyebrow':'Çalışma Günlükleri','logs.title':'Çalışma Günlükleri','logs.refresh':'Günlükleri Yenile','logs.empty':'Henüz günlük yok',
+      'mihomo.restart':'Mihomo’yu Yeniden Başlat','mihomo.tabBasics':'Temel','mihomo.tabOutbounds':'Çıkışlar','mihomo.tabRouting':'Yönlendirme Kuralları','mihomo.addOutbound':'Çıkış Ekle','mihomo.addRule':'Kural Ekle','mihomo.secStatistics':'İstatistikler','mihomo.secLog':'Günlük','mihomo.secBasicRouting':'Temel Yönlendirme','mihomo.secReset':'Varsayılana Sıfırla','mihomo.snellPsk':'PSK','mihomo.snellVersion':'Sürüm','mihomo.snellReuse':'Bağlantıyı Yeniden Kullan (v4/v5)','mihomo.snellObfsMode':'Gizleme Modu','mihomo.snellObfsHost':'Gizleme Sunucusu',
+      'settings.restartPanel':'Paneli Yeniden Başlat','settings.tabAuthentication':'Kimlik Doğrulama','settings.secNotifications':'Bildirimler','settings.secCerts':'Sertifikalar','settings.secExternalTraffic':'Harici Trafik','settings.secDateTime':'Tarih ve Saat','settings.secMihomoCore':'Mihomo Çekirdeği','settings.secAdminCreds':'Yönetici Bilgileri','settings.language':'Dil','settings.descLanguage':'Arayüz dili; hemen uygulanır ve ayarlar kaydedildiğinde sunucuya yazılır.','settings.clearIpinfoToken':'Temizle','settings.ipinfoTokenSet':'Ayarlanmış','settings.ipinfoTokenWillClear':'Kaydedildiğinde temizlenecek','settings.modeRule':'Kural','settings.modeGlobal':'Genel','settings.modeDirect':'Doğrudan','settings.logLevel':'Günlük Düzeyi','settings.allowLan':'LAN’a İzin Ver',
+      'client.add':'İstemci Ekle','client.edit':'İstemciyi Düzenle','client.email':'E-posta','client.username':'Kullanıcı Adı','client.passwordToken':'Parola / Jeton','client.totalFlowGb':'Toplam Trafik (GB)','client.expiryTime':'Bitiş Zamanı','client.comment':'Açıklama','client.addClients':'İstemcileri Ekle','common.update':'Güncelle','action.edit':'Düzenle','action.clone':'Kopyala','action.exportInbound':'Girişi Dışa Aktar','action.resetTraffic':'Trafiği Sıfırla','action.recommended':'Önerilen'
+    },
     ru: {
       'common.save':'Сохранить','common.cancel':'Отмена','common.import':'Импорт','common.close':'Закрыть','common.create':'Создать','common.delete':'Удалить','common.copy':'Копировать','common.confirm':'Подтвердить','common.enable':'Включить','common.enabled':'Включено','common.never':'Никогда','common.general':'Общие','common.refreshTitle':'Обновить','common.backTopTitle':'Наверх',
       'nav.theme':'Тема','nav.dark':'Тёмная','nav.ultraDark':'Очень тёмная','nav.overview':'Обзор','nav.inbounds':'Входы','nav.mihomoSettings':'Настройки Mihomo','nav.panelSettings':'Настройки панели','nav.logOut':'Выйти','nav.collapseTitle':'Свернуть/развернуть меню','nav.menuTitle':'Меню','topbar.refresh':'Обновить',
@@ -2019,7 +2042,7 @@ m-ui 界面多语言核心（简体中文 / English / Русский / فارس�
   var SKIP_SELECTOR = '#security-segmented,.mui-select-menu,.release-list';
 
   var lang = 'zh-CN';
-  var SUPPORTED_LANGUAGES = ['zh-CN', 'en', 'ru', 'fa', 'vi', 'es'];
+  var SUPPORTED_LANGUAGES = ['zh-CN', 'zh-TW', 'en', 'ja', 'ru', 'fa', 'vi', 'es', 'tr', 'uk', 'pt-BR'];
 
   function muiGetLang() {
     var stored = null;

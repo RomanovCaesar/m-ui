@@ -1713,6 +1713,14 @@ func (m *CoreManager) updateSettings(input Settings) error {
 		return fmt.Errorf("时区无效: %w", err)
 	}
 	input.Language = strings.TrimSpace(input.Language)
+	switch input.Language {
+	case "ja-JP":
+		input.Language = "ja"
+	case "uk-UA":
+		input.Language = "uk"
+	case "pt":
+		input.Language = "pt-BR"
+	}
 	if input.Language == "" {
 		input.Language = defaultLanguage
 	}
@@ -1784,7 +1792,7 @@ func normalizeIPInfoToken(value string) (string, error) {
 // 3x-ui 的备注分隔符清单，顺序也保持一致（下拉框按这个顺序渲染）。
 var remarkSeparators = []string{" ", "-", "_", "@", ":", "~", "|", ",", ".", "/"}
 
-var supportedLanguages = []string{"zh-CN", "en", "ru", "fa", "vi", "es"}
+var supportedLanguages = []string{"zh-CN", "zh-TW", "en", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"}
 
 // normalizeRemarkModel 校验备注模板串：首字符是分隔符，后面跟着去重后的标签字符。
 // m-ui 只做 Inbound(i) + Email(e)，没有 3x-ui 的 Other(o)。

@@ -28,6 +28,7 @@ client-fingerprint: chrome
 reality-opts:
   public-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   short-id: "1234"
+  support-x25519mlkem768: true
 ws-opts:
   path: /ws
   headers:
@@ -259,7 +260,7 @@ func TestOutboundShareLinks(t *testing.T) {
 		{"socks5://user:p%3Aa%40ss@example.com:1080#SOCKS", "socks5", "SOCKS", "p:a@ss"},
 		{"https://user:pass@example.com:443#HTTP", "http", "HTTP", "pass"},
 		{"vmess://" + vmess, "vmess", "vmess ws", ""},
-		{"vless://00000000-0000-0000-0000-000000000001@[2001:db8::1]:443?security=reality&pbk=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&sid=1234&sni=example.com&type=grpc&serviceName=svc#Reality", "vless", "Reality", ""},
+		{"vless://00000000-0000-0000-0000-000000000001@[2001:db8::1]:443?security=reality&pbk=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&sid=1234&support-x25519mlkem768=true&sni=example.com&type=grpc&serviceName=svc#Reality", "vless", "Reality", ""},
 		{"trojan://p%3Ass@example.com:443?type=ws&path=%2Fws&host=cdn.example.com#Trojan", "trojan", "Trojan", "p:ss"},
 		{"hy2://p%3Ass@example.com:443?sni=example.com&insecure=1#Hy2", "hysteria2", "Hy2", "p:ss"},
 		{"tuic://00000000-0000-0000-0000-000000000001:pass@example.com:443?congestion_control=bbr#TUIC", "tuic", "TUIC", "pass"},
@@ -273,8 +274,8 @@ func TestOutboundShareLinks(t *testing.T) {
 			if len(items) != 1 || items[0].Type != tc.kind || items[0].Name != tc.name || items[0].Password != tc.password {
 				t.Fatalf("bad conversion: %s", output)
 			}
-			if tc.name == "Reality" && (!items[0].TLS || !strings.Contains(string(output), "reality-opts:")) {
-				t.Fatalf("missing Reality TLS: %s", output)
+			if tc.name == "Reality" && (!items[0].TLS || !strings.Contains(string(output), "reality-opts:") || !strings.Contains(string(output), "support-x25519mlkem768: true")) {
+				t.Fatalf("missing Reality ML-KEM option: %s", output)
 			}
 		})
 	}
@@ -282,6 +283,41 @@ func TestOutboundShareLinks(t *testing.T) {
 		if _, _, err := convertOutboundInput(mihomoYAMLParseRequest{Link: link}); err == nil {
 			t.Fatalf("invalid link accepted: %s", link)
 		}
+	}
+}
+
+func TestOutboundRealityMLKEMShareLinkValues(t *testing.T) {
+	const base = "vless://00000000-0000-0000-0000-000000000001@example.com:443?security=reality&pbk=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&sid=1234"
+	tests := []struct {
+		name, query string
+		want        any
+	}{
+		{"absent", "", nil},
+		{"empty", "&support-x25519mlkem768=", nil},
+		{"true", "&support-x25519mlkem768=true", true},
+		{"one", "&support-x25519mlkem768=1", true},
+		{"false", "&support-x25519mlkem768=false", false},
+		{"zero", "&support-x25519mlkem768=0", false},
+		{"invalid", "&support-x25519mlkem768=invalid", nil},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			items, _, err := convertOutboundInput(mihomoYAMLParseRequest{Link: base + tc.query})
+			if err != nil {
+				t.Fatal(err)
+			}
+			reality := mapValue(items[0].Native["reality-opts"])
+			got, exists := reality["support-x25519mlkem768"]
+			if tc.want == nil {
+				if exists {
+					t.Fatalf("unexpected ML-KEM option: %#v", got)
+				}
+				return
+			}
+			if !exists || got != tc.want {
+				t.Fatalf("ML-KEM option = %#v, want %#v", got, tc.want)
+			}
+		})
 	}
 }
 
@@ -314,7 +350,7 @@ func TestImportedOutboundConfigWithMihomo(t *testing.T) {
 	if core == "" {
 		t.Skip("MUI_TEST_CORE is not set")
 	}
-	items, _, err := convertOutboundInput(mihomoYAMLParseRequest{Link: "vless://00000000-0000-0000-0000-000000000001@example.com:443?security=reality&pbk=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&sid=1234&sni=example.com&type=tcp#Native"})
+	items, _, err := convertOutboundInput(mihomoYAMLParseRequest{Link: "vless://00000000-0000-0000-0000-000000000001@example.com:443?security=reality&pbk=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA&sid=1234&support-x25519mlkem768=true&sni=example.com&type=tcp#Native"})
 	if err != nil {
 		t.Fatal(err)
 	}

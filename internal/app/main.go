@@ -1784,7 +1784,7 @@ func normalizeIPInfoToken(value string) (string, error) {
 // 3x-ui 的备注分隔符清单，顺序也保持一致（下拉框按这个顺序渲染）。
 var remarkSeparators = []string{" ", "-", "_", "@", ":", "~", "|", ",", ".", "/"}
 
-var supportedLanguages = []string{"zh-CN", "en"}
+var supportedLanguages = []string{"zh-CN", "en", "ru", "fa", "vi", "es"}
 
 // normalizeRemarkModel 校验备注模板串：首字符是分隔符，后面跟着去重后的标签字符。
 // m-ui 只做 Inbound(i) + Email(e)，没有 3x-ui 的 Other(o)。

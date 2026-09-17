@@ -7,8 +7,8 @@ services:
       context: .
       args:
         MUI_VERSION: ${MUI_BUILD_VERSION:-dev}
-        MIHOMO_VERSION: ${MIHOMO_VERSION:-1.19.30}
-        MIHOMO_SHA256: ${MIHOMO_SHA256:-db214c7a2517e63c150d123178d16d102e03a241ccdae4e5e07ffbe9cf56c6f9}
+        MIHOMO_VERSION: ${MIHOMO_VERSION:-1.19.31}
+        MIHOMO_SHA256: ${MIHOMO_SHA256:-04cf9f09671704f839ddbee2e93069dc831a4123a75281e725d1d96ab9ac1afc}
     platform: linux/amd64
     container_name: m-ui
     restart: unless-stopped

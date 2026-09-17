@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -67,6 +68,107 @@ func TestEnglishTableHasNoLeftoverChinese(t *testing.T) {
 		if hasCJK(pattern.to) {
 			t.Fatalf("messagePatternsEN[%q] is still Chinese: %q", pattern.from, pattern.to)
 		}
+	}
+}
+
+func TestEveryAdditionalLocaleCoversTheFullCatalog(t *testing.T) {
+	languages := []string{"ru", "fa", "vi", "es"}
+	placeholder := regexp.MustCompile(`\{[A-Za-z0-9_]+\}|\$\d+`)
+	for _, language := range languages {
+		messages, ok := messagesLocalized[language]
+		if !ok || len(messages) != len(messagesEN) {
+			t.Fatalf("%s backend catalog has %d entries, want %d", language, len(messages), len(messagesEN))
+		}
+		for source, english := range messagesEN {
+			translated := messages[source]
+			if strings.TrimSpace(translated) == "" || hasCJK(translated) || strings.ContainsRune(translated, '\uFFFD') {
+				t.Fatalf("%s backend message %q is invalid: %q", language, source, translated)
+			}
+			if !reflect.DeepEqual(placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)) {
+				t.Fatalf("%s backend message %q changed placeholders: %q", language, source, translated)
+			}
+			if len(translated) > len(english)*8+160 {
+				t.Errorf("%s backend message %q expanded abnormally: %q", language, source, translated)
+			}
+		}
+		patterns := messagePatternsLocalized[language]
+		if len(patterns) != len(messagePatternsEN) {
+			t.Fatalf("%s pattern catalog has %d entries, want %d", language, len(patterns), len(messagePatternsEN))
+		}
+		for index, translated := range patterns {
+			english := messagePatternsEN[index].to
+			if strings.TrimSpace(translated) == "" || hasCJK(translated) || strings.ContainsRune(translated, '\uFFFD') {
+				t.Fatalf("%s pattern #%d is invalid: %q", language, index, translated)
+			}
+			if !reflect.DeepEqual(placeholder.FindAllString(english, -1), placeholder.FindAllString(translated, -1)) {
+				t.Fatalf("%s pattern #%d changed placeholders: %q", language, index, translated)
+			}
+			if len(translated) > len(english)*8+160 {
+				t.Errorf("%s pattern #%d expanded abnormally: %q", language, index, translated)
+			}
+		}
+	}
+}
+
+func TestEveryAdditionalLocaleCoversTheFullUICatalog(t *testing.T) {
+	dictionary, err := os.ReadFile("web/i18n.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	source := string(dictionary)
+	englishAt := strings.Index(source, "'en': {")
+	if englishAt < 0 {
+		t.Fatal("web/i18n.js has no English catalog")
+	}
+	english := i18nBraceBlock(t, source, englishAt+strings.Index(source[englishAt:], "{"), "English UI catalog")
+	englishKeys := map[string]bool{}
+	for _, match := range i18nSourceKey.FindAllStringSubmatch(english, -1) {
+		englishKeys[match[1]] = true
+	}
+	if len(englishKeys) < 700 {
+		t.Fatalf("English UI catalog unexpectedly has only %d keys", len(englishKeys))
+	}
+
+	generated, err := os.ReadFile("web/i18n-locales.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(generated)
+	entry := regexp.MustCompile(`(?m)^\s*("(?:\\.|[^"\\])*"):\s*("(?:\\.|[^"\\])*"),?\s*$`)
+	for _, language := range []string{"ru", "fa", "vi", "es"} {
+		marker := strings.Index(text, `"`+language+`": {`)
+		if marker < 0 {
+			t.Fatalf("web/i18n-locales.js has no %s catalog", language)
+		}
+		block := i18nBraceBlock(t, text, marker+strings.Index(text[marker:], "{"), language+" UI catalog")
+		catalog := map[string]string{}
+		for _, match := range entry.FindAllStringSubmatch(block, -1) {
+			key, keyErr := strconv.Unquote(match[1])
+			value, valueErr := strconv.Unquote(match[2])
+			if keyErr != nil || valueErr != nil {
+				t.Fatalf("decode %s UI entry: %v / %v", language, keyErr, valueErr)
+			}
+			catalog[key] = value
+		}
+		if len(catalog) != len(englishKeys) {
+			t.Fatalf("%s UI catalog has %d keys, want %d", language, len(catalog), len(englishKeys))
+		}
+		for key := range englishKeys {
+			value, ok := catalog[key]
+			if !ok || strings.TrimSpace(value) == "" || hasCJK(value) || strings.ContainsRune(value, '\uFFFD') || strings.Contains(value, "@@") {
+				t.Fatalf("%s UI key %q is missing or invalid: %q", language, key, value)
+			}
+		}
+	}
+	if !strings.Contains(source, "document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr'") {
+		t.Fatal("Persian must switch the main panel to RTL")
+	}
+	index, err := os.ReadFile("web/index.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Index(string(index), "static/i18n-locales.js") > strings.Index(string(index), "static/i18n.js") {
+		t.Fatal("the generated locales must load before i18n.js")
 	}
 }
 
@@ -165,6 +267,15 @@ func TestAPIMessagesFollowThePanelLanguage(t *testing.T) {
 	if got := normalizeLanguage(" en "); got != "en" {
 		t.Fatalf("normalizeLanguage must trim the stored value, got %q", got)
 	}
+	for _, language := range []string{"ru", "fa", "vi", "es"} {
+		if got := normalizeLanguage(" " + language + " "); got != language {
+			t.Fatalf("normalizeLanguage(%q) = %q, want %q", language, got, language)
+		}
+		i18nSetLanguage(app, language)
+		if message := call(); message == "" || hasCJK(message) {
+			t.Fatalf("the %s panel must not show Chinese, got %q", language, message)
+		}
+	}
 }
 
 // 面板首页和登录页一样是静态资源，语言只能靠 <html data-default-language> 注进去，
@@ -207,11 +318,13 @@ func TestPublicLanguageUpdatePersistsFromPanelAndSubscriptionPorts(t *testing.T)
 	}
 
 	// The login page uses the panel-relative endpoint before authentication.
-	if response := post(app.panelRoutes(false), "/hidden/api/language", "en"); response.Code != http.StatusOK {
-		t.Fatalf("login-page language update: %d %s", response.Code, response.Body.String())
-	}
-	if app.manager.state.Settings.Language != "en" {
-		t.Fatalf("language = %q, want en", app.manager.state.Settings.Language)
+	for _, language := range []string{"en", "ru", "fa", "vi", "es"} {
+		if response := post(app.panelRoutes(false), "/hidden/api/language", language); response.Code != http.StatusOK {
+			t.Fatalf("login-page %s language update: %d %s", language, response.Code, response.Body.String())
+		}
+		if app.manager.state.Settings.Language != language {
+			t.Fatalf("language = %q, want %q", app.manager.state.Settings.Language, language)
+		}
 	}
 
 	// A dedicated subscription listener exposes the same one-setting endpoint.
@@ -237,6 +350,27 @@ func TestPublicLanguageUpdatePersistsFromPanelAndSubscriptionPorts(t *testing.T)
 	}
 	if response := post(app.routes(), "/api/language", "fr"); response.Code != http.StatusBadRequest || app.manager.state.Settings.Language != "en" {
 		t.Fatalf("invalid language update: %d %s", response.Code, response.Body.String())
+	}
+}
+
+func TestStandalonePagesSupportEveryLanguage(t *testing.T) {
+	for _, name := range []string{"web/login.html", "web/subscription.html"} {
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		page := string(data)
+		for _, language := range []string{"ru", "fa", "vi", "es"} {
+			if !strings.Contains(page, `value="`+language+`"`) {
+				t.Fatalf("%s has no %s language option", name, language)
+			}
+			if !strings.Contains(page, language+":{") && !strings.Contains(page, language+": {") {
+				t.Fatalf("%s has no %s message catalog", name, language)
+			}
+		}
+		if !strings.Contains(page, "lang === 'fa' ? 'rtl' : 'ltr'") && !strings.Contains(page, "lang==='fa'?'rtl':'ltr'") {
+			t.Fatalf("%s must switch Persian to RTL", name)
+		}
 	}
 }
 

@@ -1,11 +1,11 @@
 /*
-m-ui 界面多语言核心（English / 简体中文）。
+m-ui 界面多语言核心（简体中文 / English / Русский / فارسی / Tiếng Việt / Español）。
 机制：
 - DICT 按语言存全部 key；muiT(key, params) 取词，缺 key 时回退另一语言再回退 key 本身。
 - muiApply 两遍扫描：先处理已打标的 data-i18n* 属性，再对未打标元素按“原始文案精确匹配”
   （SOURCE/SOURCE_PH/SOURCE_TITLE/SOURCE_ARIA）翻译文本节点并打标，之后切换语言只走打标路径。
 - 语言存 localStorage['mui-language']（与 Panel Settings 的 language 设置、登录页
-  data-default-language 注入值同值域：zh-CN / en），切换后广播 window 事件 mui-langchange，
+  data-default-language 注入值同值域：zh-CN / en / ru / fa / vi / es），切换后广播 window 事件 mui-langchange，
   index 主脚本与卫星脚本监听该事件重渲染动态内容。
 本文件由 index.html 以 <script src="static/i18n.js"> 引入，须在其余卫星脚本之前。
 */
@@ -1627,6 +1627,57 @@ m-ui 界面多语言核心（English / 简体中文）。
     }
   };
 
+  /* Human-reviewed overrides for the most visible controls. The generated
+     locale catalog below supplies every remaining key. */
+  var LOCALIZED = {
+    ru: {
+      'common.save':'Сохранить','common.cancel':'Отмена','common.import':'Импорт','common.close':'Закрыть','common.create':'Создать','common.delete':'Удалить','common.copy':'Копировать','common.confirm':'Подтвердить','common.enable':'Включить','common.enabled':'Включено','common.never':'Никогда','common.general':'Общие','common.refreshTitle':'Обновить','common.backTopTitle':'Наверх',
+      'nav.theme':'Тема','nav.dark':'Тёмная','nav.ultraDark':'Очень тёмная','nav.overview':'Обзор','nav.inbounds':'Входы','nav.mihomoSettings':'Настройки Mihomo','nav.panelSettings':'Настройки панели','nav.logOut':'Выйти','nav.collapseTitle':'Свернуть/развернуть меню','nav.menuTitle':'Меню','topbar.refresh':'Обновить',
+      'banner.securityTitle':'Уведомление безопасности','dash.start':'Запустить','dash.stop':'Остановить','dash.restart':'Перезапустить','dash.manage':'Управление','dash.logs':'Журналы','dash.config':'Конфигурация','dash.backup':'Резервная копия','dash.documentation':'Документация','dash.uptime':'Время работы','dash.systemLoad':'Нагрузка системы','dash.usage':'Использование','dash.overallSpeed':'Общая скорость','dash.upload':'Отправка','dash.download':'Загрузка','dash.totalData':'Всего данных','dash.sent':'Отправлено','dash.received':'Получено','dash.ipAddresses':'IP-адреса','dash.connStats':'Статистика соединений','dash.cpuHistory':'История CPU','dash.coreRunning':'Работает','dash.coreStopped':'Остановлено','dash.unknown':'Неизвестно',
+      'inbounds.totalTraffic':'Всего отправлено/получено','inbounds.totalUsage':'Общее использование','inbounds.allTimeUsage':'Использование за всё время','inbounds.totalInbounds':'Всего входов','inbounds.clients':'Клиенты','inbounds.add':'Добавить вход','inbounds.generalActions':'Общие действия','inbounds.import':'Импортировать вход','inbounds.exportUrls':'Экспортировать все URL','inbounds.exportSubs':'Экспортировать все подписки','inbounds.testConfig':'Проверить конфигурацию','inbounds.resetInbounds':'Сбросить трафик входов','inbounds.resetClients':'Сбросить трафик клиентов','inbounds.sync':'Синхронизировать вход','inbounds.deleteDepleted':'Удалить исчерпавших клиентов','inbounds.searchPh':'Поиск','inbounds.statusNone':'Нет','inbounds.statusDisabled':'Отключено','inbounds.statusEnded':'Завершено','inbounds.statusOnline':'В сети',
+      'conn.eyebrow':'Активные соединения','conn.title':'Активные соединения','conn.closeAll':'Закрыть все соединения','conn.list':'Соединения','conn.autoRefresh':'Обновлять каждые 5 с','logs.eyebrow':'Рабочие журналы','logs.title':'Рабочие журналы','logs.refresh':'Обновить журналы','logs.empty':'Журналов пока нет',
+      'mihomo.restart':'Перезапустить Mihomo','mihomo.tabBasics':'Основные','mihomo.tabOutbounds':'Выходы','mihomo.tabRouting':'Правила маршрутизации','mihomo.addOutbound':'Добавить выход','mihomo.addRule':'Добавить правило','mihomo.secStatistics':'Статистика','mihomo.secLog':'Журнал','mihomo.secBasicRouting':'Базовая маршрутизация','mihomo.secReset':'Сбросить по умолчанию',
+      'settings.restartPanel':'Перезапустить панель','settings.tabAuthentication':'Аутентификация','settings.secNotifications':'Уведомления','settings.secCerts':'Сертификаты','settings.secExternalTraffic':'Внешний трафик','settings.secDateTime':'Дата и время','settings.secMihomoCore':'Ядро Mihomo','settings.secAdminCreds':'Учётные данные администратора','settings.language':'Язык','settings.clearIpinfoToken':'Очистить','settings.ipinfoTokenSet':'Уже задано','settings.ipinfoTokenWillClear':'Будет очищено при сохранении','settings.modeRule':'Правила','settings.modeGlobal':'Глобальный','settings.modeDirect':'Прямой','settings.logLevel':'Уровень журнала','settings.allowLan':'Разрешить LAN',
+      'client.add':'Добавить клиента','client.edit':'Изменить клиента','client.email':'Email','client.username':'Имя пользователя','client.passwordToken':'Пароль / токен','client.totalFlowGb':'Общий трафик (ГБ)','client.expiryTime':'Срок действия','client.comment':'Комментарий','client.addClients':'Добавить клиентов','common.update':'Обновить','action.edit':'Изменить','action.clone':'Клонировать','action.exportInbound':'Экспортировать вход','action.resetTraffic':'Сбросить трафик','action.recommended':'Рекомендуется'
+    },
+    fa: {
+      'common.save':'ذخیره','common.cancel':'لغو','common.import':'درون‌ریزی','common.close':'بستن','common.create':'ایجاد','common.delete':'حذف','common.copy':'کپی','common.confirm':'تأیید','common.enable':'فعال‌سازی','common.enabled':'فعال','common.never':'هرگز','common.general':'عمومی','common.refreshTitle':'بازخوانی','common.backTopTitle':'بازگشت به بالا',
+      'nav.theme':'پوسته','nav.dark':'تیره','nav.ultraDark':'تیرهٔ کامل','nav.overview':'نمای کلی','nav.inbounds':'ورودی‌ها','nav.mihomoSettings':'تنظیمات Mihomo','nav.panelSettings':'تنظیمات پنل','nav.logOut':'خروج','nav.collapseTitle':'جمع/باز کردن منو','nav.menuTitle':'منو','topbar.refresh':'بازخوانی',
+      'banner.securityTitle':'هشدار امنیتی','dash.start':'شروع','dash.stop':'توقف','dash.restart':'راه‌اندازی مجدد','dash.manage':'مدیریت','dash.logs':'گزارش‌ها','dash.config':'پیکربندی','dash.backup':'پشتیبان‌گیری','dash.documentation':'مستندات','dash.uptime':'مدت فعالیت','dash.systemLoad':'بار سیستم','dash.usage':'مصرف منابع','dash.overallSpeed':'سرعت کلی','dash.upload':'ارسال','dash.download':'دریافت','dash.totalData':'کل داده','dash.sent':'ارسال‌شده','dash.received':'دریافت‌شده','dash.ipAddresses':'نشانی‌های IP','dash.connStats':'آمار اتصال','dash.cpuHistory':'تاریخچه CPU','dash.coreRunning':'در حال اجرا','dash.coreStopped':'متوقف','dash.unknown':'نامشخص',
+      'inbounds.totalTraffic':'کل ارسال/دریافت','inbounds.totalUsage':'کل مصرف','inbounds.allTimeUsage':'مصرف از ابتدا','inbounds.totalInbounds':'کل ورودی‌ها','inbounds.clients':'کلاینت‌ها','inbounds.add':'افزودن ورودی','inbounds.generalActions':'عملیات عمومی','inbounds.import':'درون‌ریزی ورودی','inbounds.exportUrls':'خروجی همه URLها','inbounds.exportSubs':'خروجی همه اشتراک‌ها','inbounds.testConfig':'آزمون پیکربندی','inbounds.resetInbounds':'بازنشانی ترافیک ورودی‌ها','inbounds.resetClients':'بازنشانی ترافیک کلاینت‌ها','inbounds.sync':'همگام‌سازی ورودی','inbounds.deleteDepleted':'حذف کلاینت‌های تمام‌شده','inbounds.searchPh':'جستجو','inbounds.statusNone':'هیچ‌کدام','inbounds.statusDisabled':'غیرفعال','inbounds.statusEnded':'پایان‌یافته','inbounds.statusOnline':'آنلاین',
+      'conn.eyebrow':'اتصال‌های زنده','conn.title':'اتصال‌های زنده','conn.closeAll':'بستن همه اتصال‌ها','conn.list':'اتصال‌ها','conn.autoRefresh':'بازخوانی هر ۵ ثانیه','logs.eyebrow':'گزارش‌های اجرا','logs.title':'گزارش‌های اجرا','logs.refresh':'بازخوانی گزارش‌ها','logs.empty':'هنوز گزارشی وجود ندارد',
+      'mihomo.restart':'راه‌اندازی مجدد Mihomo','mihomo.tabBasics':'اصلی','mihomo.tabOutbounds':'خروجی‌ها','mihomo.tabRouting':'قواعد مسیریابی','mihomo.addOutbound':'افزودن خروجی','mihomo.addRule':'افزودن قاعده','mihomo.secStatistics':'آمار','mihomo.secLog':'گزارش','mihomo.secBasicRouting':'مسیریابی پایه','mihomo.secReset':'بازنشانی پیش‌فرض',
+      'settings.restartPanel':'راه‌اندازی مجدد پنل','settings.tabAuthentication':'احراز هویت','settings.secNotifications':'اعلان‌ها','settings.secCerts':'گواهی‌ها','settings.secExternalTraffic':'ترافیک خارجی','settings.secDateTime':'تاریخ و زمان','settings.secMihomoCore':'هسته Mihomo','settings.secAdminCreds':'اطلاعات مدیر','settings.language':'زبان','settings.clearIpinfoToken':'پاک کردن','settings.ipinfoTokenSet':'قبلاً تنظیم شده','settings.ipinfoTokenWillClear':'هنگام ذخیره پاک می‌شود','settings.modeRule':'قانون','settings.modeGlobal':'سراسری','settings.modeDirect':'مستقیم','settings.logLevel':'سطح گزارش','settings.allowLan':'اجازه LAN',
+      'client.add':'افزودن کلاینت','client.edit':'ویرایش کلاینت','client.email':'ایمیل','client.username':'نام کاربری','client.passwordToken':'گذرواژه / توکن','client.totalFlowGb':'کل ترافیک (GB)','client.expiryTime':'زمان انقضا','client.comment':'توضیح','client.addClients':'افزودن کلاینت‌ها','common.update':'به‌روزرسانی','action.edit':'ویرایش','action.clone':'کپی','action.exportInbound':'خروجی گرفتن از ورودی','action.resetTraffic':'بازنشانی ترافیک','action.recommended':'پیشنهادی'
+      ,'mh.vpngateUnknown':'نامشخص','si.statusUnknown':'نامشخص','drawer.port':'پورت','table.colMenu':'منو','si.sync':'همگام‌سازی','mh.resetOutbound':'بازنشانی خروجی','settings.apiSecret':'رمز API','mh.vpngateNotInstalled':'نصب نشده','si.confirmTitle':'تأیید همگام‌سازی ورودی','drawer.protocolSection':'پروتکل','mc.protocol':'پروتکل','settings.descUriPath':'مسیر URI پنل؛ باید با / آغاز و پایان یابد.','msg.snellSingleClient':'Snell فقط از یک کلاینت پشتیبانی می‌کند.','msg.ssSingleClient':'Shadowsocks فقط از یک کلاینت پشتیبانی می‌کند.'
+    },
+    vi: {
+      'common.save':'Lưu','common.cancel':'Hủy','common.import':'Nhập','common.close':'Đóng','common.create':'Tạo','common.delete':'Xóa','common.copy':'Sao chép','common.confirm':'Xác nhận','common.enable':'Bật','common.enabled':'Đã bật','common.never':'Không bao giờ','common.general':'Chung','common.refreshTitle':'Làm mới','common.backTopTitle':'Về đầu trang',
+      'nav.theme':'Giao diện','nav.dark':'Tối','nav.ultraDark':'Tối sâu','nav.overview':'Tổng quan','nav.inbounds':'Inbound','nav.mihomoSettings':'Cài đặt Mihomo','nav.panelSettings':'Cài đặt bảng điều khiển','nav.logOut':'Đăng xuất','nav.collapseTitle':'Thu gọn/mở rộng menu','nav.menuTitle':'Menu','topbar.refresh':'Làm mới',
+      'banner.securityTitle':'Thông báo bảo mật','dash.start':'Khởi động','dash.stop':'Dừng','dash.restart':'Khởi động lại','dash.manage':'Quản lý','dash.logs':'Nhật ký','dash.config':'Cấu hình','dash.backup':'Sao lưu','dash.documentation':'Tài liệu','dash.uptime':'Thời gian hoạt động','dash.systemLoad':'Tải hệ thống','dash.usage':'Mức sử dụng','dash.overallSpeed':'Tốc độ tổng','dash.upload':'Tải lên','dash.download':'Tải xuống','dash.totalData':'Tổng dữ liệu','dash.sent':'Đã gửi','dash.received':'Đã nhận','dash.ipAddresses':'Địa chỉ IP','dash.connStats':'Thống kê kết nối','dash.cpuHistory':'Lịch sử CPU','dash.coreRunning':'Đang chạy','dash.coreStopped':'Đã dừng','dash.unknown':'Không rõ',
+      'inbounds.totalTraffic':'Tổng gửi/nhận','inbounds.totalUsage':'Tổng mức dùng','inbounds.allTimeUsage':'Tổng từ trước đến nay','inbounds.totalInbounds':'Tổng inbound','inbounds.clients':'Client','inbounds.add':'Thêm inbound','inbounds.generalActions':'Thao tác chung','inbounds.import':'Nhập inbound','inbounds.exportUrls':'Xuất tất cả URL','inbounds.exportSubs':'Xuất tất cả gói đăng ký','inbounds.testConfig':'Kiểm tra cấu hình','inbounds.resetInbounds':'Đặt lại lưu lượng inbound','inbounds.resetClients':'Đặt lại lưu lượng client','inbounds.sync':'Đồng bộ inbound','inbounds.deleteDepleted':'Xóa client hết hạn mức','inbounds.searchPh':'Tìm kiếm','inbounds.statusNone':'Không','inbounds.statusDisabled':'Đã tắt','inbounds.statusEnded':'Đã kết thúc','inbounds.statusOnline':'Trực tuyến',
+      'conn.eyebrow':'Kết nối trực tiếp','conn.title':'Kết nối trực tiếp','conn.closeAll':'Đóng tất cả kết nối','conn.list':'Kết nối','conn.autoRefresh':'Tự làm mới mỗi 5 giây','logs.eyebrow':'Nhật ký chạy','logs.title':'Nhật ký chạy','logs.refresh':'Làm mới nhật ký','logs.empty':'Chưa có nhật ký',
+      'mihomo.restart':'Khởi động lại Mihomo','mihomo.tabBasics':'Cơ bản','mihomo.tabOutbounds':'Outbound','mihomo.tabRouting':'Luật định tuyến','mihomo.addOutbound':'Thêm outbound','mihomo.addRule':'Thêm luật','mihomo.secStatistics':'Thống kê','mihomo.secLog':'Nhật ký','mihomo.secBasicRouting':'Định tuyến cơ bản','mihomo.secReset':'Đặt lại mặc định',
+      'settings.restartPanel':'Khởi động lại bảng điều khiển','settings.tabAuthentication':'Xác thực','settings.secNotifications':'Thông báo','settings.secCerts':'Chứng chỉ','settings.secExternalTraffic':'Lưu lượng bên ngoài','settings.secDateTime':'Ngày và giờ','settings.secMihomoCore':'Lõi Mihomo','settings.secAdminCreds':'Thông tin quản trị','settings.language':'Ngôn ngữ','settings.clearIpinfoToken':'Xóa','settings.ipinfoTokenSet':'Đã đặt','settings.ipinfoTokenWillClear':'Sẽ xóa khi lưu','settings.modeRule':'Luật','settings.modeGlobal':'Toàn cục','settings.modeDirect':'Trực tiếp','settings.logLevel':'Mức nhật ký','settings.allowLan':'Cho phép LAN',
+      'client.add':'Thêm client','client.edit':'Sửa client','client.email':'Email','client.username':'Tên người dùng','client.passwordToken':'Mật khẩu / token','client.totalFlowGb':'Tổng lưu lượng (GB)','client.expiryTime':'Thời hạn','client.comment':'Ghi chú','client.addClients':'Thêm client','common.update':'Cập nhật','action.edit':'Sửa','action.clone':'Nhân bản','action.exportInbound':'Xuất inbound','action.resetTraffic':'Đặt lại lưu lượng','action.recommended':'Khuyến nghị'
+      ,'proto.suitesTitle':'Ghi lại mã bộ mã hóa TLS 1.2 dùng nonce tường minh; lõi không tự áp dụng danh sách đề xuất, hãy dùng nút bên dưới khi cần.'
+    },
+    es: {
+      'common.save':'Guardar','common.cancel':'Cancelar','common.import':'Importar','common.close':'Cerrar','common.create':'Crear','common.delete':'Eliminar','common.copy':'Copiar','common.confirm':'Confirmar','common.enable':'Activar','common.enabled':'Activado','common.never':'Nunca','common.general':'General','common.refreshTitle':'Actualizar','common.backTopTitle':'Volver arriba',
+      'nav.theme':'Tema','nav.dark':'Oscuro','nav.ultraDark':'Muy oscuro','nav.overview':'Resumen','nav.inbounds':'Entradas','nav.mihomoSettings':'Ajustes de Mihomo','nav.panelSettings':'Ajustes del panel','nav.logOut':'Cerrar sesión','nav.collapseTitle':'Contraer/expandir menú','nav.menuTitle':'Menú','topbar.refresh':'Actualizar',
+      'banner.securityTitle':'Aviso de seguridad','dash.start':'Iniciar','dash.stop':'Detener','dash.restart':'Reiniciar','dash.manage':'Gestionar','dash.logs':'Registros','dash.config':'Configuración','dash.backup':'Copia de seguridad','dash.documentation':'Documentación','dash.uptime':'Tiempo activo','dash.systemLoad':'Carga del sistema','dash.usage':'Uso','dash.overallSpeed':'Velocidad total','dash.upload':'Subida','dash.download':'Descarga','dash.totalData':'Datos totales','dash.sent':'Enviado','dash.received':'Recibido','dash.ipAddresses':'Direcciones IP','dash.connStats':'Estadísticas de conexión','dash.cpuHistory':'Historial de CPU','dash.coreRunning':'En ejecución','dash.coreStopped':'Detenido','dash.unknown':'Desconocido',
+      'inbounds.totalTraffic':'Total enviado/recibido','inbounds.totalUsage':'Uso total','inbounds.allTimeUsage':'Uso total histórico','inbounds.totalInbounds':'Total de entradas','inbounds.clients':'Clientes','inbounds.add':'Añadir entrada','inbounds.generalActions':'Acciones generales','inbounds.import':'Importar entrada','inbounds.exportUrls':'Exportar todas las URL','inbounds.exportSubs':'Exportar todas las suscripciones','inbounds.testConfig':'Probar configuración','inbounds.resetInbounds':'Restablecer tráfico de entradas','inbounds.resetClients':'Restablecer tráfico de clientes','inbounds.sync':'Sincronizar entrada','inbounds.deleteDepleted':'Eliminar clientes agotados','inbounds.searchPh':'Buscar','inbounds.statusNone':'Ninguno','inbounds.statusDisabled':'Desactivado','inbounds.statusEnded':'Finalizado','inbounds.statusOnline':'En línea',
+      'conn.eyebrow':'Conexiones activas','conn.title':'Conexiones activas','conn.closeAll':'Cerrar todas las conexiones','conn.list':'Conexiones','conn.autoRefresh':'Actualizar cada 5 s','logs.eyebrow':'Registros de ejecución','logs.title':'Registros de ejecución','logs.refresh':'Actualizar registros','logs.empty':'Aún no hay registros',
+      'mihomo.restart':'Reiniciar Mihomo','mihomo.tabBasics':'Básico','mihomo.tabOutbounds':'Salidas','mihomo.tabRouting':'Reglas de enrutamiento','mihomo.addOutbound':'Añadir salida','mihomo.addRule':'Añadir regla','mihomo.secStatistics':'Estadísticas','mihomo.secLog':'Registro','mihomo.secBasicRouting':'Enrutamiento básico','mihomo.secReset':'Restablecer valores',
+      'settings.restartPanel':'Reiniciar panel','settings.tabAuthentication':'Autenticación','settings.secNotifications':'Notificaciones','settings.secCerts':'Certificados','settings.secExternalTraffic':'Tráfico externo','settings.secDateTime':'Fecha y hora','settings.secMihomoCore':'Núcleo Mihomo','settings.secAdminCreds':'Credenciales de administrador','settings.language':'Idioma','settings.clearIpinfoToken':'Borrar','settings.ipinfoTokenSet':'Ya configurado','settings.ipinfoTokenWillClear':'Se borrará al guardar','settings.modeRule':'Reglas','settings.modeGlobal':'Global','settings.modeDirect':'Directo','settings.logLevel':'Nivel de registro','settings.allowLan':'Permitir LAN',
+      'client.add':'Añadir cliente','client.edit':'Editar cliente','client.email':'Correo electrónico','client.username':'Usuario','client.passwordToken':'Contraseña / token','client.totalFlowGb':'Tráfico total (GB)','client.expiryTime':'Caducidad','client.comment':'Comentario','client.addClients':'Añadir clientes','common.update':'Actualizar','action.edit':'Editar','action.clone':'Clonar','action.exportInbound':'Exportar entrada','action.resetTraffic':'Restablecer tráfico','action.recommended':'Recomendado'
+    }
+  };
+  var GENERATED_LOCALES = window.MUI_LOCALES || {};
+  Object.keys(GENERATED_LOCALES).forEach(function (language) {
+    DICT[language] = Object.assign({}, DICT.en, GENERATED_LOCALES[language], LOCALIZED[language] || {});
+  });
+
   /* 页面原始文案 → key。首遍 muiApply 按原文精确匹配并打标；之后按 data-i18n* 属性走。 */
   var SOURCE = {
     'Theme': 'nav.theme', 'Dark': 'nav.dark', 'Ultra Dark': 'nav.ultraDark',
@@ -1968,19 +2019,20 @@ m-ui 界面多语言核心（English / 简体中文）。
   var SKIP_SELECTOR = '#security-segmented,.mui-select-menu,.release-list';
 
   var lang = 'zh-CN';
+  var SUPPORTED_LANGUAGES = ['zh-CN', 'en', 'ru', 'fa', 'vi', 'es'];
 
   function muiGetLang() {
     var stored = null;
     try { stored = localStorage.getItem('mui-language'); } catch (e) {}
     var value = stored || document.documentElement.getAttribute('data-default-language') || 'zh-CN';
-    return value === 'en' ? 'en' : value === 'zh-CN' ? 'zh-CN' : 'zh-CN';
+    return SUPPORTED_LANGUAGES.indexOf(value) >= 0 ? value : 'zh-CN';
   }
 
   function muiT(key, params) {
     var table = DICT[lang] || DICT['zh-CN'];
     var text = table[key];
+    if (text === undefined && lang !== 'zh-CN') text = DICT['en'][key];
     if (text === undefined) text = DICT['zh-CN'][key];
-    if (text === undefined) text = DICT['en'][key];
     if (text === undefined) return key;
     if (params) {
       text = text.replace(/\{(\w+)\}/g, function (match, name) {
@@ -2009,7 +2061,8 @@ m-ui 界面多语言核心（English / 简体中文）。
   function muiApply(root) {
     root = root || document;
     lang = muiGetLang();
-    document.documentElement.lang = lang === 'zh-CN' ? 'zh-CN' : 'en';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
 
     /* 第一遍：已打标元素 */
     var stamped = root.querySelectorAll ? root.querySelectorAll('[data-i18n],[data-i18n-html],[data-i18n-multi],[data-i18n-placeholder],[data-i18n-title],[data-i18n-aria]') : [];
@@ -2072,7 +2125,7 @@ m-ui 界面多语言核心（English / 简体中文）。
   }
 
   function muiSetLang(value) {
-    var next = value === 'en' ? 'en' : 'zh-CN';
+    var next = SUPPORTED_LANGUAGES.indexOf(value) >= 0 ? value : 'zh-CN';
     try { localStorage.setItem('mui-language', next); } catch (e) {}
     lang = next;
     muiApply(document);

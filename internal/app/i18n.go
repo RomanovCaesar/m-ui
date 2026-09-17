@@ -107,18 +107,19 @@ func (a *App) trSyncJob(job *inboundSyncJob) *inboundSyncJob {
 	return &translated
 }
 
-// translateMessage 把中文提示翻成目标语言。zh-CN 是原文，直接返回。
+// translateMessage 把中文提示翻成目标语言。zh-CN 是原文，直接返回；其他语言
+// 对暂未收录的提示安全回退英文，避免新语言界面混入中文。
 func translateMessage(text, language string) string {
-	if language != "en" || text == "" || !hasCJK(text) {
+	if language == defaultLanguage || text == "" || !hasCJK(text) {
 		return text
 	}
-	if translated, ok := translateSegment(text); ok {
+	if translated, ok := translateSegment(text, language); ok {
 		return translated
 	}
 	parts := strings.Split(text, ": ")
 	changed := false
 	for i, part := range parts {
-		if translated, ok := translateSegment(part); ok {
+		if translated, ok := translateSegment(part, language); ok {
 			parts[i] = translated
 			changed = true
 		}
@@ -131,16 +132,24 @@ func translateMessage(text, language string) string {
 
 // translateSegment 翻一段（整句、或者 ": " 拆出来的一层），翻不了就报 false，让
 // 调用方保留原文。
-func translateSegment(segment string) (string, bool) {
+
+func translateSegment(segment, language string) (string, bool) {
+	if translated, ok := messagesLocalized[language][segment]; ok {
+		return translated, true
+	}
 	if translated, ok := messagesEN[segment]; ok {
 		return translated, true
 	}
 	if !hasCJK(segment) {
 		return segment, false
 	}
-	for _, pattern := range messagePatternsEN {
+	for index, pattern := range messagePatternsEN {
 		if match := pattern.from.FindStringSubmatchIndex(segment); match != nil {
-			return string(pattern.from.ExpandString(nil, pattern.to, segment, match)), true
+			target := pattern.to
+			if localized := messagePatternsLocalized[language]; index < len(localized) {
+				target = localized[index]
+			}
+			return string(pattern.from.ExpandString(nil, target, segment, match)), true
 		}
 	}
 	return segment, false

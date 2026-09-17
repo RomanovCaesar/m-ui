@@ -541,12 +541,19 @@
       if(!bar || bar.dataset.liquidSliderInit) return;
       bar.dataset.liquidSliderInit = 'true';
 
+      // 彻底消除任何可能的浏览器原生滚动条（进度条假象）
+      bar.style.overflow = 'hidden';
+      bar.style.scrollbarWidth = 'none';
+
       var slider = bar.querySelector('.liquid-pill-slider');
       if(!slider){
         slider = document.createElement('div');
         slider.className = 'liquid-pill-slider';
+        slider.style.pointerEvents = 'none'; // 绝对不遮挡按钮原生点击事件
         slider.innerHTML = '<div class="liquid-pill-sheen"></div>';
         bar.appendChild(slider);
+      } else {
+        slider.style.pointerEvents = 'none';
       }
 
       function getButtons(){
@@ -572,135 +579,153 @@
         if(instant){
           slider.style.transition = 'none';
         } else {
-          slider.style.transition = 'transform 0.35s cubic-bezier(0.22, 1.25, 0.36, 1), width 0.35s cubic-bezier(0.22, 1.25, 0.36, 1), height 0.35s cubic-bezier(0.22, 1.25, 0.36, 1)';
+          slider.style.transition = 'transform 0.32s cubic-bezier(0.22, 1.35, 0.36, 1), width 0.32s cubic-bezier(0.22, 1.35, 0.36, 1), height 0.32s cubic-bezier(0.22, 1.35, 0.36, 1)';
         }
         slider.style.transform = 'translate3d(' + left.toFixed(1) + 'px, ' + top.toFixed(1) + 'px, 0)';
         slider.style.width = width.toFixed(1) + 'px';
         slider.style.height = height.toFixed(1) + 'px';
       }
 
-      // Drag state
+      // Drag state: 仅当移动距离 > 8px 时才判定为拖拽，绝不破坏正常点击！
       var isDragging = false;
+      var potentialDrag = false;
       var startX = 0;
+      var startY = 0;
       var baseLeft = 0;
+      var baseTop = 4;
       var currentWidth = 0;
+      var lastProposedLeft = 0;
+      var activePointerId = null;
 
       function onPointerDown(e){
         if(e.button !== undefined && e.button !== 0) return;
-        var buttons = getButtons();
-        if(buttons.length === 0) return;
+        startX = e.clientX;
+        startY = e.clientY;
+        potentialDrag = true;
+        isDragging = false;
+        activePointerId = e.pointerId;
 
         var active = getActiveButton();
-        if(!active) return;
-
-        var barRect = bar.getBoundingClientRect();
-        var btnRect = active.getBoundingClientRect();
-        baseLeft = btnRect.left - barRect.left;
-        currentWidth = btnRect.width;
-        startX = e.clientX;
-        isDragging = true;
-
-        bar.classList.add('is-dragging');
-        slider.classList.add('is-dragging');
-        slider.style.transition = 'none';
-
-        if(bar.setPointerCapture && e.pointerId){
-          try { bar.setPointerCapture(e.pointerId); } catch(_){}
+        if(active){
+          var barRect = bar.getBoundingClientRect();
+          var btnRect = active.getBoundingClientRect();
+          baseLeft = btnRect.left - barRect.left;
+          baseTop = btnRect.top - barRect.top;
+          currentWidth = btnRect.width;
+          lastProposedLeft = baseLeft;
         }
+        // 注意：绝不在 pointerdown 捕获指针或阻止默认行为，保证按钮 onclick 立刻触发！
       }
 
       function onPointerMove(e){
-        if(!isDragging) return;
+        if(!potentialDrag) return;
         var dx = e.clientX - startX;
-        var barRect = bar.getBoundingClientRect();
-        var buttons = getButtons();
-        var minLeft = 4;
-        var maxRight = barRect.width - 4;
+        var dy = e.clientY - startY;
 
-        var proposedLeft = baseLeft + dx;
-        if(proposedLeft < minLeft){
-          proposedLeft = minLeft + (proposedLeft - minLeft) * 0.25;
-        } else if(proposedLeft + currentWidth > maxRight){
-          var over = proposedLeft + currentWidth - maxRight;
-          proposedLeft = maxRight - currentWidth + over * 0.25;
+        // 仅当水平移动明显超过 8px 时才进入拖动模式
+        if(!isDragging && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)){
+          isDragging = true;
+          bar.classList.add('is-dragging');
+          slider.classList.add('is-dragging');
+          slider.style.transition = 'none';
+          if(bar.setPointerCapture && activePointerId !== null){
+            try { bar.setPointerCapture(activePointerId); } catch(_){}
+          }
         }
 
-        var stretch = 1 + Math.min(Math.abs(dx) / 320, 0.12);
-        slider.style.transform = 'translate3d(' + proposedLeft.toFixed(1) + 'px, 4px, 0) scaleX(' + stretch.toFixed(3) + ')';
+        if(isDragging){
+          var barRect = bar.getBoundingClientRect();
+          var buttons = getButtons();
+          var minLeft = 4;
+          var maxRight = barRect.width - 4;
 
-        var pillCenter = proposedLeft + currentWidth / 2;
-        var closestBtn = null;
-        var closestDist = Infinity;
-        buttons.forEach(function(btn){
-          var bRect = btn.getBoundingClientRect();
-          var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
-          var dist = Math.abs(pillCenter - bCenter);
-          if(dist < closestDist){
-            closestDist = dist;
-            closestBtn = btn;
+          var proposedLeft = baseLeft + dx;
+          if(proposedLeft < minLeft){
+            proposedLeft = minLeft + (proposedLeft - minLeft) * 0.25;
+          } else if(proposedLeft + currentWidth > maxRight){
+            var over = proposedLeft + currentWidth - maxRight;
+            proposedLeft = maxRight - currentWidth + over * 0.25;
           }
-        });
+          lastProposedLeft = proposedLeft;
 
-        if(closestBtn){
-          buttons.forEach(function(b){
-            if(b === closestBtn){
-              b.style.color = 'var(--text-strong)';
-            } else if(!b.classList.contains('active')){
-              b.style.color = '';
+          // Liquid Glass 果冻流体弹性拉伸与微压缩动效 (GetStream awesome-liquid-glass Jello 算法)
+          var stretch = 1 + Math.min(Math.abs(dx) / 260, 0.16);
+          var squash = 1 / Math.sqrt(stretch);
+          slider.style.transform = 'translate3d(' + proposedLeft.toFixed(1) + 'px, ' + baseTop.toFixed(1) + 'px, 0) scaleX(' + stretch.toFixed(3) + ') scaleY(' + squash.toFixed(3) + ')';
+
+          var pillCenter = proposedLeft + currentWidth / 2;
+          var closestBtn = null;
+          var closestDist = Infinity;
+          buttons.forEach(function(btn){
+            var bRect = btn.getBoundingClientRect();
+            var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
+            var dist = Math.abs(pillCenter - bCenter);
+            if(dist < closestDist){
+              closestDist = dist;
+              closestBtn = btn;
             }
           });
+
+          if(closestBtn){
+            buttons.forEach(function(b){
+              if(b === closestBtn){
+                b.style.color = 'var(--text-strong)';
+              } else if(!b.classList.contains('active')){
+                b.style.color = '';
+              }
+            });
+          }
         }
       }
 
       function onPointerUp(e){
-        if(!isDragging) return;
-        isDragging = false;
-        bar.classList.remove('is-dragging');
-        slider.classList.remove('is-dragging');
+        if(!potentialDrag) return;
+        potentialDrag = false;
 
-        var buttons = getButtons();
-        var barRect = bar.getBoundingClientRect();
-        var matrix = window.getComputedStyle(slider).transform;
-        var currentX = baseLeft;
-        if(matrix && matrix !== 'none'){
-          var match = matrix.match(/matrix.*\((.+)\)/);
-          if(match){
-            var parts = match[1].split(', ');
-            currentX = parseFloat(parts[4]) || baseLeft;
+        if(isDragging){
+          isDragging = false;
+          bar.classList.remove('is-dragging');
+          slider.classList.remove('is-dragging');
+
+          if(bar.releasePointerCapture && activePointerId !== null){
+            try { bar.releasePointerCapture(activePointerId); } catch(_){}
           }
-        }
+          activePointerId = null;
 
-        var pillCenter = currentX + currentWidth / 2;
-        var closestBtn = null;
-        var closestDist = Infinity;
+          var buttons = getButtons();
+          var barRect = bar.getBoundingClientRect();
+          var pillCenter = lastProposedLeft + currentWidth / 2;
+          var closestBtn = null;
+          var closestDist = Infinity;
 
-        buttons.forEach(function(btn){
-          var bRect = btn.getBoundingClientRect();
-          var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
-          var dist = Math.abs(pillCenter - bCenter);
-          if(dist < closestDist){
-            closestDist = dist;
-            closestBtn = btn;
+          buttons.forEach(function(btn){
+            var bRect = btn.getBoundingClientRect();
+            var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
+            var dist = Math.abs(pillCenter - bCenter);
+            if(dist < closestDist){
+              closestDist = dist;
+              closestBtn = btn;
+            }
+          });
+
+          buttons.forEach(function(b){ b.style.color = ''; });
+
+          if(closestBtn){
+            closestBtn.click();
           }
-        });
-
-        buttons.forEach(function(b){ b.style.color = ''; });
-
-        if(closestBtn && closestBtn !== getActiveButton()){
-          closestBtn.click();
-        }
-        syncSlider(false);
-
-        if(bar.releasePointerCapture && e.pointerId){
-          try { bar.releasePointerCapture(e.pointerId); } catch(_){}
+          syncSlider(false);
+        } else {
+          // 普通点击：直接由浏览器原生分发给目标 button，不作任何拦截！
+          activePointerId = null;
         }
       }
 
       bar.addEventListener('pointerdown', onPointerDown);
-      window.addEventListener('pointermove', onPointerMove, { passive: false });
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
       window.addEventListener('pointerup', onPointerUp);
       window.addEventListener('pointercancel', onPointerUp);
 
+      // 监听选项卡按钮的点击，以 Apple Spring 弹性滑动对齐
       bar.addEventListener('click', function(e){
         var btn = e.target.closest('button');
         if(btn && bar.contains(btn)){
@@ -711,10 +736,22 @@
       var observer = new MutationObserver(function(){
         syncSlider(false);
       });
-      observer.observe(bar, { attributes: true, subtree: true, attributeFilter: ['class'] });
+      observer.observe(bar, { attributes: true, childList: true, subtree: true, attributeFilter: ['class', 'style'] });
 
-      setTimeout(function(){ syncSlider(true); }, 60);
-      setTimeout(function(){ syncSlider(true); }, 300);
+      // 使用 ResizeObserver 确保视窗切换显示、缩放时实时重算，不留空隙
+      if(window.ResizeObserver){
+        var ro = new ResizeObserver(function(entries){
+          for(var i = 0; i < entries.length; i++){
+            if(entries[i].contentRect && entries[i].contentRect.width > 0){
+              syncSlider(false);
+            }
+          }
+        });
+        ro.observe(bar);
+      }
+
+      setTimeout(function(){ syncSlider(true); }, 50);
+      setTimeout(function(){ syncSlider(false); }, 200);
       window.addEventListener('resize', function(){ syncSlider(true); });
     }
 

@@ -1296,6 +1296,16 @@
       user-select: none !important;
       -webkit-user-select: none !important;
       touch-action: pan-y !important;
+      overflow: hidden !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    .inbound-status-tabs::-webkit-scrollbar,
+    .settings-tabbar::-webkit-scrollbar,
+    .mihomo-tabs::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
     body.dark .inbound-status-tabs,
     body.dark .settings-tabbar,
@@ -1399,49 +1409,77 @@
       color: var(--teal) !important;
     }
 
-    /* 12. Apple Inset Grouped Section (Panel Settings 圆角组卡片) */
-    .setting-section {
-      background: var(--surface-glass) !important;
-      backdrop-filter: blur(36px) saturate(210%) !important;
-      -webkit-backdrop-filter: blur(36px) saturate(210%) !important;
-      border: 1px solid var(--glass-border) !important;
-      border-radius: 18px !important;
-      margin-bottom: 16px !important;
+    /* 12. Apple Inset Grouped Section (Panel Settings & Mihomo 统一表单分组规范) */
+    #settings-form,
+    #credentials-form,
+    #subscription-settings-form,
+    .multi-control-sections,
+    .basics-sections {
+      border: 1px solid var(--line) !important;
+      border-radius: var(--radius-lg) !important;
+      background: var(--surface) !important;
       overflow: hidden !important;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04), var(--glass-caustic) !important;
-      transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease) !important;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02) !important;
+      margin-bottom: 20px !important;
     }
-    .setting-section:hover {
-      border-color: rgba(255, 255, 255, 0.95) !important;
-      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.07), var(--glass-caustic) !important;
-    }
-    body.dark .setting-section:hover {
-      border-color: rgba(255, 255, 255, 0.28) !important;
-      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), var(--glass-caustic) !important;
-    }
-    .setting-section > summary {
-      position: relative !important;
-      padding: 14px 22px 14px 44px !important;
-      color: var(--text-strong) !important;
-      background: rgba(255, 255, 255, 0.28) !important;
-      font-size: 14.5px !important;
-      font-weight: 650 !important;
-      line-height: 22px !important;
-      cursor: pointer !important;
-      list-style: none !important;
-      border-bottom: 1px solid transparent !important;
-      transition: background .2s var(--ease) !important;
-    }
-    body.dark .setting-section > summary {
-      background: rgba(255, 255, 255, 0.06) !important;
-    }
-    .setting-section[open] > summary {
-      border-bottom: 1px solid var(--line) !important;
-    }
-    .setting-section-body {
-      padding: 16px 24px 22px !important;
+    .setting-section,
+    .basics-section {
       background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+    }
+    .setting-section + .setting-section,
+    .basics-section + .basics-section {
+      border-top: 1px solid var(--line) !important;
+    }
+    .setting-section > summary,
+    .basics-section > summary {
+      position: relative !important;
+      list-style: none !important;
+      cursor: pointer !important;
+      padding: 12px 18px 12px 42px !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      line-height: 22px !important;
+      color: var(--text-strong) !important;
+      background: var(--surface-subtle) !important;
+      transition: background-color .2s var(--ease) !important;
+      border: 0 !important;
+    }
+    .setting-section > summary:hover,
+    .basics-section > summary:hover {
+      background: var(--surface-hover) !important;
+    }
+    .setting-section > summary::-webkit-details-marker,
+    .basics-section > summary::-webkit-details-marker {
+      display: none !important;
+    }
+    .setting-section > summary::before,
+    .basics-section > summary::before {
+      content: '' !important;
+      position: absolute !important;
+      top: 50% !important;
+      left: 18px !important;
+      width: 7px !important;
+      height: 7px !important;
+      border-right: 1.5px solid currentColor !important;
+      border-bottom: 1.5px solid currentColor !important;
+      transform: translateY(-50%) rotate(-45deg) !important;
+      transition: transform .24s var(--ease) !important;
+    }
+    .setting-section[open] > summary::before,
+    .basics-section[open] > summary::before {
+      transform: translateY(-50%) rotate(45deg) !important;
+    }
+    .setting-section-body,
+    .basics-section-body {
+      padding: 16px 20px !important;
+      border-top: 1px solid var(--line) !important;
+      background: var(--surface) !important;
       overflow-x: auto !important;
+      animation: collfade .25s var(--ease) !important;
     }
 
     /* 13. Liquid Glass 动态游标流体光泽反射层 (Caustic Gloss Overlay) */
@@ -1449,7 +1487,11 @@
     .inbounds-card::after,
     .stats-strip::after,
     .mihomo-card::after,
-    .setting-section::after {
+    #settings-form::after,
+    #credentials-form::after,
+    #subscription-settings-form::after,
+    .multi-control-sections::after,
+    .basics-sections::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -1464,7 +1506,11 @@
     body.dark .inbounds-card::after,
     body.dark .stats-strip::after,
     body.dark .mihomo-card::after,
-    body.dark .setting-section::after {
+    body.dark #settings-form::after,
+    body.dark #credentials-form::after,
+    body.dark #subscription-settings-form::after,
+    body.dark .multi-control-sections::after,
+    body.dark .basics-sections::after {
       background: radial-gradient(circle 300px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.18) 0%, rgba(10, 132, 255, 0.12) 40%, transparent 70%);
       mix-blend-mode: screen;
     }

@@ -6,16 +6,18 @@
   bar.appendChild(tab);
   const pane=document.createElement('div');pane.className='settings-pane';pane.id='settings-pane-multi-control';
   pane.innerHTML=`<div class="mc-notice" data-i18n="mc.notice">所有面板都是对等节点，配对后自动发现网络成员并尝试直连。需要同步入站时，请在 Inbounds → General Actions → Sync Inbound 中选择目标和 Client。</div>
-    <details class="setting-section" open><summary>Multi-control</summary><div class="setting-section-body">
-      <div class="setting-row"><div><strong data-i18n="mc.pairingToken">Pairing Token</strong><p data-i18n="mc.tokenDesc">支持手动输入或生成 16-32 位小写字母和数字混合的 token，供其他面板加入你的对等网络。</p></div><div class="setting-control"><button type="button" class="outline-btn" id="mc-token-open" data-i18n="mc.manageToken">管理配对 Token</button></div></div>
-      <div class="setting-row"><div><strong data-i18n="mc.peerConnections">Peer Connections</strong><p data-i18n="mc.peersDesc">输入任意成员的 IP、面板端口和 token 加入。新成员会继承网络中的成员信任。</p></div><div class="setting-control"><button type="button" class="primary-btn" id="mc-connections-open" data-i18n="mc.manageConnections">管理连接</button></div></div>
-    </div></details>
-    <details class="setting-section" open><summary data-i18n="mc.localNode">Local Node</summary><div class="setting-section-body"><form id="mc-local-form">
-      <div class="setting-row"><div><label for="mc-name" data-i18n="mc.nodeName">Node Name</label></div><div class="setting-control"><input id="mc-name" maxlength="128" required></div></div>
-      <div class="setting-row"><div><strong data-i18n="mc.nodeId">Node ID</strong><p data-i18n="mc.nodeIdDesc">本机独立生成的持久身份。</p></div><div class="mc-node-id" id="mc-id">—</div></div>
-      <div class="setting-row"><div><label for="mc-endpoint" data-i18n="mc.advertisedAddress">Advertised Address</label><p data-i18n="mc.endpointDesc">其他服务器可直接访问的本面板地址，不包含 URI 路径；面板端口或公网地址变更后请在此更新。</p></div><div class="setting-control"><input id="mc-endpoint" placeholder="http://203.0.113.10:2053" required></div></div>
-      <div class="mc-local-footer"><span id="mc-local-status">联机设置独立保存，立即生效，无需重启面板。</span><button class="primary-btn" type="submit" id="mc-local-save" data-i18n="mc.saveLocal">保存联机地址</button></div>
-    </form></div></details>
+    <div class="multi-control-sections">
+      <details class="setting-section" open><summary>Multi-control</summary><div class="setting-section-body">
+        <div class="setting-row"><div><strong data-i18n="mc.pairingToken">Pairing Token</strong><p data-i18n="mc.tokenDesc">支持手动输入或生成 16-32 位小写字母和数字混合的 token，供其他面板加入你的对等网络。</p></div><div class="setting-control"><button type="button" class="outline-btn" id="mc-token-open" data-i18n="mc.manageToken">管理配对 Token</button></div></div>
+        <div class="setting-row"><div><strong data-i18n="mc.peerConnections">Peer Connections</strong><p data-i18n="mc.peersDesc">输入任意成员的 IP、面板端口和 token 加入。新成员会继承网络中的成员信任。</p></div><div class="setting-control"><button type="button" class="primary-btn" id="mc-connections-open" data-i18n="mc.manageConnections">管理连接</button></div></div>
+      </div></details>
+      <details class="setting-section" open><summary data-i18n="mc.localNode">Local Node</summary><div class="setting-section-body"><form id="mc-local-form">
+        <div class="setting-row"><div><label for="mc-name" data-i18n="mc.nodeName">Node Name</label></div><div class="setting-control"><input id="mc-name" maxlength="128" required></div></div>
+        <div class="setting-row"><div><strong data-i18n="mc.nodeId">Node ID</strong><p data-i18n="mc.nodeIdDesc">本机独立生成的持久身份。</p></div><div class="mc-node-id" id="mc-id">—</div></div>
+        <div class="setting-row"><div><label for="mc-endpoint" data-i18n="mc.advertisedAddress">Advertised Address</label><p data-i18n="mc.endpointDesc">其他服务器可直接访问的本面板地址，不包含 URI 路径；面板端口或公网地址变更后请在此更新。</p></div><div class="setting-control"><input id="mc-endpoint" placeholder="http://203.0.113.10:2053" required></div></div>
+        <div class="mc-local-footer"><span id="mc-local-status">联机设置独立保存，立即生效，无需重启面板。</span><button class="primary-btn" type="submit" id="mc-local-save" data-i18n="mc.saveLocal">保存联机地址</button></div>
+      </form></div></details>
+    </div>
     <div id="mc-summary" class="mc-summary"></div><div id="mc-error" role="alert" hidden></div>`;
   auth.parentNode.insertBefore(pane,auth);
   const tokenModal=document.createElement('div');tokenModal.className='modal-backdrop';tokenModal.id='mc-token-modal';

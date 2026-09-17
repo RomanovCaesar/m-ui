@@ -723,6 +723,45 @@ body.dark .inbound-status-tabs button.active {
   stroke: currentColor;
 }
 
+/* ===== 侧栏折叠圆形胶囊按钮 (Sidebar Toggle - Liquid Glass) ===== */
+.sider-trigger {
+  position: fixed;
+  bottom: 24px;
+  left: 26px;
+  z-index: 62;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 50% !important;
+  color: var(--muted);
+  background: var(--surface-glass-heavy) !important;
+  backdrop-filter: blur(24px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.10), var(--glass-caustic) !important;
+  cursor: pointer;
+  font-size: 14px;
+  transition: left .3s var(--ease), width .3s var(--ease), height .3s var(--ease), transform .2s var(--ease), box-shadow .2s, color .2s;
+}
+.sider-trigger:hover {
+  color: var(--teal);
+  transform: scale(1.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14) !important;
+}
+.sider-trigger:active {
+  transform: scale(0.95);
+}
+.sider-trigger .sf-symbol { font-size: 14px; }
+
+body.sider-collapsed .sider-trigger {
+  left: 30px !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+}
+
 /* ===== 动效关键帧 (Animations) ===== */
 @keyframes collfade { 0% { transform: scaleY(.96); transform-origin: 0% 0%; opacity: 0; } 100% { transform: scaleY(1); transform-origin: 0% 0%; opacity: 1; } }
 @keyframes runningAnimation { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: .5; } }

@@ -78,29 +78,48 @@
     }
     .nav-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 16px; color: inherit; font-size: 16px; }
 
-    /* 侧栏折叠触发条：极简 macOS 毛玻璃栏 */
+    /* 侧栏折叠圆形胶囊按钮 */
     .sider-trigger {
-      position: fixed; bottom: 0; left: 0; z-index: 61; display: grid; place-items: center;
-      width: 220px; height: 44px; padding: 0; border: 0;
-      border-top: 1px solid var(--line); border-right: 1px solid var(--line);
+      position: fixed;
+      bottom: 24px;
+      left: 26px;
+      z-index: 62;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 50% !important;
       color: var(--muted);
-      background: var(--surface-glass-heavy);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      cursor: pointer; font-size: 15px;
-      transition: width .25s var(--ease), background-color .2s, color .2s;
+      background: var(--surface-glass-heavy) !important;
+      backdrop-filter: blur(24px) saturate(200%) !important;
+      -webkit-backdrop-filter: blur(24px) saturate(200%) !important;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.10), var(--glass-caustic) !important;
+      cursor: pointer;
+      font-size: 14px;
+      transition: left .3s var(--ease), width .3s var(--ease), height .3s var(--ease), transform .2s var(--ease), box-shadow .2s, color .2s;
     }
     .sider-trigger:hover {
       color: var(--teal);
-      background: var(--surface-3);
+      transform: scale(1.08);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14) !important;
     }
-    .sider-trigger .sf-symbol { font-size: 15px; }
+    .sider-trigger:active {
+      transform: scale(0.95);
+    }
+    .sider-trigger .sf-symbol { font-size: 14px; }
 
     /* 侧边栏折叠态 */
     body.sider-collapsed .sidebar { width: 72px; padding: 16px 8px 56px; }
     body.sider-collapsed .sidebar-header { justify-content: center; padding: 8px 0 16px; }
     body.sider-collapsed .sidebar-title { display: none !important; }
-    body.sider-collapsed .sider-trigger { width: 72px; }
+    body.sider-collapsed .sider-trigger {
+      left: 30px !important;
+      width: 40px !important;
+      height: 40px !important;
+      border-radius: 50% !important;
+    }
     body.sider-collapsed .nav button, body.sider-collapsed .theme-trigger { justify-content: center; padding: 0; gap: 0; }
     body.sider-collapsed .nav button span:not(.nav-icon), body.sider-collapsed .theme-chevron, body.sider-collapsed .theme-options { display: none !important; }
     body.sider-collapsed .nav button.active { border-radius: var(--radius-sm); }
@@ -1112,30 +1131,6 @@
       color: inherit;
     }
 
-    /* 侧栏折叠条 */
-    .sider-trigger {
-      position: fixed;
-      bottom: 24px;
-      left: 24px;
-      z-index: 62;
-      width: 44px;
-      height: 44px;
-      border-radius: 50% !important;
-      background: var(--surface-glass-heavy) !important;
-      backdrop-filter: blur(24px) !important;
-      border: 1px solid var(--glass-border) !important;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), var(--glass-caustic) !important;
-      color: var(--muted);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      transition: all .2s var(--ease);
-    }
-    .sider-trigger:hover {
-      color: var(--teal);
-      transform: scale(1.08);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16) !important;
-    }
 
     /* 5. macOS 悬浮顶栏 (Floating Titlebar) */
     .topbar {

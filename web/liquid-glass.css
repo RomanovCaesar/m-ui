@@ -452,6 +452,209 @@ body.dark::-webkit-scrollbar-thumb:hover, body.dark ::-webkit-scrollbar-thumb:ho
 :not(.dark) { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
 .dark * { scrollbar-color: var(--scrollbar) transparent; scrollbar-width: thin; }
 
+/* ===== iOS 26 / macOS 26 Liquid Glass 可拖动分段滑块系统 ===== */
+.settings-tabbar,
+.mihomo-tabs,
+.inbound-status-tabs {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px !important;
+  border-radius: var(--radius-pill) !important;
+  background: rgba(120, 120, 128, 0.12) !important;
+  backdrop-filter: blur(28px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(210%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.03) !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  touch-action: pan-y !important;
+}
+body.dark .settings-tabbar,
+body.dark .mihomo-tabs,
+body.dark .inbound-status-tabs {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* 浮动液态玻璃胶囊滑块 (Draggable Liquid Glass Pill) */
+.liquid-pill-slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  transition: transform 0.32s cubic-bezier(0.22, 1.25, 0.36, 1), width 0.32s cubic-bezier(0.22, 1.25, 0.36, 1);
+  z-index: 1;
+  pointer-events: auto;
+  cursor: grab;
+}
+body.dark .liquid-pill-slider {
+  background: rgba(255, 255, 255, 0.20);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+/* 拖动中：弹性拉伸与镜面光泽增强 */
+.liquid-pill-slider.is-dragging {
+  cursor: grabbing !important;
+  transition: none !important;
+  box-shadow: 0 8px 26px rgba(0, 122, 255, 0.30), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+  transform: scaleY(0.96);
+}
+
+/* 液态微折射流光 */
+.liquid-pill-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* 选项卡按钮：透明底以透出滑块 */
+.settings-tabbar button,
+.mihomo-tabs button,
+.inbound-status-tabs button {
+  position: relative !important;
+  z-index: 2 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--muted) !important;
+  cursor: pointer !important;
+  transition: color .2s var(--ease) !important;
+}
+.settings-tabbar button:hover,
+.mihomo-tabs button:hover,
+.inbound-status-tabs button:hover {
+  color: var(--text-strong) !important;
+}
+.settings-tabbar button.active,
+.mihomo-tabs button.active,
+.inbound-status-tabs button.active {
+  color: var(--text-strong) !important;
+  font-weight: 650 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.dark .settings-tabbar button.active,
+body.dark .mihomo-tabs button.active,
+body.dark .inbound-status-tabs button.active {
+  color: #ffffff !important;
+}
+
+/* ===== Apple Inset Grouped Section (Panel Settings 圆角组卡片) ===== */
+.setting-section {
+  background: var(--surface-glass) !important;
+  backdrop-filter: blur(36px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(210%) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 18px !important;
+  margin-bottom: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04), var(--glass-caustic) !important;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease) !important;
+}
+.setting-section:hover {
+  border-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.07), var(--glass-caustic) !important;
+}
+body.dark .setting-section:hover {
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), var(--glass-caustic) !important;
+}
+.setting-section > summary {
+  position: relative !important;
+  padding: 14px 22px 14px 44px !important;
+  color: var(--text-strong) !important;
+  background: rgba(255, 255, 255, 0.28) !important;
+  font-size: 14.5px !important;
+  font-weight: 650 !important;
+  line-height: 22px !important;
+  cursor: pointer !important;
+  list-style: none !important;
+  border-bottom: 1px solid transparent !important;
+  transition: background .2s var(--ease) !important;
+}
+body.dark .setting-section > summary {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+.setting-section[open] > summary {
+  border-bottom: 1px solid var(--line) !important;
+}
+.setting-section-body {
+  padding: 16px 24px 22px !important;
+  background: transparent !important;
+  overflow-x: auto !important;
+}
+
+/* ===== Inbounds 页面刷新胶囊按钮 ===== */
+.inbounds-refresh {
+  position: absolute !important;
+  top: 50% !important;
+  right: 22px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 38px !important;
+  padding: 2px !important;
+  border-radius: var(--radius-pill) !important;
+  overflow: hidden !important;
+  background: var(--surface-glass) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border: 1px solid var(--stroke) !important;
+  box-shadow: var(--shadow-btn), var(--glass-caustic) !important;
+  transform: translateY(-50%) !important;
+}
+.inbounds-refresh > button {
+  width: 36px !important;
+  height: 34px !important;
+  min-width: 36px !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text-strong) !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transition: all .2s var(--ease) !important;
+}
+.inbounds-refresh > button:first-child {
+  border-right: 1px solid var(--line) !important;
+}
+.inbounds-refresh > button:hover {
+  background: rgba(0, 122, 255, 0.12) !important;
+  color: var(--teal) !important;
+}
+
+/* ===== Inbound 胶囊按钮文字对比度保障 ===== */
+.inbound-pill {
+  color: var(--text-strong) !important;
+  fill: var(--text-strong) !important;
+}
+.inbound-pill svg,
+.inbound-pill .sf-symbol {
+  color: var(--text-strong) !important;
+  stroke: currentColor;
+}
+#add-inbound,
+.primary-btn {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+#add-inbound svg,
+#add-inbound .sf-symbol,
+.primary-btn svg,
+.primary-btn .sf-symbol {
+  color: #ffffff !important;
+  stroke: currentColor;
+}
+
 /* ===== 动效关键帧 (Animations) ===== */
 @keyframes collfade { 0% { transform: scaleY(.96); transform-origin: 0% 0%; opacity: 0; } 100% { transform: scaleY(1); transform-origin: 0% 0%; opacity: 1; } }
 @keyframes runningAnimation { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.3); opacity: .5; } }
@@ -471,3 +674,4 @@ html[data-theme-animations="off"] *::after { transition: none !important; animat
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+

@@ -14,11 +14,11 @@
     :root {
       color-scheme: light;
       --page-bg: #f2f2f7;
-      --card-bg: rgba(255, 255, 255, 0.78);
-      --card-border: rgba(255, 255, 255, 0.65);
+      --card-bg: rgba(255, 255, 255, 0.58);
+      --card-border: rgba(255, 255, 255, 0.85);
       --card-stroke: rgba(60, 60, 67, 0.12);
-      --input-bg: rgba(120, 120, 128, 0.08);
-      --input-bg-focus: #ffffff;
+      --input-bg: rgba(120, 120, 128, 0.09);
+      --input-bg-focus: rgba(255, 255, 255, 0.95);
       --text: rgba(0, 0, 0, 0.85);
       --text-strong: rgba(0, 0, 0, 0.95);
       --muted: rgba(60, 60, 67, 0.55);
@@ -26,7 +26,7 @@
       --primary: #0071e3;
       --primary-hover: #0077ed;
       --primary-active: #005bb5;
-      --shadow-card: 0 24px 64px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.04);
+      --shadow-card: 0 32px 84px rgba(0, 0, 0, 0.10), 0 4px 20px rgba(0, 0, 0, 0.04);
       --switch-off: rgba(120, 120, 128, 0.24);
       --checkbox-bg: #ffffff;
     }
@@ -34,11 +34,11 @@
     html.dark {
       color-scheme: dark;
       --page-bg: #141416;
-      --card-bg: rgba(30, 30, 32, 0.75);
-      --card-border: rgba(255, 255, 255, 0.14);
-      --card-stroke: rgba(255, 255, 255, 0.10);
+      --card-bg: rgba(28, 28, 34, 0.62);
+      --card-border: rgba(255, 255, 255, 0.18);
+      --card-stroke: rgba(255, 255, 255, 0.12);
       --input-bg: rgba(255, 255, 255, 0.08);
-      --input-bg-focus: rgba(255, 255, 255, 0.12);
+      --input-bg-focus: rgba(255, 255, 255, 0.16);
       --text: rgba(255, 255, 255, 0.88);
       --text-strong: rgba(255, 255, 255, 0.96);
       --muted: rgba(235, 235, 245, 0.55);
@@ -46,18 +46,18 @@
       --primary: #0a84ff;
       --primary-hover: #2b95ff;
       --primary-active: #0066cc;
-      --shadow-card: 0 28px 72px rgba(0, 0, 0, 0.55), 0 4px 20px rgba(0, 0, 0, 0.35);
+      --shadow-card: 0 36px 90px rgba(0, 0, 0, 0.60), 0 4px 24px rgba(0, 0, 0, 0.35);
       --switch-off: rgba(120, 120, 128, 0.35);
       --checkbox-bg: rgba(255, 255, 255, 0.1);
     }
 
     html.dark[data-theme="ultra-dark"] {
       --page-bg: #000000;
-      --card-bg: rgba(18, 18, 20, 0.88);
-      --card-border: rgba(255, 255, 255, 0.08);
-      --card-stroke: rgba(255, 255, 255, 0.06);
+      --card-bg: rgba(18, 18, 22, 0.75);
+      --card-border: rgba(255, 255, 255, 0.10);
+      --card-stroke: rgba(255, 255, 255, 0.08);
       --input-bg: rgba(255, 255, 255, 0.06);
-      --shadow-card: 0 28px 72px rgba(0, 0, 0, 0.85);
+      --shadow-card: 0 36px 90px rgba(0, 0, 0, 0.85);
     }
 
     * { box-sizing: border-box; }
@@ -78,47 +78,110 @@
       transition: background-color .3s var(--ease), color .3s var(--ease);
     }
 
-    /* Apple 环境光渐变底图 */
+    /* Apple 环境光渐变底图与动态极光光球 */
     .ambient-backdrop {
       position: fixed;
       inset: 0;
       pointer-events: none;
       z-index: 0;
-      background:
-        radial-gradient(circle at 15% 20%, rgba(0, 113, 227, 0.12), transparent 45%),
-        radial-gradient(circle at 85% 80%, rgba(88, 86, 214, 0.10), transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(52, 199, 89, 0.05), transparent 60%);
-      filter: blur(60px);
+      overflow: hidden;
+      background: var(--page-bg);
     }
-    html.dark .ambient-backdrop {
-      background:
-        radial-gradient(circle at 20% 20%, rgba(10, 132, 255, 0.16), transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(94, 92, 230, 0.14), transparent 50%),
-        radial-gradient(circle at 50% 40%, rgba(48, 209, 88, 0.06), transparent 60%);
+    .aurora-orb {
+      position: absolute;
+      border-radius: 50%;
       filter: blur(80px);
+      opacity: 0.65;
+      mix-blend-mode: normal;
+      pointer-events: none;
+      will-change: transform;
     }
-    html.dark[data-theme="ultra-dark"] .ambient-backdrop {
-      background:
-        radial-gradient(circle at 50% 30%, rgba(10, 132, 255, 0.08), transparent 60%);
+    html.dark .aurora-orb {
+      opacity: 0.45;
       filter: blur(90px);
     }
+    .orb-1 {
+      width: 520px; height: 520px;
+      top: -150px; left: -120px;
+      background: radial-gradient(circle, rgba(0, 122, 255, 0.60) 0%, rgba(0, 122, 255, 0) 70%);
+      animation: float-orb-1 18s ease-in-out infinite alternate;
+    }
+    .orb-2 {
+      width: 560px; height: 560px;
+      bottom: -160px; right: -140px;
+      background: radial-gradient(circle, rgba(175, 82, 222, 0.55) 0%, rgba(175, 82, 222, 0) 70%);
+      animation: float-orb-2 22s ease-in-out infinite alternate;
+    }
+    .orb-3 {
+      width: 400px; height: 400px;
+      top: 35%; right: 5%;
+      background: radial-gradient(circle, rgba(52, 199, 89, 0.38) 0%, rgba(52, 199, 89, 0) 70%);
+      animation: float-orb-3 16s ease-in-out infinite alternate;
+    }
+    .orb-4 {
+      width: 460px; height: 460px;
+      bottom: 10%; left: 10%;
+      background: radial-gradient(circle, rgba(0, 199, 190, 0.42) 0%, rgba(0, 199, 190, 0) 70%);
+      animation: float-orb-4 20s ease-in-out infinite alternate;
+    }
+    @keyframes float-orb-1 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(80px, 60px) scale(1.15); } }
+    @keyframes float-orb-2 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-70px, -50px) scale(1.12); } }
+    @keyframes float-orb-3 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-60px, 80px) scale(0.9); } }
+    @keyframes float-orb-4 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(70px, -60px) scale(1.08); } }
 
-    /* macOS Sequoia 磨砂玻璃卡片 */
+    /* macOS 26 Tahoe / iOS 26 Liquid Glass 锁屏卡片 */
     .login-card {
       position: relative;
       z-index: 1;
-      width: min(400px, calc(100vw - 36px));
+      width: min(420px, calc(100vw - 36px));
       padding: 3rem 2.25rem 2.25rem;
-      border-radius: 24px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-stroke);
-      box-shadow: var(--shadow-card);
-      backdrop-filter: blur(32px) saturate(190%);
-      -webkit-backdrop-filter: blur(32px) saturate(190%);
+      border-radius: 28px;
+      background: var(--card-bg) !important;
+      border: 1px solid var(--card-border) !important;
+      box-shadow: var(--shadow-card), inset 0 1.5px 2px rgba(255, 255, 255, 0.95), inset 0 -1px 1.5px rgba(0, 0, 0, 0.05) !important;
+      backdrop-filter: blur(48px) saturate(220%) !important;
+      -webkit-backdrop-filter: blur(48px) saturate(220%) !important;
       animation: mui-sheet-in .4s var(--ease-modal) both;
       user-select: none;
       -webkit-user-select: none;
+      overflow: hidden;
     }
+    .login-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(circle 280px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.08) 45%, transparent 70%);
+      opacity: 0.85;
+      transition: opacity .3s var(--ease);
+      mix-blend-mode: overlay;
+    }
+    html.dark .login-card::after {
+      background: radial-gradient(circle 280px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.18) 0%, rgba(10, 132, 255, 0.12) 40%, transparent 70%);
+      mix-blend-mode: screen;
+    }
+
+    /* macOS 交通灯红黄绿微晶圆钮 */
+    .mac-traffic-lights {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      display: flex;
+      gap: 7px;
+      z-index: 5;
+    }
+    .mac-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      transition: transform .2s var(--ease);
+    }
+    .mac-dot.red { background: #ff5f56; border: 0.5px solid rgba(224, 68, 62, 0.8); }
+    .mac-dot.yellow { background: #ffbd2e; border: 0.5px solid rgba(222, 161, 35, 0.8); }
+    .mac-dot.green { background: #27c93f; border: 0.5px solid rgba(40, 173, 60, 0.8); }
+    .login-card:hover .mac-dot { transform: scale(1.08); }
 
     /* 卡片顶部 m-ui 标志徽章 */
     .brand-emblem {
@@ -308,8 +371,18 @@
   </style>
 </head>
 <body>
-  <div class="ambient-backdrop" aria-hidden="true"></div>
+  <div class="ambient-backdrop" aria-hidden="true">
+    <div class="aurora-orb orb-1"></div>
+    <div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div>
+    <div class="aurora-orb orb-4"></div>
+  </div>
   <main class="login-card">
+    <div class="mac-traffic-lights" aria-hidden="true">
+      <span class="mac-dot red"></span>
+      <span class="mac-dot yellow"></span>
+      <span class="mac-dot green"></span>
+    </div>
     <button class="settings-button" id="settings-button" type="button" aria-label="面板设置" aria-expanded="false">
       <svg class="sf-symbol" aria-hidden="true"><use href="#sf-setting"></use></svg>
     </button>

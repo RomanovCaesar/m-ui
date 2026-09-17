@@ -57,7 +57,7 @@
 
   /* ===== 1. Liquid Glass 动态游标光学追踪器 ===== */
   function updateGlassCursor(e){
-    var target = e.target.closest ? e.target.closest('.glass-surface, .glass-card, .swift-card, .glass-button, .swift-btn, .sidebar, .nav button, .swift-picker-selection') : null;
+    var target = e.target.closest ? e.target.closest('.glass-surface, .glass-card, .swift-card, .glass-button, .swift-btn, .sidebar, .nav button, .swift-picker-selection, .overview-card, .inbounds-card, .mihomo-card, .stats-strip, .setting-section, .login-card, .liquid-pill-slider, .inbound-pill, .modal-panel, .drawer') : null;
     if(!target) return;
     var rect = target.getBoundingClientRect();
     if(rect.width === 0 || rect.height === 0) return;
@@ -533,18 +533,283 @@
     return wrap;
   }
 
+  /* ===== 5. iOS 26 / macOS 26 Liquid Glass 可拖动分段滑块与手势切换系统 ===== */
+  function initDraggableLiquidSliders(){
+    var selectors = ['.settings-tabbar', '.mihomo-tabs', '#inbound-status-tabs'];
+
+    function setupBar(bar){
+      if(!bar || bar.dataset.liquidSliderInit) return;
+      bar.dataset.liquidSliderInit = 'true';
+
+      var slider = bar.querySelector('.liquid-pill-slider');
+      if(!slider){
+        slider = document.createElement('div');
+        slider.className = 'liquid-pill-slider';
+        slider.innerHTML = '<div class="liquid-pill-sheen"></div>';
+        bar.appendChild(slider);
+      }
+
+      function getButtons(){
+        return Array.from(bar.querySelectorAll('button:not([hidden])'));
+      }
+
+      function getActiveButton(){
+        return bar.querySelector('button.active') || getButtons()[0];
+      }
+
+      function syncSlider(instant){
+        var active = getActiveButton();
+        if(!active) return;
+        var barRect = bar.getBoundingClientRect();
+        var btnRect = active.getBoundingClientRect();
+        if(btnRect.width === 0) return;
+
+        var left = btnRect.left - barRect.left;
+        var top = btnRect.top - barRect.top;
+        var width = btnRect.width;
+        var height = btnRect.height;
+
+        if(instant){
+          slider.style.transition = 'none';
+        } else {
+          slider.style.transition = 'transform 0.35s cubic-bezier(0.22, 1.25, 0.36, 1), width 0.35s cubic-bezier(0.22, 1.25, 0.36, 1), height 0.35s cubic-bezier(0.22, 1.25, 0.36, 1)';
+        }
+        slider.style.transform = 'translate3d(' + left.toFixed(1) + 'px, ' + top.toFixed(1) + 'px, 0)';
+        slider.style.width = width.toFixed(1) + 'px';
+        slider.style.height = height.toFixed(1) + 'px';
+      }
+
+      // Drag state
+      var isDragging = false;
+      var startX = 0;
+      var baseLeft = 0;
+      var currentWidth = 0;
+
+      function onPointerDown(e){
+        if(e.button !== undefined && e.button !== 0) return;
+        var buttons = getButtons();
+        if(buttons.length === 0) return;
+
+        var active = getActiveButton();
+        if(!active) return;
+
+        var barRect = bar.getBoundingClientRect();
+        var btnRect = active.getBoundingClientRect();
+        baseLeft = btnRect.left - barRect.left;
+        currentWidth = btnRect.width;
+        startX = e.clientX;
+        isDragging = true;
+
+        bar.classList.add('is-dragging');
+        slider.classList.add('is-dragging');
+        slider.style.transition = 'none';
+
+        if(bar.setPointerCapture && e.pointerId){
+          try { bar.setPointerCapture(e.pointerId); } catch(_){}
+        }
+      }
+
+      function onPointerMove(e){
+        if(!isDragging) return;
+        var dx = e.clientX - startX;
+        var barRect = bar.getBoundingClientRect();
+        var buttons = getButtons();
+        var minLeft = 4;
+        var maxRight = barRect.width - 4;
+
+        var proposedLeft = baseLeft + dx;
+        if(proposedLeft < minLeft){
+          proposedLeft = minLeft + (proposedLeft - minLeft) * 0.25;
+        } else if(proposedLeft + currentWidth > maxRight){
+          var over = proposedLeft + currentWidth - maxRight;
+          proposedLeft = maxRight - currentWidth + over * 0.25;
+        }
+
+        var stretch = 1 + Math.min(Math.abs(dx) / 320, 0.12);
+        slider.style.transform = 'translate3d(' + proposedLeft.toFixed(1) + 'px, 4px, 0) scaleX(' + stretch.toFixed(3) + ')';
+
+        var pillCenter = proposedLeft + currentWidth / 2;
+        var closestBtn = null;
+        var closestDist = Infinity;
+        buttons.forEach(function(btn){
+          var bRect = btn.getBoundingClientRect();
+          var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
+          var dist = Math.abs(pillCenter - bCenter);
+          if(dist < closestDist){
+            closestDist = dist;
+            closestBtn = btn;
+          }
+        });
+
+        if(closestBtn){
+          buttons.forEach(function(b){
+            if(b === closestBtn){
+              b.style.color = 'var(--text-strong)';
+            } else if(!b.classList.contains('active')){
+              b.style.color = '';
+            }
+          });
+        }
+      }
+
+      function onPointerUp(e){
+        if(!isDragging) return;
+        isDragging = false;
+        bar.classList.remove('is-dragging');
+        slider.classList.remove('is-dragging');
+
+        var buttons = getButtons();
+        var barRect = bar.getBoundingClientRect();
+        var matrix = window.getComputedStyle(slider).transform;
+        var currentX = baseLeft;
+        if(matrix && matrix !== 'none'){
+          var match = matrix.match(/matrix.*\((.+)\)/);
+          if(match){
+            var parts = match[1].split(', ');
+            currentX = parseFloat(parts[4]) || baseLeft;
+          }
+        }
+
+        var pillCenter = currentX + currentWidth / 2;
+        var closestBtn = null;
+        var closestDist = Infinity;
+
+        buttons.forEach(function(btn){
+          var bRect = btn.getBoundingClientRect();
+          var bCenter = (bRect.left - barRect.left) + bRect.width / 2;
+          var dist = Math.abs(pillCenter - bCenter);
+          if(dist < closestDist){
+            closestDist = dist;
+            closestBtn = btn;
+          }
+        });
+
+        buttons.forEach(function(b){ b.style.color = ''; });
+
+        if(closestBtn && closestBtn !== getActiveButton()){
+          closestBtn.click();
+        }
+        syncSlider(false);
+
+        if(bar.releasePointerCapture && e.pointerId){
+          try { bar.releasePointerCapture(e.pointerId); } catch(_){}
+        }
+      }
+
+      bar.addEventListener('pointerdown', onPointerDown);
+      window.addEventListener('pointermove', onPointerMove, { passive: false });
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+
+      bar.addEventListener('click', function(e){
+        var btn = e.target.closest('button');
+        if(btn && bar.contains(btn)){
+          requestAnimationFrame(function(){ syncSlider(false); });
+        }
+      });
+
+      var observer = new MutationObserver(function(){
+        syncSlider(false);
+      });
+      observer.observe(bar, { attributes: true, subtree: true, attributeFilter: ['class'] });
+
+      setTimeout(function(){ syncSlider(true); }, 60);
+      setTimeout(function(){ syncSlider(true); }, 300);
+      window.addEventListener('resize', function(){ syncSlider(true); });
+    }
+
+    function scanBars(){
+      selectors.forEach(function(sel){
+        document.querySelectorAll(sel).forEach(setupBar);
+      });
+    }
+
+    scanBars();
+    setInterval(scanBars, 600);
+
+    // Page swipe gesture handler
+    function setupSwipePanes(containerSelector, getActiveIndex, setActiveIndex, totalCount){
+      var container = document.querySelector(containerSelector);
+      if(!container || container.dataset.swipeInit) return;
+      container.dataset.swipeInit = 'true';
+
+      var touchStartX = 0, touchStartY = 0;
+      container.addEventListener('touchstart', function(e){
+        if(e.touches.length === 1){
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      container.addEventListener('touchend', function(e){
+        if(e.changedTouches.length === 1){
+          var dx = e.changedTouches[0].clientX - touchStartX;
+          var dy = e.changedTouches[0].clientY - touchStartY;
+          if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5){
+            var curr = getActiveIndex();
+            var total = totalCount();
+            if(dx < 0 && curr < total - 1){
+              setActiveIndex(curr + 1);
+            } else if(dx > 0 && curr > 0){
+              setActiveIndex(curr - 1);
+            }
+          }
+        }
+      }, { passive: true });
+    }
+
+    setupSwipePanes(
+      '#view-settings',
+      function(){
+        var btns = Array.from(document.querySelectorAll('#settings-tabbar button:not([hidden])'));
+        return btns.findIndex(function(b){ return b.classList.contains('active'); });
+      },
+      function(index){
+        var btns = Array.from(document.querySelectorAll('#settings-tabbar button:not([hidden])'));
+        if(btns[index]) btns[index].click();
+      },
+      function(){
+        return document.querySelectorAll('#settings-tabbar button:not([hidden])').length;
+      }
+    );
+
+    setupSwipePanes(
+      '#view-mihomo',
+      function(){
+        var btns = Array.from(document.querySelectorAll('.mihomo-tabs button:not([hidden])'));
+        return btns.findIndex(function(b){ return b.classList.contains('active'); });
+      },
+      function(index){
+        var btns = Array.from(document.querySelectorAll('.mihomo-tabs button:not([hidden])'));
+        if(btns[index]) btns[index].click();
+      },
+      function(){
+        return document.querySelectorAll('.mihomo-tabs button:not([hidden])').length;
+      }
+    );
+  }
+
   injectStyle();
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ scan(); });
-  else scan();
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      scan();
+      initDraggableLiquidSliders();
+    });
+  } else {
+    scan();
+    initDraggableLiquidSliders();
+  }
 
   window.swiftPicker = {
     scan: scan,
     upgrade: upgrade,
     upgradeCombobox: upgradeCombobox,
-    closeAll: closeAll
+    closeAll: closeAll,
+    initSliders: initDraggableLiquidSliders
   };
 
   window.muiUpgradeSelects = scan;
   window.muiUpgradeCombobox = upgradeCombobox;
   window.muiCloseSelects = closeAll;
+  window.initDraggableLiquidSliders = initDraggableLiquidSliders;
 })();

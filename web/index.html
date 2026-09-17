@@ -1228,9 +1228,15 @@
       -webkit-backdrop-filter: blur(24px) !important;
       border: 1px solid var(--stroke) !important;
       border-radius: var(--radius-pill) !important;
+      color: var(--text-strong) !important;
+      fill: var(--text-strong) !important;
       box-shadow: var(--shadow-btn), var(--glass-caustic) !important;
       font-weight: 550 !important;
       transition: all .2s var(--ease) !important;
+    }
+    .inbound-pill svg, .inbound-pill .sf-symbol {
+      color: var(--text-strong) !important;
+      stroke: currentColor;
     }
     .inbound-pill:hover, .outline-btn:hover, .icon-btn:hover {
       background: var(--surface-3) !important;
@@ -1245,10 +1251,15 @@
     .primary-btn, #add-inbound {
       background: linear-gradient(180deg, var(--teal-3) 0%, var(--teal) 100%) !important;
       color: #ffffff !important;
+      fill: #ffffff !important;
       border: 1px solid rgba(255, 255, 255, 0.25) !important;
       border-radius: var(--radius-pill) !important;
       box-shadow: var(--shadow-btn-primary), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
       font-weight: 600 !important;
+    }
+    .primary-btn svg, .primary-btn .sf-symbol, #add-inbound svg, #add-inbound .sf-symbol {
+      color: #ffffff !important;
+      stroke: currentColor;
     }
     .primary-btn:hover, #add-inbound:hover {
       filter: brightness(1.08);
@@ -1269,34 +1280,63 @@
       border: 1px solid var(--stroke) !important;
       box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     }
-    .inbound-status-tabs {
-      padding: 3px !important;
+    .inbound-status-tabs,
+    .settings-tabbar,
+    .mihomo-tabs {
+      position: relative !important;
+      padding: 4px !important;
       border-radius: var(--radius-pill) !important;
-      background: var(--surface-3) !important;
+      background: rgba(120, 120, 128, 0.12) !important;
+      backdrop-filter: blur(28px) saturate(210%) !important;
+      -webkit-backdrop-filter: blur(28px) saturate(210%) !important;
       border: 1px solid var(--line) !important;
       gap: 3px !important;
       display: inline-flex !important;
       align-items: center !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      touch-action: pan-y !important;
     }
-    .inbound-status-tabs button {
+    body.dark .inbound-status-tabs,
+    body.dark .settings-tabbar,
+    body.dark .mihomo-tabs {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+    .inbound-status-tabs button,
+    .settings-tabbar button,
+    .mihomo-tabs button {
+      position: relative !important;
+      z-index: 2 !important;
       border: 0 !important;
       border-radius: var(--radius-pill) !important;
-      height: 30px !important;
-      padding: 0 14px !important;
-      font-size: 12.5px !important;
+      height: 32px !important;
+      padding: 0 16px !important;
+      font-size: 13px !important;
       font-weight: 500 !important;
       color: var(--muted) !important;
       background: transparent !important;
-      transition: all .2s var(--ease) !important;
+      box-shadow: none !important;
+      transition: color .2s var(--ease) !important;
+      cursor: pointer !important;
     }
-    .inbound-status-tabs button:hover {
+    .inbound-status-tabs button:hover,
+    .settings-tabbar button:hover,
+    .mihomo-tabs button:hover {
       color: var(--text-strong) !important;
     }
-    .inbound-status-tabs button.active {
-      background: var(--surface) !important;
-      color: var(--teal) !important;
+    .inbound-status-tabs button.active,
+    .settings-tabbar button.active,
+    .mihomo-tabs button.active {
+      color: var(--text-strong) !important;
       font-weight: 650 !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    body.dark .inbound-status-tabs button.active,
+    body.dark .settings-tabbar button.active,
+    body.dark .mihomo-tabs button.active {
+      color: #ffffff !important;
     }
 
     /* 10. 表格质感与分组视图 */
@@ -1319,6 +1359,116 @@
     body.dark tbody tr:hover > td {
       background: rgba(10, 132, 255, 0.10) !important;
     }
+
+    /* 11. Inbounds 刷新胶囊圆角框 */
+    .inbounds-refresh {
+      position: absolute !important;
+      top: 50% !important;
+      right: 22px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      height: 38px !important;
+      padding: 2px !important;
+      border-radius: var(--radius-pill) !important;
+      overflow: hidden !important;
+      background: var(--surface-glass) !important;
+      backdrop-filter: blur(28px) saturate(200%) !important;
+      -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+      border: 1px solid var(--stroke) !important;
+      box-shadow: var(--shadow-btn), var(--glass-caustic) !important;
+      transform: translateY(-50%) !important;
+    }
+    .inbounds-refresh > button {
+      width: 36px !important;
+      height: 34px !important;
+      min-width: 36px !important;
+      border: 0 !important;
+      background: transparent !important;
+      color: var(--text-strong) !important;
+      display: grid !important;
+      place-items: center !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      transition: all .2s var(--ease) !important;
+    }
+    .inbounds-refresh > button:first-child {
+      border-right: 1px solid var(--line) !important;
+    }
+    .inbounds-refresh > button:hover {
+      background: rgba(0, 122, 255, 0.12) !important;
+      color: var(--teal) !important;
+    }
+
+    /* 12. Apple Inset Grouped Section (Panel Settings 圆角组卡片) */
+    .setting-section {
+      background: var(--surface-glass) !important;
+      backdrop-filter: blur(36px) saturate(210%) !important;
+      -webkit-backdrop-filter: blur(36px) saturate(210%) !important;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 18px !important;
+      margin-bottom: 16px !important;
+      overflow: hidden !important;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.04), var(--glass-caustic) !important;
+      transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease) !important;
+    }
+    .setting-section:hover {
+      border-color: rgba(255, 255, 255, 0.95) !important;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.07), var(--glass-caustic) !important;
+    }
+    body.dark .setting-section:hover {
+      border-color: rgba(255, 255, 255, 0.28) !important;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55), var(--glass-caustic) !important;
+    }
+    .setting-section > summary {
+      position: relative !important;
+      padding: 14px 22px 14px 44px !important;
+      color: var(--text-strong) !important;
+      background: rgba(255, 255, 255, 0.28) !important;
+      font-size: 14.5px !important;
+      font-weight: 650 !important;
+      line-height: 22px !important;
+      cursor: pointer !important;
+      list-style: none !important;
+      border-bottom: 1px solid transparent !important;
+      transition: background .2s var(--ease) !important;
+    }
+    body.dark .setting-section > summary {
+      background: rgba(255, 255, 255, 0.06) !important;
+    }
+    .setting-section[open] > summary {
+      border-bottom: 1px solid var(--line) !important;
+    }
+    .setting-section-body {
+      padding: 16px 24px 22px !important;
+      background: transparent !important;
+      overflow-x: auto !important;
+    }
+
+    /* 13. Liquid Glass 动态游标流体光泽反射层 (Caustic Gloss Overlay) */
+    .overview-card::after,
+    .inbounds-card::after,
+    .stats-strip::after,
+    .mihomo-card::after,
+    .setting-section::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: radial-gradient(circle 300px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 70%);
+      opacity: 0.85;
+      transition: opacity .3s var(--ease);
+      mix-blend-mode: overlay;
+    }
+    body.dark .overview-card::after,
+    body.dark .inbounds-card::after,
+    body.dark .stats-strip::after,
+    body.dark .mihomo-card::after,
+    body.dark .setting-section::after {
+      background: radial-gradient(circle 300px at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.18) 0%, rgba(10, 132, 255, 0.12) 40%, transparent 70%);
+      mix-blend-mode: screen;
+    }
+
 
   </style>
 </head>

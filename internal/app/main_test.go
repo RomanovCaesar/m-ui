@@ -4810,3 +4810,24 @@ func TestSettingsPageReplicates3xUiLayout(t *testing.T) {
 		t.Fatal("Export All Subscriptions must list only the normal subscription URL")
 	}
 }
+
+func TestMediaLogoServing(t *testing.T) {
+	manager := &CoreManager{state: State{Settings: Settings{PanelPath: "/panel/"}}}
+	app := &App{manager: manager, session: "admin-session"}
+	handler := app.panelRoutes(false)
+
+	req := httptest.NewRequest(http.MethodGet, "/panel/media/m-ui_logo.png", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for /panel/media/m-ui_logo.png, got %d", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "image/png" {
+		t.Fatalf("expected Content-Type image/png, got %s", ct)
+	}
+	if rec.Body.Len() == 0 {
+		t.Fatal("expected non-empty response body for logo")
+	}
+}
+

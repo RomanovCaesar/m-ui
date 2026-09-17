@@ -671,13 +671,17 @@ body.dark .inbound-status-tabs button.active {
   height: 38px !important;
   padding: 2px !important;
   border-radius: var(--radius-pill) !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   background: var(--surface-glass) !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
   -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
   border: 1px solid var(--stroke) !important;
   box-shadow: var(--shadow-btn), var(--glass-caustic) !important;
   transform: translateY(-50%) !important;
+  z-index: 25 !important;
+}
+.inbounds-refresh.open {
+  z-index: 1050 !important;
 }
 .inbounds-refresh > button {
   width: 36px !important;
@@ -694,10 +698,22 @@ body.dark .inbound-status-tabs button.active {
 }
 .inbounds-refresh > button:first-child {
   border-right: 1px solid var(--line) !important;
+  border-radius: 9999px 0 0 9999px !important;
+}
+.inbounds-refresh > button:nth-child(2) {
+  border-radius: 0 9999px 9999px 0 !important;
 }
 .inbounds-refresh > button:hover {
   background: rgba(0, 122, 255, 0.12) !important;
   color: var(--teal) !important;
+}
+.auto-refresh-menu {
+  border-radius: var(--radius-lg) !important;
+  background: var(--surface-modal) !important;
+  backdrop-filter: blur(28px) saturate(200%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+  border: 1px solid var(--stroke) !important;
+  box-shadow: var(--shadow-pop), var(--glass-caustic) !important;
 }
 
 /* ===== Inbound 胶囊按钮文字对比度保障 ===== */

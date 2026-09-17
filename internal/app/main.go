@@ -948,6 +948,7 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/", a.handleIndex)
 	mux.HandleFunc("/login", a.handleLoginPage)
 	mux.HandleFunc("/static/", a.handleStatic)
+	mux.HandleFunc("/media/", a.handleMedia)
 	mux.HandleFunc("/api/auth/login", a.handleLogin)
 	mux.HandleFunc("/api/language", a.handleLanguage)
 	mux.HandleFunc("/api/auth/logout", a.handleLogout)
@@ -1043,8 +1044,37 @@ func (a *App) handleStatic(w http.ResponseWriter, r *http.Request) {
 		contentType = "text/css; charset=utf-8"
 	} else if strings.HasSuffix(name, ".js") {
 		contentType = "text/javascript; charset=utf-8"
+	} else if strings.HasSuffix(name, ".png") {
+		contentType = "image/png"
+	} else if strings.HasSuffix(name, ".svg") {
+		contentType = "image/svg+xml"
+	} else if strings.HasSuffix(name, ".jpg") || strings.HasSuffix(name, ".jpeg") {
+		contentType = "image/jpeg"
+	} else if strings.HasSuffix(name, ".webp") {
+		contentType = "image/webp"
+	} else if strings.HasSuffix(name, ".ico") {
+		contentType = "image/x-icon"
 	}
 	a.serveEmbedded(w, "web/"+name, contentType)
+}
+
+func (a *App) handleMedia(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimPrefix(r.URL.Path, "/media/")
+	if name == "" || strings.Contains(name, "..") {
+		http.NotFound(w, r)
+		return
+	}
+	contentType := "image/png"
+	if strings.HasSuffix(name, ".svg") {
+		contentType = "image/svg+xml"
+	} else if strings.HasSuffix(name, ".jpg") || strings.HasSuffix(name, ".jpeg") {
+		contentType = "image/jpeg"
+	} else if strings.HasSuffix(name, ".webp") {
+		contentType = "image/webp"
+	} else if strings.HasSuffix(name, ".ico") {
+		contentType = "image/x-icon"
+	}
+	a.serveEmbedded(w, "web/media/"+name, contentType)
 }
 
 // serveLocalizedPage 和 serveEmbedded 一样吐 embed 里的页面，只是顺手把面板设置里的
@@ -1063,8 +1093,15 @@ func (a *App) serveLocalizedPage(w http.ResponseWriter, name string) {
 func (a *App) serveEmbedded(w http.ResponseWriter, name, contentType string) {
 	data, err := webFS.ReadFile(name)
 	if err != nil {
-		http.NotFound(w, nil)
-		return
+		clean := strings.TrimPrefix(name, "web/")
+		if diskData, diskErr := os.ReadFile("web/" + clean); diskErr == nil {
+			data = diskData
+		} else if diskData, diskErr := os.ReadFile(clean); diskErr == nil {
+			data = diskData
+		} else {
+			http.NotFound(w, nil)
+			return
+		}
 	}
 	a.writeAsset(w, data, contentType)
 }

@@ -191,19 +191,20 @@
       margin-bottom: 8px;
     }
     .brand-icon {
-      width: 56px;
-      height: 56px;
-      display: grid;
-      place-items: center;
-      border-radius: 16px;
-      background: linear-gradient(135deg, var(--primary), #5856d6);
-      color: #ffffff;
-      box-shadow: 0 8px 24px rgba(0, 113, 227, 0.38);
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      background: transparent;
+      filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.28));
       margin-bottom: 12px;
       transition: transform .3s var(--ease);
+      overflow: hidden;
     }
     .brand-icon:hover { transform: scale(1.05); }
-    .brand-icon svg { width: 28px; height: 28px; }
+    .brand-icon img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
 
     /* macOS 偏好设置齿轮按钮 */
     .settings-button {
@@ -399,7 +400,7 @@
 
     <div class="brand-emblem">
       <div class="brand-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <img src="media/m-ui_logo.png" alt="m-ui" width="64" height="64">
       </div>
     </div>
 

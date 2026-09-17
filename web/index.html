@@ -42,12 +42,19 @@
       border-bottom: 1px solid var(--line);
     }
     .sidebar-logo {
-      width: 32px; height: 32px; flex: none;
-      display: grid; place-items: center;
-      border-radius: 9px;
-      background: linear-gradient(135deg, var(--teal), var(--indigo));
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.35);
+      width: 38px; height: 38px; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      background: transparent;
+      overflow: hidden;
+      filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.22));
+    }
+    .sidebar-logo img,
+    .sidebar-logo-img {
+      width: 100%; height: 100%;
+      display: block;
+      object-fit: cover;
+      border-radius: inherit;
     }
     .sidebar-title { display: flex; align-items: center; gap: 8px; overflow: hidden; }
     .sidebar-app-name { font-size: 16px; font-weight: 700; color: var(--text-strong); letter-spacing: -0.02em; }
@@ -1059,12 +1066,12 @@
     .mac-dot.yellow { background: #febc2e; border: 1px solid #d89e24; }
     .mac-dot.green { background: #28c840; border: 1px solid #1aab29; }
     .sidebar-logo {
-      width: 36px; height: 36px; flex: none;
-      display: grid; place-items: center;
+      width: 38px; height: 38px; flex: none;
+      display: flex; align-items: center; justify-content: center;
       border-radius: 10px;
-      background: linear-gradient(135deg, var(--teal-3), var(--indigo));
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(0, 122, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+      background: transparent;
+      overflow: hidden;
+      filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.22));
     }
     .sidebar-title {
       display: flex;
@@ -1544,7 +1551,7 @@
           <span class="mac-dot green"></span>
         </div>
         <div class="sidebar-logo">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          <img class="sidebar-logo-img" src="media/m-ui_logo.png" alt="m-ui" width="38" height="38">
         </div>
         <div class="sidebar-title">
           <span class="sidebar-app-name">m-ui</span>

@@ -565,6 +565,7 @@
       }
 
       function syncSlider(instant){
+        if(isDragging) return;
         var active = getActiveButton();
         if(!active) return;
         var barRect = bar.getBoundingClientRect();
@@ -590,7 +591,7 @@
         slider.style.height = height.toFixed(1) + 'px';
       }
 
-      // Drag state: 仅当移动距离 > 8px 时才判定为拖拽，绝不破坏正常点击！
+      // Drag state: 平滑手势拖拽跟踪，且绝不破坏正常点击
       var isDragging = false;
       var potentialDrag = false;
       var startX = 0;
@@ -609,7 +610,8 @@
         isDragging = false;
         activePointerId = e.pointerId;
 
-        var active = getActiveButton();
+        var clickedBtn = e.target.closest('button');
+        var active = (clickedBtn && bar.contains(clickedBtn)) ? clickedBtn : getActiveButton();
         if(active){
           var barRect = bar.getBoundingClientRect();
           var btnRect = active.getBoundingClientRect();
@@ -621,7 +623,6 @@
           currentWidth = btnRect.width;
           lastProposedLeft = baseLeft;
         }
-        // 注意：绝不在 pointerdown 捕获指针或阻止默认行为，保证按钮 onclick 立刻触发！
       }
 
       function onPointerMove(e){
@@ -629,18 +630,25 @@
         var dx = e.clientX - startX;
         var dy = e.clientY - startY;
 
-        // 仅当水平移动明显超过 8px 时才进入拖动模式
-        if(!isDragging && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)){
-          isDragging = true;
-          bar.classList.add('is-dragging');
-          slider.classList.add('is-dragging');
-          slider.style.transition = 'none';
-          if(bar.setPointerCapture && activePointerId !== null){
-            try { bar.setPointerCapture(activePointerId); } catch(_){}
+        // 仅需微小移动（> 4px）即平滑进入拖拽模式，跟手更灵敏
+        if(!isDragging && (Math.abs(dx) > 4 || Math.abs(dy) > 4)){
+          if(Math.abs(dx) >= Math.abs(dy)){
+            isDragging = true;
+            bar.classList.add('is-dragging');
+            slider.classList.add('is-dragging');
+            slider.style.transition = 'none';
+            if(bar.setPointerCapture && activePointerId !== null){
+              try { bar.setPointerCapture(activePointerId); } catch(_){}
+            }
+          } else {
+            potentialDrag = false;
+            return;
           }
         }
 
         if(isDragging){
+          if(e.cancelable) e.preventDefault();
+
           var barRect = bar.getBoundingClientRect();
           var barStyle = window.getComputedStyle(bar);
           var borderLeft = parseFloat(barStyle.borderLeftWidth) || 0;
@@ -691,11 +699,12 @@
       }
 
       function onPointerUp(e){
-        if(!potentialDrag) return;
+        if(!potentialDrag && !isDragging) return;
+        var wasDragging = isDragging;
         potentialDrag = false;
+        isDragging = false;
 
-        if(isDragging){
-          isDragging = false;
+        if(wasDragging){
           bar.classList.remove('is-dragging');
           slider.classList.remove('is-dragging');
 
@@ -729,15 +738,15 @@
           }
           syncSlider(false);
         } else {
-          // 普通点击：直接由浏览器原生分发给目标 button，不作任何拦截！
           activePointerId = null;
         }
       }
 
       bar.addEventListener('pointerdown', onPointerDown);
-      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      window.addEventListener('pointermove', onPointerMove, { passive: false });
       window.addEventListener('pointerup', onPointerUp);
       window.addEventListener('pointercancel', onPointerUp);
+      bar.addEventListener('dragstart', function(e){ e.preventDefault(); });
 
       // 监听选项卡按钮的点击，以 Apple Spring 弹性滑动对齐
       bar.addEventListener('click', function(e){
@@ -747,10 +756,21 @@
         }
       });
 
-      var observer = new MutationObserver(function(){
-        syncSlider(false);
+      var observer = new MutationObserver(function(mutations){
+        if(isDragging) return;
+        var shouldSync = false;
+        for(var i = 0; i < mutations.length; i++){
+          var m = mutations[i];
+          if(m.target && m.target !== bar && m.target !== slider && !slider.contains(m.target)){
+            shouldSync = true;
+            break;
+          }
+        }
+        if(shouldSync){
+          syncSlider(false);
+        }
       });
-      observer.observe(bar, { attributes: true, childList: true, subtree: true, attributeFilter: ['class', 'style'] });
+      observer.observe(bar, { attributes: true, subtree: true, attributeFilter: ['class', 'aria-selected'] });
 
       // 使用 ResizeObserver 确保视窗切换显示、缩放时实时重算，不留空隙
       if(window.ResizeObserver){

@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liquid toggle regression</title>
+<link rel="stylesheet" href="/static/liquid-glass.css">
+<!--APP_STYLES-->
+<link rel="stylesheet" href="/static/liquid-optics.css"><link rel="stylesheet" href="/static/liquid-toggle.css">
+<script defer src="/static/liquid-toggle.js"></script>
+<style>body{padding:40px;overflow:auto}main{max-width:620px;margin:auto;background:var(--surface);border-radius:28px;padding:28px}.test-row{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:64px;border-bottom:1px solid var(--line)}.test-row .check{font-size:0}#results{white-space:pre-wrap;font:13px/1.7 monospace}button{margin:12px 8px 0 0;padding:10px 16px;border-radius:999px;border:1px solid var(--line)}.drawer{display:block;width:auto;padding:0;background:none;box-shadow:none}h1{font-size:24px}</style>
+</head><body><main><h1>Liquid Glass switches</h1><p>Shared native controls · drag, press and Space</p>
+<form id="form">
+<div class="test-row"><span>Dark appearance · login</span><label class="theme-switch"><input id="theme" type="checkbox" aria-label="Dark appearance"><span></span></label></div>
+<div class="test-row"><span>Enable · standard</span><label class="switch"><input id="normal" name="normal" type="checkbox" aria-label="Enable standard"><span></span></label></div>
+<div class="test-row"><span>Enabled · compact</span><label class="switch switch-sm"><input id="small" name="small" checked type="checkbox" aria-label="Enabled compact"><span></span></label></div>
+<div class="test-row"><span>Disabled on</span><label class="switch"><input id="disabled" checked disabled type="checkbox" aria-label="Disabled on"><span></span></label></div>
+<div class="test-row"><span>Disabled off</span><label class="switch"><input disabled type="checkbox" aria-label="Disabled off"><span></span></label></div>
+<div class="drawer" style="min-height:0;height:auto"><div class="test-row"><span>Protocol option · generated editor</span><label class="check"><input id="bare" name="bare" type="checkbox" aria-label="Protocol option">Enable</label></div></div>
+<div class="test-row"><span>Ultra dark · preference</span><label class="ultra-check"><input id="ultra" type="checkbox" aria-label="Ultra dark"><span></span></label></div>
+<div class="test-row"><span>Filter mode · button</span><button type="button" id="filter" class="search-toggle" aria-label="Filter mode"><span class="filter-icon off"></span><span class="filter-icon on"></span></button></div>
+<div class="test-row"><label><input id="selection" type="checkbox"> Table row selection stays a checkbox</label></div>
+</form>
+<button id="run">Run regression checks</button><button id="rtl">RTL / LTR</button><output id="results" role="status">Ready</output>
+</main><script>
+const $=s=>document.querySelector(s), wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+$('#theme').onchange=()=>document.body.classList.toggle('dark',$('#theme').checked);
+$('#filter').onclick=()=>$('#filter').classList.toggle('status-mode');
+$('#rtl').onclick=()=>document.documentElement.dir=document.documentElement.dir==='rtl'?'ltr':'rtl';
+let changes=0; $('#normal').addEventListener('change',()=>changes++);
+$('#run').onclick=async()=>{
+ const lines=[], assert=(ok,label)=>{if(!ok)throw Error(label);lines.push('PASS '+label);$('#results').textContent=lines.join('\n');};
+ const input=$('#normal'), shell=input.parentElement;
+ const pointer=(target,type,x,y)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:9,isPrimary:true,pointerType:'mouse',button:0,clientX:x,clientY:y}));
+ try{
+  document.documentElement.dir='ltr';$('#form').reset();changes=0;
+  assert(document.querySelectorAll('.lg-toggle').length===8,'All existing switch markup families upgraded');
+  assert(!$('#selection').closest('.lg-toggle'),'Selection checkbox preserved');
+  input.click();assert(input.checked&&changes===1,'Tap changes native value exactly once');
+  assert(new FormData($('#form')).get('normal')==='on','Native form serialization preserved');
+  input.checked=false;assert(shell.matches(':has(input:not(:checked))'),'Programmatic state remains native');
+  $('#disabled').click();assert($('#disabled').checked,'Disabled input cannot toggle');
+  $('#form').reset();assert(!input.checked&&$('#small').checked,'Form reset restores defaults');
+  shell.setPointerCapture=()=>{};
+  let r=shell.getBoundingClientRect(), n=changes;
+  pointer(input,'pointerdown',r.x+12,r.y+12);pointer(shell,'pointermove',r.x+45,r.y+12);pointer(window,'pointercancel',r.x+45,r.y+12);
+  assert(!input.checked&&changes===n&&!shell.classList.contains('lt-press'),'Pointer cancellation has no change event');
+  pointer(input,'pointerdown',r.x+12,r.y+12);pointer(shell,'pointermove',r.x+45,r.y+12);pointer(window,'pointerup',r.x+45,r.y+12);
+  assert(input.checked&&changes===n+1,'Drag commits exactly once');
+  n=changes;pointer(input,'pointerdown',r.x+45,r.y+12);pointer(shell,'pointermove',r.x+12,r.y+12);input.disabled=true;pointer(window,'pointerup',r.x+12,r.y+12);input.disabled=false;
+  assert(input.checked&&changes===n,'Disabled during drag cannot commit');
+  document.documentElement.dir='rtl';input.checked=false;r=shell.getBoundingClientRect();
+  pointer(input,'pointerdown',r.x+48,r.y+12);pointer(shell,'pointermove',r.x+8,r.y+12);pointer(window,'pointerup',r.x+8,r.y+12);
+  assert(input.checked,'RTL drag follows the visual direction');document.documentElement.dir='ltr';
+  const row=document.createElement('label');row.className='switch';row.innerHTML='<input type="checkbox" aria-label="New row"><span></span>';$('#form').append(row);await wait(30);
+  assert(row.classList.contains('lg-toggle')&&row.querySelectorAll('.lt-thumb').length===1,'Inserted controls auto-upgrade once');
+  row.remove();await wait(30);assert(document.querySelectorAll('filter[id^="mui-toggle-lens-"]').length<=2,'Only two shared refraction maps regardless of row count');
+  $('#filter').click();await wait(30);assert($('#filter').getAttribute('aria-checked')==='true','Button switch reports checked state');$('#filter').click();
+  $('#form').reset();$('#results').textContent=lines.join('\n')+'\nALL CHECKS PASSED';
+ }catch(e){$('#results').textContent=lines.join('\n')+'\nFAIL '+e.message;}
+};
+</script></body></html>

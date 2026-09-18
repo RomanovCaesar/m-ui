@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200" fill="none">
+  <defs>
+    <linearGradient id="sky" x2="1920" y2="1200" gradientUnits="userSpaceOnUse"><stop stop-color="#d9eafb"/><stop offset=".48" stop-color="#b5cfeb"/><stop offset="1" stop-color="#e8d9ed"/></linearGradient>
+    <linearGradient id="blue" x1="200" y1="100" x2="1200" y2="1150" gradientUnits="userSpaceOnUse"><stop stop-color="#fbfdff"/><stop offset=".18" stop-color="#aad5f3"/><stop offset=".48" stop-color="#4796ce"/><stop offset=".8" stop-color="#3161a3"/><stop offset="1" stop-color="#7f89bb"/></linearGradient>
+    <linearGradient id="pearl" x1="1800" y1="300" x2="600" y2="1200" gradientUnits="userSpaceOnUse"><stop stop-color="#eff8ff"/><stop offset=".32" stop-color="#b0d8e9"/><stop offset=".65" stop-color="#aaa3d5"/><stop offset="1" stop-color="#ead6e9"/></linearGradient>
+    <linearGradient id="edge" x1="700" y1="300" x2="1600" y2="1100" gradientUnits="userSpaceOnUse"><stop stop-color="white" stop-opacity=".7"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1920v1200H0z"/>
+  <path fill="url(#blue)" d="M-200-100H1460C1410 160 1280 330 1080 405 830 500 610 410 455 596 265 822 576 1050 432 1300H-200Z"/>
+  <path fill="url(#pearl)" d="M2040 74C1690 143 1603 404 1300 563 1060 689 844 590 655 765 509 900 595 1090 758 1300H2040Z"/>
+  <path stroke="url(#edge)" stroke-width="3" d="M2040 74C1690 143 1603 404 1300 563 1060 689 844 590 655 765 509 900 595 1090 758 1300"/>
+</svg>

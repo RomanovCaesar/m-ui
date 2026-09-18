@@ -31,6 +31,8 @@ type subscriptionPageData struct {
 	ClashEnabled    bool
 	ClientToggles   string
 	StaticURL       string
+	ToggleStyleURL  string
+	ToggleScriptURL string
 	DefaultLanguage string
 	Status          string
 	Downloaded      string
@@ -454,6 +456,17 @@ func (a *App) handleSubscriptionRequest(w http.ResponseWriter, r *http.Request) 
 		a.serveEmbedded(w, "web/qrious2.min.js", "application/javascript; charset=utf-8")
 		return true
 	}
+	// Only these shared UI assets are public on the dedicated subscription port.
+	assetBase := strings.TrimSuffix(assetPath, "qrious2.min.js")
+	for name, contentType := range map[string]string{
+		"liquid-toggle.css": "text/css; charset=utf-8",
+		"liquid-toggle.js":  "text/javascript; charset=utf-8",
+	} {
+		if r.URL.Path == assetBase+name {
+			a.serveEmbedded(w, "web/"+name, contentType)
+			return true
+		}
+	}
 	if snapshot, format, ok := a.crossSubscriptionSnapshot(r.URL.Path); ok {
 		server := subscriptionServerHost(r)
 		a.respondSubscription(w, r, snapshot, format, server,
@@ -596,6 +609,8 @@ func renderSubscriptionPageAt(w http.ResponseWriter, r *http.Request, snapshot s
 		ClashEnabled:    subscriptionClientEnabled(snapshot.Settings, "clash"),
 		ClientToggles:   subscriptionClientTogglesJSON(snapshot.Settings),
 		StaticURL:       subscriptionAssetPublicPath(snapshot.Settings),
+		ToggleStyleURL:  strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-toggle.css",
+		ToggleScriptURL: strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-toggle.js",
 		DefaultLanguage: settingsLanguage(snapshot.Settings),
 		Status:          status, Downloaded: formatSubscriptionBytes(down), Uploaded: formatSubscriptionBytes(up),
 		Usage: formatSubscriptionBytes(up + down), Total: "∞", LastOnline: lastOnline, Expiry: "No expiry", Nodes: nodes,

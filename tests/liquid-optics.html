@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquid Glass interaction regression checks</title>
+<link rel="stylesheet" href="/static/liquid-glass.css">
+<link rel="stylesheet" href="/static/liquid-optics.css">
+<style>body{padding:32px}main{max-width:700px;margin:auto;padding:24px;background:var(--surface);border-radius:24px}#results{white-space:pre-wrap}button{min-height:34px}</style>
+<main>
+  <h1>Liquid Glass interaction checks</h1>
+  <p>Standalone UI fixture. Does not read or modify panel configuration.</p>
+  <div class="settings-tabbar" id="fixture">
+    <button class="active">First</button><button>Second</button><button disabled>Disabled</button>
+  </div>
+  <div class="mihomo-tabs" id="initially-hidden" hidden><button class="active">Hidden</button></div>
+  <p><button id="run">Run checks</button></p>
+  <output id="results" role="status">Ready</output>
+</main>
+<script src="/static/liquid-optics.js"></script>
+<script>
+const bar = document.querySelector('#fixture');
+let activations = 0;
+bar.addEventListener('click', event => {
+  if (!event.target.matches('button:not(:disabled)')) return;
+  activations++;
+  bar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === event.target));
+});
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+const result = document.querySelector('#results');
+document.querySelector('#run').onclick = async () => {
+  const lines = [];
+  const check = (condition, label) => { if (!condition) throw Error(label); lines.push('PASS ' + label); result.textContent = lines.join('\n'); };
+  const first = bar.querySelector('button'), second = first.nextElementSibling;
+  const pointer = (target, type, x, y) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 42, isPrimary: true, pointerType: 'mouse', button: 0, clientX: x, clientY: y }));
+  try {
+    first.click(); await delay(650);
+    check(document.querySelector('#initially-hidden .liquid-pill-slider').hidden, 'Hidden controls settle without a mutation loop');
+    second.click(); await delay(700);
+    let lens = bar.querySelector('.liquid-pill-slider').getBoundingClientRect();
+    let button = second.getBoundingClientRect();
+    check(Math.abs(lens.left - button.left) < 1 && Math.abs(lens.width - button.width) < 1, 'Spring settles on the selected button');
+    second.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await delay(650);
+    check(first.classList.contains('active'), 'Keyboard navigation skips disabled buttons');
+    // Synthetic pointers have no native capture. Stub only capture for this fixture.
+    bar.setPointerCapture = () => {};
+    const start = first.getBoundingClientRect(), end = second.getBoundingClientRect();
+    let before = activations;
+    pointer(first, 'pointerdown', start.x + start.width / 2, start.y + 16);
+    pointer(bar, 'pointermove', end.x + end.width / 2, end.y + 16);
+    pointer(window, 'pointercancel', end.x + end.width / 2, end.y + 16);
+    await delay(650);
+    check(activations === before && first.classList.contains('active'), 'Cancellation restores selection without firing an action');
+    check(!bar.querySelector('.is-dragging'), 'Cancellation clears drag decoration');
+    pointer(first, 'pointerdown', start.x + start.width / 2, start.y + 16);
+    pointer(bar, 'pointermove', end.x + end.width / 2, end.y + 16);
+    pointer(window, 'pointerup', end.x + end.width / 2, end.y + 16);
+    await delay(650);
+    check(activations === before + 1 && second.classList.contains('active'), 'Drag release commits exactly once');
+    document.querySelector('#initially-hidden').hidden = false;
+    await delay(300);
+    check(!document.querySelector('#initially-hidden .liquid-pill-slider').hidden, 'A previously hidden bar initializes when revealed');
+    const dynamic = document.createElement('div'); dynamic.className = 'mihomo-editor-tabs'; dynamic.innerHTML = '<button class="active">Dynamic</button>';
+    bar.after(dynamic); await delay(300);
+    const id = dynamic.querySelector('.liquid-pill-slider').style.getPropertyValue('--lg-filter').match(/#([^\"]+)/)?.[1];
+    check(!!dynamic.querySelector('.liquid-pill-slider'), 'Dynamically inserted controls initialize');
+    dynamic.remove(); await delay(300);
+    check(!id || !document.getElementById(id), 'Removed controls release their SVG filter');
+    check(document.querySelectorAll('filter').length <= 32, 'Optical filters remain bounded');
+    result.textContent = lines.join('\n') + '\nALL CHECKS PASSED';
+  } catch (error) { result.textContent = lines.join('\n') + '\nFAIL ' + error.message; }
+};
+</script>
+</html>

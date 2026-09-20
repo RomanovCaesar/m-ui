@@ -1,0 +1,58 @@
+/* m-ui True Apple Liquid Glass Tab Switch Bar (WebGL) Styles */
+
+/* Tab bar container when WebGL is active */
+.has-liquid-tabbar {
+  position: relative !important;
+  overflow: visible !important;
+  isolation: isolate;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* WebGL canvas overlays the tab bar (+26px margin so inflated glass pill & shadow are not clipped) */
+.has-liquid-tabbar > .liquid-tabbar-canvas {
+  display: block !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  top: -26px !important;
+  left: -26px !important;
+  z-index: 5 !important;
+}
+
+/* Hide legacy DOM ink bars or duplicate sliders inside the bar */
+.has-liquid-tabbar > .ink-bar,
+.has-liquid-tabbar > .liquid-pill-slider {
+  display: none !important;
+}
+
+/* Tab buttons sit under the canvas for hit-testing and sizing, while WebGL owns 100% of the visual rendering.
+   Ensure opacity: 0 and transparent color across ALL specificity levels to completely eradicate text/icon ghosting! */
+:is(.liquid-tabbar, .settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs).has-liquid-tabbar button,
+.has-liquid-tabbar button,
+.has-liquid-tabbar button * {
+  opacity: 0 !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.has-liquid-tabbar button {
+  position: relative !important;
+  z-index: 1 !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  pointer-events: auto !important;
+}
+
+.has-liquid-tabbar button svg,
+.has-liquid-tabbar button img,
+.has-liquid-tabbar button .sf-symbol,
+.has-liquid-tabbar button .icon {
+  opacity: 0 !important;
+  visibility: visible !important; /* Keep visible for getBoundingClientRect() measurement */
+}

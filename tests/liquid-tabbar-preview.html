@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Liquid Glass Tab Switch Bar Test</title>
+  <link rel="stylesheet" href="../web/liquid-tabbar.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      background: #b7cde4 url("../web/media/glass-wallpaper.svg") center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      padding: 40px 20px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .card {
+      background: rgba(249, 251, 255, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 28px;
+      padding: 36px 40px;
+      box-shadow: 0 16px 40px -12px rgba(25, 45, 75, 0.2), 0 2px 6px rgba(25, 45, 75, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      align-items: center;
+      width: min(680px, 95vw);
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+      letter-spacing: -0.02em;
+    }
+    .tabs-row {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      width: 100%;
+    }
+    .tabs-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #64748b;
+    }
+
+    /* Container for the segmented tab switch bar */
+    .liquid-tabbar {
+      position: relative !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+      padding: 4px !important;
+      height: 42px !important;
+      border-radius: 9999px !important;
+      border: 1px solid rgba(140, 165, 195, 0.35);
+      background: rgba(112, 133, 161, 0.09);
+      box-shadow: inset 0 1px 3px rgba(24, 44, 70, 0.05);
+      touch-action: none;
+      cursor: pointer;
+      overflow: visible !important;
+      isolation: isolate;
+    }
+    .liquid-tabbar button {
+      position: relative;
+      z-index: 2;
+      height: 34px;
+      padding: 0 18px;
+      border-radius: 9999px;
+      background: transparent;
+      border: 0;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #58667a;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      outline: none;
+      transition: color 0.15s ease;
+    }
+    .liquid-tabbar button.active {
+      color: #0f172a;
+      font-weight: 600;
+    }
+    #airplane-tabs {
+      background: rgba(190, 235, 255, 0.45) !important;
+      border: 1px solid rgba(255, 255, 255, 0.75) !important;
+      box-shadow: 0 4px 16px rgba(0, 120, 220, 0.08) !important;
+    }
+    #airplane-tabs button {
+      color: #000000 !important;
+    }
+    #airplane-tabs button.active {
+      color: #0088ff !important;
+      font-weight: 600 !important;
+    }
+
+    /* Dark mode toggle */
+    .theme-toggle-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.5);
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(10px);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    body.dark .card {
+      background: rgba(26, 33, 46, 0.91);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 18px 45px -12px rgba(0, 0, 0, 0.5);
+    }
+    body.dark h2 { color: #f1f5f9; }
+    body.dark .tabs-label { color: #94a3b8; }
+    .sf-symbol {
+      width: 15px;
+      height: 15px;
+      vertical-align: -2px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle-btn" onclick="document.body.classList.toggle('dark')">切换深色 / 浅色</button>
+
+  <div class="card">
+    <h2>Apple Liquid Glass 液态玻璃交互测试</h2>
+
+    <div class="tabs-row">
+      <div class="tabs-label">Inbounds 状态筛选（用户截图示例："无"、"已禁用"、"已结束"、"即将耗尽"、"在线"）</div>
+      <div class="liquid-tabbar" id="status-tabs">
+        <button class="active" data-val="none">无</button>
+        <button data-val="disabled">已禁用</button>
+        <button data-val="ended">已结束</button>
+        <button data-val="depleting">即将耗尽</button>
+        <button data-val="online">在线</button>
+      </div>
+    </div>
+
+    <div class="tabs-row">
+      <div class="tabs-label">Panel Settings 选项卡（带 SF Symbols 图标）</div>
+      <div class="liquid-tabbar" id="settings-tabs">
+        <button class="active" data-val="general"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-setting"></use></svg>General</button>
+        <button data-val="auth"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-safety"></use></svg>Authentication</button>
+        <button data-val="sub"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-cloud-server"></use></svg>Subscription</button>
+        <button data-val="multi-control"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-multi-control"></use></svg>Multi-control</button>
+      </div>
+    </div>
+
+    <div class="tabs-row">
+      <div class="tabs-label">Airplane 底部栏原型（对照 glass.mt512.qzz.io）</div>
+      <div class="liquid-tabbar" id="airplane-tabs">
+        <button class="active" data-val="tab1">✈ Tab 1</button>
+        <button data-val="tab2">✈ Tab 2</button>
+        <button data-val="tab3">✈ Tab 3</button>
+        <button data-val="tab4">✈ Tab 4</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../web/sf-symbols.js"></script>
+  <script src="../web/liquid-tabbar.js"></script>
+  <script>
+    window.addEventListener('error', e => console.error('[WINDOW ERROR]', e.message, e.filename, e.lineno));
+    document.querySelectorAll('canvas').forEach(c => {
+      c.addEventListener('webglcontextlost', e => {
+        console.error('[WEBGL CONTEXT LOST]', e);
+        e.preventDefault();
+      });
+    });
+    document.querySelectorAll('.liquid-tabbar').forEach(bar => {
+      bar.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          bar.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

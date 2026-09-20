@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Apple Liquid Glass Switch Toggle Preview</title>
+  <link rel="stylesheet" href="../web/liquid-toggle.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      background: #b7cde4 url("../web/media/glass-wallpaper.svg") center / cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      padding: 40px 20px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .theme-toggle-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(10px);
+      font-size: 13px;
+      font-weight: 500;
+      color: #1e293b;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+    body.dark .theme-toggle-btn {
+      background: rgba(30, 41, 59, 0.85);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #f1f5f9;
+    }
+
+    /* Container directly on wallpaper (matching reference top toggle) */
+    .wallpaper-demo-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .wallpaper-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    /* Card container (matching reference bottom toggle on card) */
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 28px;
+      padding: 32px 36px;
+      box-shadow: 0 16px 40px -12px rgba(25, 45, 75, 0.2), 0 2px 6px rgba(25, 45, 75, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      align-items: center;
+      width: min(520px, 92vw);
+    }
+    body.dark .card {
+      background: rgba(26, 33, 46, 0.92);
+      border-color: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 18px 45px -12px rgba(0, 0, 0, 0.5);
+    }
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1e293b;
+      letter-spacing: -0.02em;
+    }
+    body.dark h2 { color: #f1f5f9; }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(140, 160, 185, 0.15);
+    }
+    .switch-row:last-child { border-bottom: 0; }
+    .switch-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .switch-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+    body.dark .switch-title { color: #f1f5f9; }
+    .switch-desc {
+      font-size: 12px;
+      color: #64748b;
+    }
+    body.dark .switch-desc { color: #94a3b8; }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle-btn" onclick="document.body.classList.toggle('dark')">切换深色 / 浅色</button>
+
+  <!-- 1. Directly on wallpaper (Reference Top Toggle) -->
+  <div class="wallpaper-demo-row">
+    <div class="wallpaper-label">直接置于壁纸层（对照示例 top toggle）</div>
+    <label class="switch" id="wallpaper-toggle-wrap">
+      <input type="checkbox" id="wallpaper-toggle">
+      <span></span>
+    </label>
+  </div>
+
+  <!-- 2. On card surface (Reference Bottom Toggle) -->
+  <div class="card">
+    <h2>Apple Liquid Glass 开关测试</h2>
+
+    <div class="switch-row">
+      <div class="switch-info">
+        <span class="switch-title">标准开关（开启时变绿）</span>
+        <span class="switch-desc">动作历时 580ms，灰色/绿色渐变耗时严格相同</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="card-standard-toggle" checked>
+        <span></span>
+      </label>
+    </div>
+
+    <div class="switch-row">
+      <div class="switch-info">
+        <span class="switch-title">紧凑型开关（switch-sm）</span>
+        <span class="switch-desc">适配小型表单与侧边栏主题开关</span>
+      </div>
+      <label class="switch switch-sm">
+        <input type="checkbox" id="card-compact-toggle">
+        <span></span>
+      </label>
+    </div>
+
+    <div class="switch-row">
+      <div class="switch-info">
+        <span class="switch-title">状态筛选按钮开关（search-toggle）</span>
+        <span class="switch-desc">Compact 46px × 21px 规格，无多余白圆圈</span>
+      </div>
+      <button type="button" id="preview-search-toggle" class="search-toggle" aria-label="Filter mode">
+        <span class="filter-icon off"></span><span class="filter-icon on"></span>
+      </button>
+    </div>
+  </div>
+
+  <script src="../web/liquid-toggle.js"></script>
+  <script>
+    document.querySelector('#preview-search-toggle').onclick = function() {
+      this.classList.toggle('status-mode');
+    };
+    window.addEventListener('error', e => console.error('[WINDOW ERROR]', e.message, e.filename, e.lineno));
+  </script>
+</body>
+</html>

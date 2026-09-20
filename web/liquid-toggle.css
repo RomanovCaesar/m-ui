@@ -1,109 +1,128 @@
-/* Shared switch material for the panel, login and public subscription page.
-   Native inputs remain the state and event source. Decoration is inert. */
+/* True Liquid Glass Switch Toggle Styling (m-ui)
+ * Faithful to Apple SwiftUI / iOS Liquid Glass switch geometry and optics.
+ */
 html body .lg-toggle {
-  --lt-width: 64px; --lt-height: 32px; --lt-knob: 40px; --lt-pad: 2px;
-  --lt-travel: calc(var(--lt-width) - var(--lt-knob) - 2 * var(--lt-pad));
-  --lt-off: rgb(113 125 143 / .28); --lt-on: #30c65b;
-  --lt-rim: rgb(255 255 255 / .84); --lt-knob-fill: rgb(255 255 255 / .76);
-  --lt-pos: 0px; --lt-fill: 0;
-  position: relative; display: inline-block; flex: none;
-  width: var(--lt-width) !important; min-width: var(--lt-width) !important;
-  height: var(--lt-height) !important; min-height: var(--lt-height) !important;
-  padding: 0 !important; margin: 0; border: 0 !important; border-radius: 999px;
-  box-sizing: border-box; vertical-align: middle; cursor: pointer;
-  background: none !important; box-shadow: none !important; overflow: visible;
-  touch-action: pan-y; -webkit-tap-highlight-color: transparent; user-select: none;
-  transform: none !important; filter: none !important;
+  --lt-width: 60px;
+  --lt-height: 26px;
+  --lt-pad: 2px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  width: var(--lt-width) !important;
+  min-width: var(--lt-width) !important;
+  height: var(--lt-height) !important;
+  min-height: var(--lt-height) !important;
+  padding: 0 !important;
+  margin: 0;
+  border: 0 !important;
+  border-radius: 999px;
+  box-sizing: border-box;
+  vertical-align: middle;
+  cursor: pointer;
+  background: none !important;
+  box-shadow: none !important;
+  overflow: visible;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
-html body .lg-toggle.lt-small {
-  --lt-width: 52px; --lt-height: 26px; --lt-knob: 32px;
-}
-html body.dark .lg-toggle, html.dark body .lg-toggle,
-html[data-theme="dark"] body .lg-toggle, html[data-theme="ultra-dark"] body .lg-toggle {
-  --lt-off: rgb(157 169 189 / .26); --lt-on: #30d158;
-  --lt-rim: rgb(255 255 255 / .72); --lt-knob-fill: rgb(246 250 255 / .81);
-}
-html body .lg-toggle:has(> input:checked), html body button.lg-toggle.status-mode {
-  --lt-pos: var(--lt-travel); --lt-fill: 1;
-}
-html[dir="rtl"] body .lg-toggle { --lt-pos: var(--lt-travel); }
-html[dir="rtl"] body .lg-toggle:has(> input:checked),
-html[dir="rtl"] body button.lg-toggle.status-mode { --lt-pos: 0px; }
 
-/* Stretch the real input over the rail. Label clicks, Space, checked writes,
-   form reset, validation, and existing click/change listeners remain native. */
+html body .lg-toggle.switch-sm,
+html body .lg-toggle.lt-small,
+html body button.search-toggle.lg-toggle {
+  --lt-width: 46px;
+  --lt-height: 21px;
+}
+
+/* WebGL / Canvas Overlay */
+html body .lg-toggle > .liquid-toggle-canvas {
+  position: absolute !important;
+  top: -14px !important;
+  left: -14px !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+  display: block !important;
+}
+
+/* Native input sits invisibly on top to capture clicks, focus, and spacebar */
 html body .lg-toggle > input[type="checkbox"] {
-  position: absolute !important; inset: -6px 0 !important; z-index: 5;
-  display: block !important; opacity: 0 !important; pointer-events: auto !important;
-  width: 100% !important; min-width: 0 !important; height: calc(100% + 12px) !important;
-  min-height: 0 !important; padding: 0 !important; margin: 0 !important;
-  cursor: inherit; border: 0 !important; transform: none !important;
+  position: absolute !important;
+  inset: -4px !important;
+  z-index: 5 !important;
+  display: block !important;
+  opacity: 0 !important;
+  pointer-events: auto !important;
+  width: calc(100% + 8px) !important;
+  height: calc(100% + 8px) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+  border: 0 !important;
 }
-html body .lg-toggle > input::before, html body .lg-toggle > input::after,
-html body .lg-toggle::before, html body .lg-toggle::after,
-html body .lg-toggle > .lt-track::after { content: none !important; }
+
+/* Eradicate all legacy CSS decoration, pseudo-elements, and circular knobs */
+html body .lg-toggle::before,
+html body .lg-toggle::after,
+html body button.search-toggle::before,
+html body button.search-toggle::after,
+html body .search-toggle.lg-toggle::before,
+html body .search-toggle.lg-toggle::after,
+html body .switch.lg-toggle > span,
+html body .switch.lg-toggle > span::before,
+html body .switch.lg-toggle > span::after,
+html body .theme-switch.lg-toggle > span,
+html body .theme-switch.lg-toggle > span::before,
+html body .theme-switch.lg-toggle > span::after,
+html body .ultra-check.lg-toggle > span,
+html body .ultra-check.lg-toggle > span::before,
+html body .ultra-check.lg-toggle > span::after,
+html body .check-box.lg-toggle > span,
+html body .check-box.lg-toggle > span::before,
+html body .check-box.lg-toggle > span::after,
+html body .check.lg-toggle > span,
+html body .check.lg-toggle > span::before,
+html body .check.lg-toggle > span::after,
+html body .lg-toggle > span,
+html body .lg-toggle > span::before,
+html body .lg-toggle > span::after,
 html body .lg-toggle > .lt-track {
-  position: absolute !important; inset: 0 !important; z-index: 0;
-  display: block !important; width: 100% !important; height: 100% !important;
-  min-width: 0 !important; margin: 0 !important; padding: 0 !important;
-  border: 0 !important; border-radius: 999px !important; box-sizing: border-box;
-  background: var(--lt-off) !important; pointer-events: none;
-  box-shadow: inset 0 1px 2px rgb(25 42 64 / .12), inset 0 -1px 0 rgb(255 255 255 / .24) !important;
-  transform: none !important; overflow: visible;
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
-html body .lg-toggle > .lt-track::before {
-  content: ""; position: absolute; inset: 0; border-radius: inherit;
-  background: var(--lt-on); opacity: var(--lt-drag-fill, var(--lt-fill));
-  transition: opacity .24s ease-out; pointer-events: none;
-  box-shadow: inset 0 1px 2px rgb(0 80 24 / .14), inset 0 -1px 0 rgb(255 255 255 / .16);
+
+/* Focus indicator for keyboard accessibility */
+html body .lg-toggle:has(input:focus-visible),
+html body button.lg-toggle:focus-visible {
+  outline: 2px solid #007aff !important;
+  outline-offset: 4px;
 }
-html body .lg-toggle .lt-thumb {
-  display: block; position: absolute; top: var(--lt-pad); left: var(--lt-pad); z-index: 1;
-  width: var(--lt-knob); height: calc(var(--lt-height) - 2 * var(--lt-pad));
-  border: 1px solid var(--lt-rim); border-radius: 999px; box-sizing: border-box;
-  background: transparent; pointer-events: none;
-  transform: translateX(var(--lt-drag-x, var(--lt-pos)));
-  scale: 1; transform-origin: center;
-  box-shadow: 0 3px 6px rgb(12 32 56 / .18), 0 1px 2px rgb(12 32 56 / .12),
-    inset 0 1px 1px rgb(255 255 255 / .95), inset 0 -1px 1px rgb(40 65 87 / .18);
-  transition: transform .46s cubic-bezier(.22, 1.45, .36, 1), scale .32s cubic-bezier(.2, 1.6, .35, 1), box-shadow .2s;
+
+/* Disabled state */
+html body .lg-toggle:has(input:disabled),
+html body button.lg-toggle:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
 }
-html body .lg-toggle .lt-thumb::before {
-  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit;
-  background: linear-gradient(145deg, rgb(255 255 255 / .3), transparent 55%, rgb(238 246 255 / .26)), var(--lt-knob-fill);
-  -webkit-backdrop-filter: blur(3px) saturate(150%); backdrop-filter: blur(3px) saturate(150%);
-  transition: background-color .2s;
+html body .lg-toggle:has(input:disabled) > input,
+html body button.lg-toggle:disabled {
+  cursor: not-allowed !important;
 }
-html body .lt-optical .lt-thumb::before {
-  -webkit-backdrop-filter: var(--lt-filter) blur(.6px) saturate(160%);
-  backdrop-filter: var(--lt-filter) blur(.6px) saturate(160%);
+
+/* Filter icon suppression inside button.search-toggle */
+html body .lg-toggle .filter-icon {
+  display: none !important;
 }
-html body .lg-toggle .lt-thumb::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: linear-gradient(155deg, rgb(255 255 255 / .65), transparent 35% 65%, rgb(255 255 255 / .3));
-  box-shadow: inset 1px 0 1px rgb(255 255 255 / .55), inset -1px 0 1px rgb(140 210 255 / .2);
-}
-html body .lg-toggle.lt-press:not(:has(input:disabled)) { --lt-knob-fill: rgb(255 255 255 / .16); }
-html body .lg-toggle.lt-press .lt-thumb { scale: 1.16 1.22; box-shadow: 0 5px 12px rgb(12 32 56 / .2), inset 0 1px 1px white, inset 0 -1px 2px rgb(18 50 78 / .22); }
-html body .lg-toggle.lt-drag .lt-thumb { transition: scale .2s, box-shadow .2s; }
-html body .lg-toggle.lt-drag > .lt-track::before { transition: none; }
-html body .lg-toggle:has(input:focus-visible), html body button.lg-toggle:focus-visible {
-  outline: 3px solid var(--teal, #007aff) !important; outline-offset: 5px;
-}
-html body .lg-toggle:has(input:disabled), html body button.lg-toggle:disabled { opacity: .45; cursor: not-allowed; }
-html body .lg-toggle .filter-icon { display: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  html body .lg-toggle *, html body .lg-toggle *::before { transition: none !important; }
-  html body .lg-toggle .lt-thumb { scale: 1 !important; }
-}
-html[data-theme-animations="off"] body .lg-toggle *, html[data-theme-animations="off"] body .lg-toggle *::before { transition: none !important; }
-@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-  html body .lg-toggle { --lt-off: #8e96a3; --lt-on: #168839; }
-  html body .lg-toggle .lt-thumb::before { background: white !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-}
-@media (forced-colors: active) {
-  html body .lg-toggle > .lt-track { background: Canvas !important; border: 1px solid ButtonText !important; }
-  html body .lg-toggle > .lt-track::before { background: Highlight !important; }
-  html body .lg-toggle .lt-thumb { background: ButtonText; border-color: Canvas; }
-  html body .lg-toggle .lt-thumb::before, html body .lg-toggle .lt-thumb::after { display: none; }
+
+/* Search toggle button styling */
+html body button.search-toggle.lg-toggle {
+  background: none !important;
+  border: 0 !important;
+  padding: 0 !important;
 }

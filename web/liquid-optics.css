@@ -110,12 +110,24 @@ html[data-glass-refraction="svg"] .lg-surface[data-lg-filter]::before {
 .login-card.lg-surface::after { background: conic-gradient(from var(--lg-angle, -35deg), transparent, var(--glass-highlight), transparent 35%, var(--glass-highlight) 70%, transparent); mix-blend-mode: normal; }
 .sidebar.lg-surface { --lg-frost: 5px; --glass-tint: rgb(243 248 255 / .47); }
 .topbar.lg-surface { --lg-frost: 3px; }
-body.dark .sidebar.lg-surface { --glass-tint: rgb(19 28 44 / .65); }
-.lg-surface:is(.modal-panel, .drawer, .swift-picker-menu, .general-menu, .auto-refresh-menu, .settings-menu) {
+.lg-surface:is(.modal-panel, .drawer, .general-menu, .auto-refresh-menu, .settings-menu) {
   --lg-frost: 16px; --glass-tint: rgb(248 251 255 / .78); border-radius: 24px;
 }
-body.dark .lg-surface:is(.modal-panel, .drawer, .swift-picker-menu, .general-menu, .auto-refresh-menu),
+body.dark .lg-surface:is(.modal-panel, .drawer, .general-menu, .auto-refresh-menu),
 html.dark .settings-menu.lg-surface { --glass-tint: rgb(25 32 46 / .87); }
+.swift-picker-menu {
+  background: rgb(255 255 255 / .95) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid var(--stroke, rgba(60, 60, 67, .18)) !important;
+  box-shadow: 0 16px 48px -12px rgb(0 0 0 / .22), 0 4px 14px rgb(0 0 0 / .08) !important;
+}
+.swift-picker-menu::before, .swift-picker-menu::after { display: none !important; }
+body.dark .swift-picker-menu, html.dark .swift-picker-menu {
+  background: rgb(25 32 46 / .95) !important;
+  border-color: rgb(255 255 255 / .15) !important;
+  box-shadow: 0 20px 52px -12px rgb(0 0 0 / .6), 0 4px 14px rgb(0 0 0 / .35) !important;
+}
 .lg-surface:is(.outline-btn, .icon-btn, .inbound-pill, .small-btn, .sider-trigger, .settings-button) {
   position: relative; z-index: 0; border-radius: 999px; --lg-frost: .7px;
 }
@@ -175,13 +187,23 @@ body.dark :is(.overview-card, .inbounds-card, .stats-strip, .mihomo-card, .card)
 .liquid-pill-slider.lg-surface {
   position: absolute !important; left: 0; top: 0; z-index: 1; pointer-events: none;
   border-radius: 999px; margin: 0; box-sizing: border-box;
-  --glass-tint: rgb(255 255 255 / .3); --lg-frost: .4px;
+  --glass-tint: rgb(255 255 255 / .16); --lg-frost: .4px;
   transition: none !important;
-  box-shadow: 0 3px 8px rgb(33 56 83 / .12), inset 0 1px 1px var(--glass-highlight), inset 0 -1px 1px var(--glass-shade) !important;
+  box-shadow: 0 5px 14px -3px rgb(33 56 83 / .26), inset 0 1px 1px rgb(255 255 255 / .95), inset 0 0 0 .5px rgb(255 255 255 / .55), inset 0 -1px 1px var(--glass-shade) !important;
 }
-body.dark .liquid-pill-slider.lg-surface { --glass-tint: rgb(204 226 255 / .12); }
-.liquid-pill-slider.is-dragging { --glass-tint: rgb(255 255 255 / .13); }
-.nav > .liquid-pill-slider { border-radius: 15px; }
+body.dark .liquid-pill-slider.lg-surface { --glass-tint: rgb(204 226 255 / .1); }
+.nav > .liquid-pill-slider {
+  border-radius: 15px;
+  width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 1 !important;
+}
+/* When a refraction lens is active on horizontal tabs, the pill floats ABOVE the tab labels.
+   For the vertical sidebar nav, the pill stays behind the text (z-index 1) so icons and labels remain crisp. */
+html[data-glass-refraction="svg"] .liquid-pill-slider.lg-surface:not(.nav > *),
+html[data-glass-gl="on"] .liquid-pill-slider.lg-surface:not(.nav > *) { z-index: 3; }
+.nav > .liquid-pill-slider.lg-surface { z-index: 1 !important; }
 .liquid-pill-sheen { display: none; }
 .inbounds-filterbar:not(.status-mode) .inbound-status-tabs { display: none !important; }
 .switch input:focus-visible + span { outline: 3px solid var(--teal); outline-offset: 3px; }

@@ -1,0 +1,175 @@
+/* WebGL liquid glass layer overrides.
+ *
+ * Only active when liquid-glass-gl.js has a working WebGL context, marked by
+ * html[data-glass-gl="on"]. The canvas (#liquid-glass-canvas, z-index:-1)
+ * OWNS the wallpaper and paints the glass MATERIAL behind every .lg-surface,
+ * so here we strip the CSS-only material (backdrop-filter frost + conic rim)
+ * and let the canvas show through. Text and controls stay on top untouched.
+ *
+ * When WebGL is unavailable, or reduced-transparency / high-contrast /
+ * forced-colors is set, the attribute is absent and the existing
+ * liquid-optics.css material is used unchanged. */
+
+html[data-glass-gl="on"] body { background: transparent !important; }
+html[data-glass-gl="on"] body::before { display: none !important; }
+
+/* The canvas sits behind content but in front of the page background. */
+#liquid-glass-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  display: block;
+}
+
+/* Surfaces become transparent shells: the canvas draws their glass. Keep a
+   whisper of a border + drop shadow for depth; the specular rim comes from
+   the WebGL pass. */
+html[data-glass-gl="on"] .lg-surface {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border: 1px solid rgb(255 255 255 / .16) !important;
+  box-shadow: 0 14px 40px -18px rgb(20 42 70 / .40) !important;
+}
+html[data-glass-gl="on"] body.dark .lg-surface,
+html[data-glass-gl="on"] html.dark .lg-surface {
+  border-color: rgb(210 230 255 / .10) !important;
+  box-shadow: 0 16px 44px -18px rgb(0 0 0 / .55) !important;
+}
+
+/* The canvas provides the frost + refraction + rim; drop the CSS pseudo
+   material entirely so it can't double up or leak a flat tint. */
+html[data-glass-gl="on"] .lg-surface::before {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-glass-gl="on"] .lg-surface::after { display: none !important; }
+
+/* -------------------------------------------------------------------------
+   Content-overlay surfaces (menus, modals, drawers, pickers) float ABOVE the
+   opaque page content, so the back-layer WebGL canvas (z-index:-1) is occluded
+   behind them and cannot paint their glass. For these we KEEP a real, strong
+   frosted CSS material — heavier blur + a more opaque tint so they read as
+   solid glass panels instead of melting into the backdrop. They are also
+   excluded from the WebGL scan (see SKIP_SELECTOR in liquid-glass-gl.js).
+   ------------------------------------------------------------------------- */
+html[data-glass-gl="on"] .lg-surface:is(.modal-panel, .drawer, .general-menu, .auto-refresh-menu, .settings-menu) {
+  border: 1px solid rgb(255 255 255 / .55) !important;
+  box-shadow: 0 24px 60px -22px rgb(18 34 60 / .55), 0 4px 14px rgb(18 34 60 / .18),
+    inset 0 1px 0 rgb(255 255 255 / .7) !important;
+}
+html[data-glass-gl="on"] .lg-surface:is(.modal-panel, .drawer, .general-menu, .auto-refresh-menu, .settings-menu)::before {
+  background: rgb(249 251 255 / .78) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(190%) !important;
+  backdrop-filter: blur(34px) saturate(190%) !important;
+}
+/* Small popovers can be a touch more opaque — they sit over dense tables. */
+html[data-glass-gl="on"] .lg-surface:is(.general-menu, .auto-refresh-menu, .settings-menu)::before {
+  background: rgb(250 252 255 / .86) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(175%) !important;
+  backdrop-filter: blur(30px) saturate(175%) !important;
+}
+html[data-glass-gl="on"] body.dark .lg-surface:is(.modal-panel, .drawer, .general-menu, .auto-refresh-menu, .settings-menu),
+html[data-glass-gl="on"] html.dark .lg-surface:is(.modal-panel, .drawer, .general-menu, .auto-refresh-menu, .settings-menu) {
+  border-color: rgb(210 230 255 / .16) !important;
+  box-shadow: 0 26px 64px -22px rgb(0 0 0 / .66), 0 4px 14px rgb(0 0 0 / .3),
+    inset 0 1px 0 rgb(220 235 255 / .16) !important;
+}
+html[data-glass-gl="on"] body.dark .lg-surface:is(.modal-panel, .drawer)::before,
+html[data-glass-gl="on"] html.dark .lg-surface:is(.modal-panel, .drawer)::before {
+  background: rgb(21 27 41 / .82) !important;
+}
+html[data-glass-gl="on"] body.dark .lg-surface:is(.general-menu, .auto-refresh-menu, .settings-menu)::before,
+html[data-glass-gl="on"] html.dark .lg-surface:is(.general-menu, .auto-refresh-menu, .settings-menu)::before {
+  background: rgb(23 29 43 / .9) !important;
+}
+.swift-picker-menu::before, .swift-picker-menu::after { display: none !important; }
+
+/* Darken + blur the mask more so overlays clearly separate from the page. */
+html[data-glass-gl="on"] .modal-mask { background: rgb(14 24 42 / .40) !important; -webkit-backdrop-filter: blur(6px) !important; backdrop-filter: blur(6px) !important; }
+html[data-glass-gl="on"] .modal-backdrop,
+html[data-glass-gl="on"] .drawer-backdrop { background: rgb(14 24 42 / .44) !important; -webkit-backdrop-filter: blur(7px) !important; backdrop-filter: blur(7px) !important; }
+
+/* -------------------------------------------------------------------------
+   Tab-selection pill (segmented control lens). It sits INSIDE opaque cards,
+   so the back-layer canvas can't paint it — instead it gets a genuine frosted
+   CSS material. backdrop-filter samples the tab LABELS beneath it, so the text
+   magnifies/frosts as the pill glides over it (the reference's segmented-glass
+   look). liquid-optics.js keeps driving its spring position + squash/stretch.
+   ------------------------------------------------------------------------- */
+html[data-glass-gl="on"] .liquid-pill-slider.lg-surface {
+  /* Element is just the rim + gloss frame; the glass body lives on ::before so
+     it can carry the SVG displacement lens (--lg-filter, from liquid-optics.js)
+     that actually REFRACTS the tab labels sitting behind the pill. */
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  border: 1px solid rgb(255 255 255 / .9) !important;
+  box-shadow:
+    0 6px 16px -4px rgb(20 42 70 / .3),
+    0 1px 2px rgb(20 42 70 / .14),
+    inset 0 1px 1px rgb(255 255 255 / .95),
+    inset 0 0 0 .5px rgb(255 255 255 / .5),
+    inset 0 -3px 4px rgb(120 150 190 / .22) !important;
+}
+/* Glass body: low white tint so the labels lens THROUGH; high saturate+brightness
+   for the refractive magnify. Flat blur until the lens map is ready. */
+html[data-glass-gl="on"] .liquid-pill-slider.lg-surface::before {
+  content: "" !important; display: block !important; position: absolute !important;
+  inset: 0 !important; z-index: -1 !important; border-radius: inherit !important;
+  background: linear-gradient(155deg, rgb(255 255 255 / .2), rgb(255 255 255 / .05) 48%, rgb(255 255 255 / .14)) !important;
+  -webkit-backdrop-filter: blur(2px) saturate(200%) brightness(1.08) !important;
+  backdrop-filter: blur(2px) saturate(200%) brightness(1.08) !important;
+  opacity: 1 !important; mix-blend-mode: normal !important;
+}
+/* Once the per-size displacement map is attached, bend the labels on horizontal tabs: the lens
+   does the distortion, so blur drops to near-zero to keep them readable.
+   The sidebar nav pill stays behind nav items and uses clean frosted glass without SVG displacement. */
+html[data-glass-gl="on"] .liquid-pill-slider.lg-surface:not(.nav > *)[data-lg-filter]::before {
+  -webkit-backdrop-filter: var(--lg-filter) blur(.5px) saturate(205%) brightness(1.09) !important;
+  backdrop-filter: var(--lg-filter) blur(.5px) saturate(205%) brightness(1.09) !important;
+}
+.nav > .liquid-pill-slider.lg-surface,
+.nav > .liquid-pill-slider.lg-surface::before {
+  --lg-filter: none !important;
+}
+/* Glossy top-edge sheen — the luminous highlight arc of the reference lens. */
+html[data-glass-gl="on"] .liquid-pill-slider.lg-surface::after {
+  content: "" !important; display: block !important; position: absolute !important;
+  inset: 0 !important; border-radius: inherit !important; pointer-events: none !important;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / .92) 0, rgb(255 255 255 / .32) 14%, transparent 38%),
+    linear-gradient(0deg, rgb(255 255 255 / .28) 0, transparent 22%) !important;
+  -webkit-mask: none !important; mask: none !important; opacity: 1 !important;
+  mix-blend-mode: normal !important;
+}
+html[data-glass-gl="on"] .liquid-pill-slider.is-dragging.lg-surface[data-lg-filter]::before {
+  -webkit-backdrop-filter: var(--lg-filter) blur(1px) saturate(210%) brightness(1.1) !important;
+  backdrop-filter: var(--lg-filter) blur(1px) saturate(210%) brightness(1.1) !important;
+}
+html[data-glass-gl="on"] body.dark .liquid-pill-slider.lg-surface::after,
+html[data-glass-gl="on"] html.dark .liquid-pill-slider.lg-surface::after {
+  background: linear-gradient(180deg, rgb(235 245 255 / .34), rgb(235 245 255 / .06) 45%, transparent 70%) !important;
+}
+html[data-glass-gl="on"] body.dark .liquid-pill-slider.lg-surface,
+html[data-glass-gl="on"] html.dark .liquid-pill-slider.lg-surface {
+  background: linear-gradient(155deg, rgb(215 232 255 / .16), rgb(215 232 255 / .05) 50%, rgb(215 232 255 / .12)) !important;
+  border-color: rgb(224 240 255 / .46) !important;
+  box-shadow:
+    0 4px 12px -2px rgb(0 0 0 / .4),
+    0 1px 2px rgb(0 0 0 / .24),
+    inset 0 1px 1px rgb(230 242 255 / .4),
+    inset 0 -2px 3px rgb(0 0 0 / .22) !important;
+}
+
+/* Tab strips still show their own faint groove track under the lens. */
+html[data-glass-gl="on"] :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs) {
+  background: rgb(120 140 168 / .10) !important;
+}
+html[data-glass-gl="on"] body.dark :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs) {
+  background: rgb(210 230 255 / .06) !important;
+}
+
+/* Opaque content cards keep their solid material — glass is chrome-only, so
+   the panels that sit over data tables read as calm surfaces, not lenses. */

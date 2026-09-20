@@ -13,7 +13,7 @@
   const surfaces = new Map();
   const bars = new Map();
   const maps = new Map();
-  const surfaceSelector = '.sidebar,.topbar,.login-card,.modal-panel,.drawer,.swift-picker-menu,.general-menu,.auto-refresh-menu,.settings-menu,.top-actions .outline-btn,.top-actions .icon-btn,.inbounds-actions > .inbound-pill:not(#add-inbound),.sider-trigger';
+  const surfaceSelector = '.sidebar,.topbar,.login-card,.modal-panel,.drawer,.general-menu,.auto-refresh-menu,.settings-menu,.top-actions .outline-btn,.top-actions .icon-btn,.inbounds-actions > .inbound-pill:not(#add-inbound),.sider-trigger';
   const barSelector = '.settings-tabbar,.mihomo-tabs,.inbound-status-tabs,.mihomo-editor-tabs,.nav';
   let defs, serial = 0, scanFrame = 0, opticsTimer = 0;
   const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
@@ -80,14 +80,24 @@
   }
   function updateOptics() {
     opticsTimer = 0;
-    const enabled = canRefract && !reducedTransparency.matches && !highContrast.matches;
-    document.documentElement.dataset.glassRefraction = enabled ? 'svg' : 'fallback';
+    // When the WebGL glass layer is active it draws the material behind every
+    // surface, so the SVG displacement optics stand down (the interaction
+    // layer — spring lens, press, keyboard — keeps running).
+    const glActive = document.documentElement.getAttribute('data-glass-gl') === 'on';
+    const baseOK = canRefract && !reducedTransparency.matches && !highContrast.matches;
+    const enabled = baseOK && !glActive;
+    document.documentElement.dataset.glassRefraction = glActive ? 'gl' : (enabled ? 'svg' : 'fallback');
     let count = 0;
     for (const state of surfaces.values()) {
       const el = state.element;
+      // The sidebar nav pill sits behind nav button text/icons at z-index 1;
+      // it should not use SVG displacement filters which cause glitching during
+      // sidebar collapse/expand. Horizontal tabs use liquid-tabbar.js WebGL shaders.
+      const isNavPill = el.classList.contains('liquid-pill-slider') || el.closest('.nav');
+      const on = enabled && !isNavPill;
       const rect = el.getBoundingClientRect();
       const css = getComputedStyle(el);
-      if (!enabled || !el.isConnected || css.visibility !== 'visible' || css.opacity === '0' || rect.width < 2 || rect.height < 2 || rect.bottom < 0 || rect.top > innerHeight || rect.right < 0 || rect.left > innerWidth || count++ >= 32) {
+      if (!on || !el.isConnected || css.visibility !== 'visible' || css.opacity === '0' || rect.width < 2 || rect.height < 2 || rect.bottom < 0 || rect.top > innerHeight || rect.right < 0 || rect.left > innerWidth || count++ >= 32) {
         removeFilter(state); continue;
       }
       const radius = Math.min(parseFloat(css.borderTopLeftRadius) || 16, rect.width / 2, rect.height / 2);
@@ -129,6 +139,7 @@
 
   function setupBar(bar) {
     if (bars.has(bar)) return;
+    if (bar.classList.contains('has-liquid-tabbar') || bar.matches('.liquid-tabbar, .settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs')) return;
     const nav = bar.matches('.nav');
     const lens = document.createElement('span');
     lens.className = 'liquid-pill-slider'; lens.setAttribute('aria-hidden', 'true');
@@ -140,12 +151,23 @@
     const coords = b => ({ x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight });
     let value = null, target = null, velocity = { x: 0, y: 0, w: 0, h: 0 }, frame = 0, previous = 0;
     let pointer = null, dragging = false, suppressClickUntil = 0;
+    // Press bulge — the indicator swells when grabbed/tapped, faithful to the
+    // reference LiquidBottomTabs indicator (pressedScale). Critically damped so
+    // it grows and settles without wobble; the axis stretch below adds the
+    // liquid deformation as it slides.
+    let press = 0, pressV = 0, pressTarget = 0, pulseTimer = 0;
+    const K = 520, C = 2 * Math.sqrt(520);   // stiffness + critical damping (ζ=1, no overshoot)
+    const PK = 900, PC = 2 * Math.sqrt(900); // press spring (snappier)
+    const PRESS_SCALE = 1.22, STRETCH_CAP = .22;
     const draw = () => {
       if (!value) return;
-      const speed = Math.min(Math.abs(velocity[nav ? 'y' : 'x']) / 6500, .075);
-      const stretch = motionOff() ? 1 : 1 + speed;
+      const off = motionOff();
+      const speed = off ? 0 : Math.min(Math.abs(velocity[nav ? 'y' : 'x']) / 2600, STRETCH_CAP);
+      const bulge = off ? 1 : 1 + (PRESS_SCALE - 1) * press;
+      // Stretch along the axis of motion, squash across it (volume-ish preserved).
+      const along = bulge * (1 + speed), across = bulge * (1 - speed * .68);
       lens.style.width = `${Math.max(1, value.w)}px`; lens.style.height = `${Math.max(1, value.h)}px`;
-      lens.style.transform = `translate3d(${value.x}px,${value.y}px,0) scale(${nav ? 1 / Math.sqrt(stretch) : stretch},${nav ? stretch : 1 / Math.sqrt(stretch)})`;
+      lens.style.transform = `translate3d(${value.x}px,${value.y}px,0) scale(${nav ? across : along},${nav ? along : across})`;
     };
     function tick(time) {
       frame = 0;
@@ -153,15 +175,24 @@
       const dt = Math.min((time - (previous || time - 16)) / 1000, .032); previous = time;
       let settled = true;
       for (const key of ['x', 'y', 'w', 'h']) {
-        velocity[key] += ((target[key] - value[key]) * 480 - velocity[key] * 33) * dt;
+        velocity[key] += ((target[key] - value[key]) * K - velocity[key] * C) * dt;
         value[key] += velocity[key] * dt;
         if (Math.abs(target[key] - value[key]) > .08 || Math.abs(velocity[key]) > .2) settled = false;
       }
-      if (settled || motionOff()) { value = { ...target }; velocity = { x: 0, y: 0, w: 0, h: 0 }; previous = 0; }
+      pressV += ((pressTarget - press) * PK - pressV * PC) * dt;
+      press += pressV * dt;
+      if (Math.abs(pressTarget - press) > .004 || Math.abs(pressV) > .03) settled = false;
+      if (settled || motionOff()) {
+        value = { ...target }; velocity = { x: 0, y: 0, w: 0, h: 0 };
+        press = pressTarget; pressV = 0; previous = 0;
+      }
       draw();
       if (!settled && !motionOff()) frame = requestAnimationFrame(tick);
       else scheduleOptics();
     }
+    function kick() { if (!frame && !motionOff()) { previous = 0; frame = requestAnimationFrame(tick); } }
+    // A tap gives a brief swell-and-release; a drag holds the swell until release.
+    function pulse() { clearTimeout(pulseTimer); pressTarget = 1; kick(); pulseTimer = setTimeout(() => { pressTarget = 0; kick(); }, 120); }
     function move(to, instant = false) {
       target = to;
       if (!value || instant || motionOff()) { value = { ...to }; velocity = { x: 0, y: 0, w: 0, h: 0 }; draw(); return; }
@@ -187,7 +218,7 @@
     listen(bar, 'click', e => {
       if (e.isTrusted && performance.now() < suppressClickUntil) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, { capture: true });
-    listen(bar, 'click', () => requestAnimationFrame(() => sync()));
+    listen(bar, 'click', e => { if (e.target.closest('button')) pulse(); requestAnimationFrame(() => sync()); });
     listen(bar, 'keydown', e => {
       const keys = nav ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
       if (![...keys, 'Home', 'End'].includes(e.key) || !buttons().includes(e.target)) return;
@@ -214,6 +245,7 @@
           if (Math.abs(dx) < 5) return;
           dragging = true; lens.classList.add('is-dragging');
           bar.setPointerCapture(e.pointerId);
+          clearTimeout(pulseTimer); pressTarget = 1; kick();
         }
         if (e.cancelable) e.preventDefault();
         const list = buttons(), first = coords(list[0]), last = coords(list[list.length - 1]);
@@ -229,6 +261,7 @@
         if (!pointer || e.pointerId !== pointer.id) return;
         const chosen = pointer.candidate, wasDragging = dragging;
         pointer = null; dragging = false; lens.classList.remove('is-dragging');
+        clearTimeout(pulseTimer); pressTarget = 0; kick();
         if (bar.hasPointerCapture(e.pointerId)) bar.releasePointerCapture(e.pointerId);
         if (wasDragging) { suppressClickUntil = performance.now() + 350; if (!cancel && chosen) chosen.click(); }
         sync();

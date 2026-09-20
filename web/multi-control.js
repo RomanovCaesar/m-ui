@@ -2,7 +2,7 @@
   const bar=$('#settings-tabbar'),auth=$('#settings-pane-authentication');
   if(!bar||!auth)return;
   let state=null,loading=false,busy=false,localDirty=false,timer=null,epoch=0;
-  const tab=document.createElement('button');tab.type='button';tab.dataset.settingsTab='multi-control';tab.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 7.2 6.3 14.8M13.3 7.2l4.4 7.6M7.5 17h9"></path><circle cx="12" cy="5" r="2.5"></circle><circle cx="5" cy="17" r="2.5"></circle><circle cx="19" cy="17" r="2.5"></circle></svg><span>Multi-control</span>';
+  const tab=document.createElement('button');tab.type='button';tab.dataset.settingsTab='multi-control';tab.innerHTML=''+SF('multi-control')+'<span>Multi-control</span>';
   bar.appendChild(tab);
   const pane=document.createElement('div');pane.className='settings-pane';pane.id='settings-pane-multi-control';
   pane.innerHTML=`<div class="mc-notice" data-i18n="mc.notice">所有面板都是对等节点，配对后自动发现网络成员并尝试直连。需要同步入站时，请在 Inbounds → General Actions → Sync Inbound 中选择目标和 Client。</div>

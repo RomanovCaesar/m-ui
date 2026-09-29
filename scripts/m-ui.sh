@@ -169,6 +169,22 @@ ssl_set_paths() {
     info "TLS certificate paths applied"
 }
 
+# ensure_full_chain 确认装出来的证书文件带着中间证书。只有叶子证书时浏览器照样能开，
+# 但 Mihomo Party / FlClash 等客户端会报 "unable to verify the first certificate"，
+# 所以退回 acme.sh 自己保存的 fullchain.cer。
+ensure_full_chain() {
+    local ident="$1" cert="$2" candidate
+    [[ $(grep -c 'BEGIN CERTIFICATE' "$cert" 2>/dev/null) -ge 2 ]] && return 0
+    for candidate in "/root/.acme.sh/${ident}_ecc/fullchain.cer" "/root/.acme.sh/${ident}/fullchain.cer"; do
+        if [[ $(grep -c 'BEGIN CERTIFICATE' "$candidate" 2>/dev/null) -ge 2 ]]; then
+            cp -f "$candidate" "$cert"
+            return 0
+        fi
+    done
+    warn "certificate file ${cert} has no intermediate certificate; Mihomo clients may fail to fetch subscriptions"
+    return 1
+}
+
 install_acme_for_dns() {
     [[ -x /root/.acme.sh/acme.sh ]] && return 0
     info "Installing acme.sh for TLS certificate management..."
@@ -213,6 +229,7 @@ ssl_cloudflare() {
     mkdir -p "$cert_dir"; chmod 0700 "$cert_dir"
     "$acme" --installcert -d "$domain" --key-file "$key" --fullchain-file "$cert" --reloadcmd "systemctl restart m-ui 2>/dev/null || rc-service m-ui restart 2>/dev/null || true" || true
     [[ -s "$cert" && -s "$key" ]] || die "acme.sh did not install the certificate files"
+    ensure_full_chain "$domain" "$cert" || true
     chmod 0644 "$cert"; chmod 0600 "$key"
     "$acme" --upgrade --auto-upgrade >/dev/null 2>&1 || warn "certificate works, but acme.sh auto-upgrade could not be enabled"
     ssl_set_paths "$cert" "$key" "$domain"

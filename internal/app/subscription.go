@@ -545,9 +545,20 @@ func wantsSubscriptionHTML(r *http.Request) bool {
 	return strings.Contains(strings.ToLower(r.Header.Get("Accept")), "text/html") || r.URL.Query().Get("html") == "1"
 }
 
+// subscriptionUserinfo 拼 Subscription-Userinfo。永不过期（expiry 为 0）时不写 expire：
+// 3x-ui 照写 expire=0，Mihomo Party 等把它当"长期有效"，但 Clash Mi 按时间戳解析成
+// 1970-01-01。省略这一项是各客户端都认作"不过期"的写法。
+func subscriptionUserinfo(up, down, total uint64, expiry int64) string {
+	value := fmt.Sprintf("upload=%d; download=%d; total=%d", up, down, total)
+	if expiry > 0 {
+		value += fmt.Sprintf("; expire=%d", expiry/1000)
+	}
+	return value
+}
+
 func setSubscriptionHeaders(w http.ResponseWriter, snapshot subscriptionSnapshot) {
 	up, down, total, expiry, _ := aggregateSubscriptionStats(snapshot.Clients)
-	w.Header().Set("Subscription-Userinfo", fmt.Sprintf("upload=%d; download=%d; total=%d; expire=%d", up, down, total, expiry/1000))
+	w.Header().Set("Subscription-Userinfo", subscriptionUserinfo(up, down, total, expiry))
 	w.Header().Set("Profile-Title", "base64:"+base64.StdEncoding.EncodeToString([]byte(snapshot.Username)))
 	w.Header().Set("Profile-Update-Interval", "24")
 	w.Header().Set("Cache-Control", "no-store")

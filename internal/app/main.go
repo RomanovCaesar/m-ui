@@ -732,6 +732,20 @@ func Run(buildVersion string) {
 		if panelTLS {
 			scheme = "https"
 		}
+		// 证书链只在这里（每次重建服务器时）加载一次，补链可能要访问网络。
+		var panelTLSConfig *tls.Config
+		setPanelChainStatus(panelChainStatus{})
+		if panelTLS {
+			if cert, source, incomplete, err := loadPanelCertificate(panelCert, panelKey); err == nil {
+				panelTLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
+				setPanelChainStatus(panelChainStatus{Incomplete: incomplete, Source: source})
+				if incomplete {
+					log.Printf("panel TLS certificate file %s contains only the leaf certificate and no intermediate could be found; most Mihomo clients will reject it", panelCert)
+				} else if source != "" {
+					log.Printf("panel TLS certificate chain completed from %s", source)
+				}
+			}
+		}
 		log.Printf("m-ui %s listening at %s://%s%s", appVersion, scheme, panelServer.Addr, manager.panelPath())
 		servers := []*http.Server{panelServer}
 		if settings.SubscriptionPort != 0 {
@@ -742,6 +756,11 @@ func Run(buildVersion string) {
 		errCh := make(chan error, len(servers))
 		for _, server := range servers {
 			go func(server *http.Server) {
+				if panelTLS && panelTLSConfig != nil {
+					server.TLSConfig = panelTLSConfig.Clone()
+					errCh <- server.ListenAndServeTLS("", "")
+					return
+				}
 				if panelTLS {
 					errCh <- server.ListenAndServeTLS(panelCert, panelKey)
 					return
@@ -1257,7 +1276,7 @@ func (a *App) handleState(w http.ResponseWriter, r *http.Request) {
 	data := map[string]any{
 		"version": appVersion, "state": state, "running": running, "startedAt": started,
 		"logs": logs, "platform": runtime.GOOS, "coreVersion": a.manager.coreVersion(), "system": stats,
-		"panelTLS": map[string]bool{"configured": panelTLSConfigured, "valid": panelTLSValid},
+		"panelTLS": map[string]bool{"configured": panelTLSConfigured, "valid": panelTLSValid, "chainIncomplete": panelTLSValid && currentPanelChainStatus().Incomplete},
 	}
 	if running {
 		if metrics, err := a.manager.coreGet("/traffic"); err == nil {

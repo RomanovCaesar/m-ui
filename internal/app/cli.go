@@ -211,4 +211,6 @@ func printSettings(m *CoreManager) {
 	} else {
 		fmt.Println("tls: disabled")
 	}
+	fmt.Printf("cert-file: %s\n", strings.TrimSpace(settings.PanelCertFile))
+	fmt.Printf("key-file: %s\n", strings.TrimSpace(settings.PanelKeyFile))
 }

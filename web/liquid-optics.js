@@ -13,7 +13,12 @@
   const surfaces = new Map();
   const bars = new Map();
   const maps = new Map();
-  const surfaceSelector = '.sidebar,.topbar,.login-card,.modal-panel,.drawer,.general-menu,.auto-refresh-menu,.settings-menu,.top-actions .outline-btn,.top-actions .icon-btn,.inbounds-actions > .inbound-pill:not(#add-inbound),.sider-trigger';
+  // Only surfaces that sit directly on the wallpaper are listed: the WebGL
+  // layer paints behind page content, so anything content scrolls under
+  // (the sticky toolbar and its buttons) or that floats above it (dialogs,
+  // sheets, menus) gets a CSS glass material instead — see
+  // liquid-toolbar.css and liquid-sheet.css.
+  const surfaceSelector = '.sidebar,.login-card,.inbounds-actions > .inbound-pill:not(#add-inbound),.sider-trigger';
   const barSelector = '.settings-tabbar,.mihomo-tabs,.inbound-status-tabs,.mihomo-editor-tabs,.nav';
   let defs, serial = 0, scanFrame = 0, opticsTimer = 0;
   const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
@@ -143,7 +148,9 @@
     const nav = bar.matches('.nav');
     const lens = document.createElement('span');
     lens.className = 'liquid-pill-slider'; lens.setAttribute('aria-hidden', 'true');
-    bar.append(lens); surface(lens);
+    // The sidebar selection is a plain tinted fill, not a glass surface: registering
+    // it made the WebGL layer paint a glowing lens behind the selected item.
+    bar.append(lens); if (!nav) surface(lens);
     const abort = new AbortController();
     const listen = (el, type, fn, options = {}) => el.addEventListener(type, fn, { ...options, signal: abort.signal });
     const buttons = () => Array.from(bar.querySelectorAll(nav ? 'button[data-view]' : 'button')).filter(b => !b.hidden && !b.disabled && b.getClientRects().length && b.offsetWidth > 0);
@@ -156,9 +163,11 @@
     // it grows and settles without wobble; the axis stretch below adds the
     // liquid deformation as it slides.
     let press = 0, pressV = 0, pressTarget = 0, pulseTimer = 0;
-    const K = 520, C = 2 * Math.sqrt(520);   // stiffness + critical damping (ζ=1, no overshoot)
-    const PK = 900, PC = 2 * Math.sqrt(900); // press spring (snappier)
-    const PRESS_SCALE = 1.22, STRETCH_CAP = .22;
+    // macOS sidebar selection: slides with the controls' critically damped
+    // spring(1f, 1000f) and never swells or stretches (that read as jelly).
+    const K = 1000, C = 2 * Math.sqrt(1000);
+    const PK = 1000, PC = 2 * Math.sqrt(1000);
+    const PRESS_SCALE = 1, STRETCH_CAP = 0;
     const draw = () => {
       if (!value) return;
       const off = motionOff();
@@ -174,13 +183,17 @@
       if (!bar.isConnected || !target) return;
       const dt = Math.min((time - (previous || time - 16)) / 1000, .032); previous = time;
       let settled = true;
+      // Closed-form critically damped step (renderer/spring.ts). Explicit Euler
+      // diverged at k = 1000 on long frames and flung the selection off-screen.
+      const critical = (x, v, to, omega) => {
+        const x0 = x - to, decay = Math.exp(-omega * dt);
+        return [to + x0 * decay + (v + omega * x0) * dt * decay, -omega * x0 * decay + (v + omega * x0) * (decay - omega * dt * decay)];
+      };
       for (const key of ['x', 'y', 'w', 'h']) {
-        velocity[key] += ((target[key] - value[key]) * K - velocity[key] * C) * dt;
-        value[key] += velocity[key] * dt;
+        [value[key], velocity[key]] = critical(value[key], velocity[key], target[key], C / 2);
         if (Math.abs(target[key] - value[key]) > .08 || Math.abs(velocity[key]) > .2) settled = false;
       }
-      pressV += ((pressTarget - press) * PK - pressV * PC) * dt;
-      press += pressV * dt;
+      [press, pressV] = critical(press, pressV, pressTarget, PC / 2);
       if (Math.abs(pressTarget - press) > .004 || Math.abs(pressV) > .03) settled = false;
       if (settled || motionOff()) {
         value = { ...target }; velocity = { x: 0, y: 0, w: 0, h: 0 };

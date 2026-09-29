@@ -2,13 +2,13 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Liquid Glass interaction regression checks</title>
+<title>Liquid Glass segmented control regression checks</title>
 <link rel="stylesheet" href="/static/liquid-glass.css">
-<link rel="stylesheet" href="/static/liquid-optics.css">
-<style>body{padding:32px}main{max-width:700px;margin:auto;padding:24px;background:var(--surface);border-radius:24px}#results{white-space:pre-wrap}button{min-height:34px}</style>
+<link rel="stylesheet" href="/static/liquid-tabbar.css">
+<style>body{padding:32px}main{max-width:700px;margin:auto;padding:24px;background:var(--surface,#fff);border-radius:24px}#results{white-space:pre-wrap}</style>
 <main>
-  <h1>Liquid Glass interaction checks</h1>
-  <p>Standalone UI fixture. Does not read or modify panel configuration.</p>
+  <h1>Segmented control checks</h1>
+  <p>Standalone UI fixture for web/liquid-tabbar.js. Does not read or modify panel configuration. Open with #run to start automatically.</p>
   <div class="settings-tabbar" id="fixture">
     <button class="active">First</button><button>Second</button><button disabled>Disabled</button>
   </div>
@@ -16,59 +16,75 @@
   <p><button id="run">Run checks</button></p>
   <output id="results" role="status">Ready</output>
 </main>
-<script src="/static/liquid-optics.js"></script>
+<script>
+// Headless Chrome with --virtual-time-budget stops firing requestAnimationFrame;
+// ?timer-raf drives it from timers so the springs can settle there.
+if (location.search.includes('timer-raf')) window.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 16);
+window.__errors = [];
+addEventListener('error', e => window.__errors.push(e.message));
+</script>
+<script src="/static/liquid-tabbar.js"></script>
 <script>
 const bar = document.querySelector('#fixture');
 let activations = 0;
 bar.addEventListener('click', event => {
   if (!event.target.matches('button:not(:disabled)')) return;
   activations++;
-  bar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === event.target));
+  bar.querySelectorAll(':scope > button').forEach(b => b.classList.toggle('active', b === event.target));
 });
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 const result = document.querySelector('#results');
+const ctrlOf = el => window.MUILiquidTabBar.controllers.get(el);
 document.querySelector('#run').onclick = async () => {
   const lines = [];
   const check = (condition, label) => { if (!condition) throw Error(label); lines.push('PASS ' + label); result.textContent = lines.join('\n'); };
-  const first = bar.querySelector('button'), second = first.nextElementSibling;
+  const [first, second, disabled] = bar.querySelectorAll(':scope > button');
   const pointer = (target, type, x, y) => target.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 42, isPrimary: true, pointerType: 'mouse', button: 0, clientX: x, clientY: y }));
   try {
-    first.click(); await delay(650);
-    check(document.querySelector('#initially-hidden .liquid-pill-slider').hidden, 'Hidden controls settle without a mutation loop');
-    second.click(); await delay(700);
-    let lens = bar.querySelector('.liquid-pill-slider').getBoundingClientRect();
-    let button = second.getBoundingClientRect();
-    check(Math.abs(lens.left - button.left) < 1 && Math.abs(lens.width - button.width) < 1, 'Spring settles on the selected button');
-    second.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    await delay(650);
-    check(first.classList.contains('active'), 'Keyboard navigation skips disabled buttons');
-    // Synthetic pointers have no native capture. Stub only capture for this fixture.
+    const hidden = document.querySelector('#initially-hidden');
+    check(!!ctrlOf(hidden) && ctrlOf(hidden).boxes.length === 0, 'Hidden controls initialize without measuring or looping');
+    check(bar.querySelectorAll(':scope > .liquid-tabbar-canvas').length === 1 && bar.querySelectorAll(':scope > .liquid-tabbar-lens').length === 1 && getComputedStyle(first).opacity === '1', 'Labels stay real DOM text between the track and lens canvases');
+    check(ctrlOf(bar).labels.length === 3 && ctrlOf(bar).labels.every(l => l.text && l.text.value), 'Every segment label is laid out for the lens');
+    second.click(); await delay(1500);
+    let c = ctrlOf(bar);
+    check(c.value === 1 && c.target === 1 && c.press === 0 && c.scaleX === 1, `Tap settles on the selected segment and releases the lens (value=${c.value} target=${c.target} press=${c.press} scale=${c.scaleX})`);
+    check(second.classList.contains('lt-selected') && !first.classList.contains('lt-selected'), 'Selected label is marked for emphasis');
+    second.focus(); second.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    await delay(1500);
+    check(first.classList.contains('active') && !disabled.classList.contains('active'), 'Keyboard navigation skips disabled segments');
     bar.setPointerCapture = () => {};
     const start = first.getBoundingClientRect(), end = second.getBoundingClientRect();
     let before = activations;
-    pointer(first, 'pointerdown', start.x + start.width / 2, start.y + 16);
-    pointer(bar, 'pointermove', end.x + end.width / 2, end.y + 16);
-    pointer(window, 'pointercancel', end.x + end.width / 2, end.y + 16);
-    await delay(650);
-    check(activations === before && first.classList.contains('active'), 'Cancellation restores selection without firing an action');
-    check(!bar.querySelector('.is-dragging'), 'Cancellation clears drag decoration');
-    pointer(first, 'pointerdown', start.x + start.width / 2, start.y + 16);
-    pointer(bar, 'pointermove', end.x + end.width / 2, end.y + 16);
-    pointer(window, 'pointerup', end.x + end.width / 2, end.y + 16);
-    await delay(650);
-    check(activations === before + 1 && second.classList.contains('active'), 'Drag release commits exactly once');
-    document.querySelector('#initially-hidden').hidden = false;
+    pointer(first, 'pointerdown', start.x + start.width / 2, start.y + 10);
+    pointer(bar, 'pointermove', end.x + end.width / 2, end.y + 10);
+    pointer(window, 'pointercancel', end.x + end.width / 2, end.y + 10);
+    await delay(1500);
+    c = ctrlOf(bar);
+    check(activations === before && first.classList.contains('active') && c.value === 0, 'Cancellation restores selection without firing an action');
+    check(!c.dragging && c.press === 0, 'Cancellation releases the lens');
+    pointer(first, 'pointerdown', start.x + start.width / 2, start.y + 10);
+    pointer(bar, 'pointermove', end.x + end.width / 2, end.y + 10);
+    pointer(window, 'pointerup', end.x + end.width / 2, end.y + 10);
+    await delay(1500);
+    check(activations === before + 1 && second.classList.contains('active') && ctrlOf(bar).value === 1, 'Drag release commits exactly once');
+    {const c = ctrlOf(bar), s2 = second.getBoundingClientRect();
+    pointer(second, 'pointerdown', s2.x + s2.width / 2, s2.y + 10); await delay(500);
+    check(c.press > 0.9 && c.scaleX > 1.2, 'Holding the thumb keeps the glass lens');
+    pointer(bar, 'pointermove', s2.x + s2.width / 2 - 20, s2.y + 10); await delay(400);
+    check(c.dragging && c.press > 0.9, 'Dragging the thumb keeps the glass lens');
+    pointer(window, 'pointercancel', s2.x + s2.width / 2 - 20, s2.y + 10); await delay(1500);
+    check(c.press === 0 && second.classList.contains('active'), 'Releasing the thumb returns it to rest');}
+    hidden.hidden = false;
     await delay(300);
-    check(!document.querySelector('#initially-hidden .liquid-pill-slider').hidden, 'A previously hidden bar initializes when revealed');
+    check(ctrlOf(hidden).boxes.length === 1, 'A previously hidden bar measures when revealed');
     const dynamic = document.createElement('div'); dynamic.className = 'mihomo-editor-tabs'; dynamic.innerHTML = '<button class="active">Dynamic</button>';
     bar.after(dynamic); await delay(300);
-    const id = dynamic.querySelector('.liquid-pill-slider').style.getPropertyValue('--lg-filter').match(/#([^\"]+)/)?.[1];
-    check(!!dynamic.querySelector('.liquid-pill-slider'), 'Dynamically inserted controls initialize');
+    check(!!ctrlOf(dynamic), 'Dynamically inserted controls initialize');
     dynamic.remove(); await delay(300);
-    check(!id || !document.getElementById(id), 'Removed controls release their SVG filter');
-    check(document.querySelectorAll('filter').length <= 32, 'Optical filters remain bounded');
+    check(!ctrlOf(dynamic), 'Removed controls release their controller');
     result.textContent = lines.join('\n') + '\nALL CHECKS PASSED';
-  } catch (error) { result.textContent = lines.join('\n') + '\nFAIL ' + error.message; }
+  } catch (error) { result.textContent = lines.join('\n') + '\nFAIL ' + error.message + (window.__errors.length ? '\nPAGE ERRORS ' + window.__errors.join(' | ') : ''); }
 };
+if (location.hash === '#run') addEventListener('load', () => setTimeout(() => document.querySelector('#run').click(), 300));
 </script>
 </html>

@@ -1,0 +1,27 @@
+m-ui
+Copyright (C) RomanovCaesar and m-ui contributors.
+Licensed under the GNU General Public License v3.0 (see LICENSE).
+
+This product includes software derived from third-party projects:
+
+------------------------------------------------------------------------
+Liquid Glass WebGL Port
+https://github.com/martin65536/liquid-glass-webgl
+Copyright 2025 Liquid Glass WebGL Port Contributors
+Licensed under the Apache License, Version 2.0
+(http://www.apache.org/licenses/LICENSE-2.0)
+
+Portions of the liquid glass controls in web/liquid-toggle.js,
+web/liquid-tabbar.js and web/liquid-button.js (spring solvers, velocity
+tracker, lens refraction with chromatic dispersion, toggle combined
+backdrop, ambient and default rim highlights, the bottom-tab indicator and
+InteractiveHighlight press dynamics, and the component geometry, colours and
+spring constants) are adapted from this project's renderer and shader
+sources; web/liquid-button.css and web/liquid-sheet.css follow its
+LiquidButton and Dialog materials. The code was translated from
+TypeScript/GLSL into framework-free JavaScript/GLSL and modified to
+render inside individual DOM controls.
+
+That project is itself a web port of AndroidLiquidGlass by Kyant
+(https://github.com/Kyant0/AndroidLiquidGlass).
+------------------------------------------------------------------------

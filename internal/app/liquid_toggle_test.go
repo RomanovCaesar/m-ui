@@ -21,10 +21,16 @@ func TestSubscriptionToggleAssetsOnBothListeners(t *testing.T) {
 				app.subscriptionRoutes().ServeHTTP(w, httptest.NewRequest("GET", path, nil))
 			}},
 		} {
-			for name, mime := range map[string]string{"liquid-toggle.css": "text/css", "liquid-toggle.js": "text/javascript"} {
+			for name, want := range map[string][2]string{
+				"liquid-toggle.css": {"text/css", "lg-toggle"},
+				"liquid-toggle.js":  {"text/javascript", "lg-toggle"},
+				"liquid-button.css": {"text/css", "--lb-fill"},
+				"liquid-button.js":  {"text/javascript", "MUILiquidButton"},
+			} {
+				mime := want[0]
 				w := httptest.NewRecorder()
 				handler.serve(w, base+name)
-				if w.Code != 200 || !strings.Contains(w.Header().Get("Content-Type"), mime) || !strings.Contains(w.Body.String(), "lg-toggle") {
+				if w.Code != 200 || !strings.Contains(w.Header().Get("Content-Type"), mime) || !strings.Contains(w.Body.String(), want[1]) {
 					t.Fatalf("%s %s: %d %s", handler.name, base+name, w.Code, w.Header().Get("Content-Type"))
 				}
 			}

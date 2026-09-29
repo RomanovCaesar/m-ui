@@ -49,10 +49,22 @@ $('#run').onclick=async()=>{
   pointer(input,'pointerdown',r.x+48,r.y+12);pointer(shell,'pointermove',r.x+8,r.y+12);pointer(window,'pointerup',r.x+8,r.y+12);
   assert(input.checked,'RTL drag follows the visual direction');document.documentElement.dir='ltr';
   const row=document.createElement('label');row.className='switch';row.innerHTML='<input type="checkbox" aria-label="New row"><span></span>';$('#form').append(row);await wait(30);
-  assert(row.classList.contains('lg-toggle')&&row.querySelectorAll('.lt-thumb').length===1,'Inserted controls auto-upgrade once');
-  row.remove();await wait(30);assert(document.querySelectorAll('filter[id^="mui-toggle-lens-"]').length<=2,'Only two shared refraction maps regardless of row count');
+  assert(row.classList.contains('lg-toggle')&&row.querySelectorAll('.liquid-toggle-canvas').length===1,'Inserted controls auto-upgrade once');
+  row.remove();await wait(30);assert(window.MUILiquidToggle.controllers.size<=8,'Removed controls release their controller');
   $('#filter').click();await wait(30);assert($('#filter').getAttribute('aria-checked')==='true','Button switch reports checked state');$('#filter').click();
+  {const c=window.MUILiquidToggle.controllers.get(shell);r=shell.getBoundingClientRect();
+   pointer(input,'pointerdown',r.x+10,r.y+10);await wait(400);
+   assert(c.press>0.9&&c.scaleX>1.3,'Holding the knob keeps the glass lens');
+   pointer(shell,'pointermove',r.x+22,r.y+10);await wait(300);
+   assert(c.dragging&&c.press>0.9,'Dragging the knob keeps the glass lens');
+   pointer(window,'pointerup',r.x+22,r.y+10);await wait(1200);
+   assert(c.press===0&&!c.dragging,'Releasing the knob returns it to rest');}
+  {const box=document.createElement('div');box.style.display='none';box.innerHTML='<label class="switch switch-sm"><input type="checkbox" aria-label="Hidden at creation"><span></span></label>';$('#form').append(box);await wait(60);
+   const sw=box.querySelector('label');box.style.display='';await wait(200);
+   const c=window.MUILiquidToggle.controllers.get(sw);
+   assert(c&&c.trackW===sw.offsetWidth&&c.trackH===sw.offsetHeight,'A switch created while hidden is measured at its real size once shown');box.remove();}
   $('#form').reset();$('#results').textContent=lines.join('\n')+'\nALL CHECKS PASSED';
  }catch(e){$('#results').textContent=lines.join('\n')+'\nFAIL '+e.message;}
 };
+if(location.hash==='#run')addEventListener('load',()=>setTimeout(()=>$('#run').click(),200));
 </script></body></html>

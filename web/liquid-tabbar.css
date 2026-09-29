@@ -1,58 +1,183 @@
-/* m-ui True Apple Liquid Glass Tab Switch Bar (WebGL) Styles */
-
-/* Tab bar container when WebGL is active */
-.has-liquid-tabbar {
+/* m-ui Liquid Glass segmented controls and sidebar selection.
+ *
+ * Tab bar (liquid-tabbar.js), faithful to the reference LiquidBottomTabs: a
+ * gray capsule track with a dim indicator capsule; only the content under
+ * the indicator is tinted with the accent colour (drawn by the lens canvas
+ * above the real DOM labels). macOS size on wide screens (32px track), iOS
+ * size on narrow screens (36px track).
+ *
+ * This file loads last, so it also neutralises the older pill/ink styles
+ * from liquid-glass.css, liquid-optics.css and liquid-glass-gl.css.
+ */
+html body :is(.liquid-tabbar, .settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs).has-liquid-tabbar {
+  --lt-seg-h: 28px;
+  --lt-seg-pad: 2px;
+  --lt-text: var(--text-strong, #1d1d1f);
   position: relative !important;
+  display: flex;
+  align-items: stretch;
+  gap: 0 !important;
+  padding: var(--lt-seg-pad) !important;
+  min-height: 0 !important;
+  height: auto !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   overflow: visible !important;
   isolation: isolate;
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
+  transform-origin: 50% 50%;
 }
 
-/* WebGL canvas overlays the tab bar (+26px margin so inflated glass pill & shadow are not clipped) */
+/* Our display: flex must not resurrect bars the app hides. */
+html body .has-liquid-tabbar[hidden] {
+  display: none !important;
+}
+
+html body .settings-tabbar.has-liquid-tabbar,
+html body .inbound-status-tabs.has-liquid-tabbar,
+html body .mihomo-editor-tabs.has-liquid-tabbar {
+  width: max-content;
+  max-width: 100%;
+}
+
+body.dark :is(.liquid-tabbar, .settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs).has-liquid-tabbar {
+  --lt-text: #f5f5f7;
+}
+
+@media (max-width: 768px) {
+  html body :is(.liquid-tabbar, .settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs).has-liquid-tabbar {
+    --lt-seg-h: 32px;
+  }
+}
+
 .has-liquid-tabbar > .liquid-tabbar-canvas {
+  position: absolute !important;
   display: block !important;
   pointer-events: none !important;
-  position: absolute !important;
-  top: -26px !important;
-  left: -26px !important;
-  z-index: 5 !important;
+  z-index: 0 !important;
 }
 
-/* Hide legacy DOM ink bars or duplicate sliders inside the bar */
+/* The thumb itself sits ABOVE the labels so its lens can refract a raster of
+ * them (the real DOM text stays underneath for focus and screen readers). */
+.has-liquid-tabbar > .liquid-tabbar-lens {
+  position: absolute !important;
+  display: block !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+html body .has-liquid-tabbar > button {
+  position: relative !important;
+  z-index: 1 !important;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--lt-seg-h) !important;
+  height: var(--lt-seg-h) !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline-offset: -2px;
+  color: var(--lt-text) !important;
+  -webkit-text-fill-color: currentColor;
+  opacity: 1 !important;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: scale(var(--lt-content-scale, 1));
+  transition: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html body .has-liquid-tabbar > button * {
+  opacity: 1 !important;
+  color: inherit !important;
+}
+
+/* Every DOM label stays at the regular weight, including the selected one:
+ * the bold, emphasised label is drawn by the thumb itself (lens canvas), so
+ * emphasis follows the thumb while it slides instead of staying behind on
+ * the previous tab. A bolder DOM label would also resize its segment. */
+html body .has-liquid-tabbar > button,
+html body .has-liquid-tabbar > button:is(.active, .lt-selected, [aria-selected="true"]),
+html body .has-liquid-tabbar > button * {
+  font-weight: 500 !important;
+}
+
+html body .has-liquid-tabbar > button:hover {
+  background: transparent !important;
+}
+
+html body .has-liquid-tabbar > button:focus-visible {
+  outline: 2px solid #0088ff;
+}
+
 .has-liquid-tabbar > .ink-bar,
 .has-liquid-tabbar > .liquid-pill-slider {
   display: none !important;
 }
 
-/* Tab buttons sit under the canvas for hit-testing and sizing, while WebGL owns 100% of the visual rendering.
-   Ensure opacity: 0 and transparent color across ALL specificity levels to completely eradicate text/icon ghosting! */
-:is(.liquid-tabbar, .settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs).has-liquid-tabbar button,
-.has-liquid-tabbar button,
-.has-liquid-tabbar button * {
-  opacity: 0 !important;
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-  text-shadow: none !important;
+/* ---------------------------------------------------------------------
+ * Sidebar navigation — macOS 26 sidebar selection: a quiet gray rounded
+ * rectangle behind the item, with the icon and label in the accent colour.
+ * liquid-optics.js still animates its position (critically damped, no
+ * stretch); every older glass layer on it is switched off here.
+ * ------------------------------------------------------------------- */
+html body .nav > .liquid-pill-slider,
+html body .nav > .liquid-pill-slider.lg-surface,
+html[data-glass-gl="on"] body .nav > .liquid-pill-slider.lg-surface {
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: rgb(0 0 0 / 0.07) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  transition: none !important;
+}
+
+html body.dark .nav > .liquid-pill-slider,
+html body.dark .nav > .liquid-pill-slider.lg-surface,
+html[data-glass-gl="on"] body.dark .nav > .liquid-pill-slider.lg-surface {
+  background: rgb(255 255 255 / 0.1) !important;
+}
+
+html body .nav > .liquid-pill-slider::before,
+html body .nav > .liquid-pill-slider::after {
+  content: none !important;
+  display: none !important;
+}
+
+html body .nav button.active,
+html body .nav button[data-view].active,
+html body .nav button[aria-current="page"] {
+  color: #0088ff !important;
   background: transparent !important;
-  border-color: transparent !important;
   box-shadow: none !important;
 }
 
-.has-liquid-tabbar button {
-  position: relative !important;
-  z-index: 1 !important;
-  border: 0 !important;
-  cursor: pointer !important;
-  outline: none !important;
-  pointer-events: auto !important;
+html body.dark .nav button.active,
+html body.dark .nav button[data-view].active,
+html body.dark .nav button[aria-current="page"] {
+  color: #0091ff !important;
 }
 
-.has-liquid-tabbar button svg,
-.has-liquid-tabbar button img,
-.has-liquid-tabbar button .sf-symbol,
-.has-liquid-tabbar button .icon {
-  opacity: 0 !important;
-  visibility: visible !important; /* Keep visible for getBoundingClientRect() measurement */
+html body .nav button.active :is(svg, .nav-icon, span),
+html body .nav button[data-view].active .nav-icon {
+  color: inherit !important;
+}
+
+/* The status filter sits right after the filter switch. */
+html body .inbound-status-tabs.has-liquid-tabbar {
+  margin-inline-start: 10px !important;
 }

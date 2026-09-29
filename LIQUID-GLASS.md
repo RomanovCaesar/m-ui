@@ -1,98 +1,158 @@
 # Liquid Glass frontend
 
-The panel and login screen now use `web/liquid-optics.css` and
-`web/liquid-optics.js`. The existing design tokens and form widgets remain in
-`liquid-glass.css` and `swiftui-components.js`. No React build or remote assets
-are required; Go embeds the new files and wallpaper.
+m-ui's panel, login page and public subscription page imitate Apple's
+iOS 26 / macOS 26 Liquid Glass. The controls follow
+[Liquid Glass WebGL Port](https://github.com/martin65536/liquid-glass-webgl)
+(Apache-2.0, a web port of Kyant0/AndroidLiquidGlass): its spring constants,
+lens refraction, chromatic dispersion, highlights and component geometry were
+ported, and the result was compared against its live demo
+(<https://glass.mt512.qzz.io/>). See `NOTICE`.
 
-## Material
+Everything is framework-free JavaScript/GLSL and CSS embedded in the Go
+binary. No build step and no remote assets.
 
-- Navigation, toolbar, floating menus, editor panels and selection lenses use
-  a separate backdrop layer. Text is not filtered.
-- Rounded rectangle distance fields generate a bevel normal map. Refraction
-  uses an index of 1.46 and SVG displacement of the live backdrop. The center
-  stays flat; displacement is concentrated around the rim.
-- A directional rim follows the pointer. Content cards have a quieter, more
-  opaque material to preserve readability. The wallpaper is an original SVG.
-- Chromium receives SVG backdrop displacement. Safari and Firefox receive a
-  blur/tint/highlight fallback. This is a web approximation, not Apple's native
-  compositor. Safari/Firefox rendering and physical iOS touch input have not
-  been verified on devices.
-- Optical maps are limited to 640 pixels on the longest side, cached up to 48
-  shapes, and applied to at most 32 visible surfaces. Maps are rebuilt after
-  layout settles, not on every pointer movement. Removed elements release
-  observers, listeners and filters.
+Sizing: wide screens use macOS-sized controls, screens up to 768 px wide use
+iOS-sized ones.
 
-## Interaction
+## Where each piece lives
 
-- One spring-driven lens follows navigation and segmented selection.
-- Drag release activates one option; cancellation restores the current option.
-- Disabled and hidden options are excluded. Arrow keys and Home/End work.
-- On touch screens the active segment reserves horizontal dragging for its
-  lens; other segments retain horizontal scrolling. Vertical scrolling remains
-  available. Long strips scroll internally without widening the mobile page.
-- Reduced motion disables spring animation. Reduced transparency, increased
-  contrast and forced colors receive simpler materials.
+| File | What it does |
+| --- | --- |
+| `web/liquid-glass-gl.js/.css` | One full-viewport WebGL layer behind the page. It draws the wallpaper and the glass of surfaces that sit directly on it: the sidebar, login card, inbound action pills and sidebar trigger. |
+| `web/liquid-optics.js/.css` | Registers those wallpaper surfaces and animates the sidebar selection. |
+| `web/liquid-toggle.js/.css` | Switches (`.switch`, `.theme-switch`, `.ultra-check`, generated `.check`, `button.search-toggle`). |
+| `web/liquid-tabbar.js/.css` | Tab bars (`.settings-tabbar`, `.mihomo-tabs`, `.inbound-status-tabs`, `.mihomo-editor-tabs`) and the macOS sidebar selection style. |
+| `web/liquid-button.js/.css` | Button materials and press feedback. |
+| `web/liquid-sheet.css` | Dialogs, the inbound drawer and menus. |
+| `web/liquid-toolbar.css` | The sticky toolbar and its scroll-edge effect. |
+| `web/liquid-glass.css`, `web/swiftui-components.js` | Design tokens, form widgets and the custom select. |
+
+The WebGL layer paints behind the page content, so it can only refract the
+wallpaper. Anything content scrolls under (the toolbar) or that floats above
+content (dialogs, menus) must not be registered with it. Those use a CSS
+backdrop-filter material instead.
+
+## Controls
+
+**Switch.** A port of `LiquidToggle.kt` and `DampedDragAnimation.kt`.
+- Geometry: a 64×28 track with a 40×24 knob. Desktop uses 46×20 (compact
+  36×16); narrow screens use 64×28 (compact 50×22).
+- At rest the knob is an opaque white pebble.
+- Pressing, dragging, tapping or pressing Space springs it to 1.5×. The white
+  fades out and the knob becomes a clear lens that refracts the card colour
+  and a scaled copy of the track colour, with 7-tap chromatic dispersion and
+  an Ambient rim.
+- Springs: value and press use spring(1, 1000); scale X/Y use spring(0.6, 250)
+  and spring(0.7, 250); velocity uses spring(0.5, 300).
+- Only real drag velocity squashes the knob, so taps never wobble.
+- The lens stays up while the pointer is held.
+- A ResizeObserver re-measures switches that were created while hidden, for
+  example inside a closed menu.
+
+**Tab bar.** A port of the `LiquidBottomTabs` indicator.
+- At rest the selected tab sits under a dim capsule (black 10% light, white
+  10% dark). Only the content that capsule covers is tinted with the accent
+  (#0088FF / #0091FF), so the highlight follows the capsule while it slides.
+- Pressing or dragging the selected tab grows the capsule by 78/56 into a clear
+  lens. The lens is drawn on a canvas above the labels and refracts:
+  - a raster of the labels and SF icons. Glyphs fade out towards the rim, so
+    the steepest band never smears them into dark fragments;
+  - the inner backdrop plate: a rest-height capsule across the bar, with its
+    rim highlight and shadow. Its top and bottom edges are the two bent,
+    colour-split lines seen while dragging.
+- The real DOM labels stay underneath for focus, translation and screen
+  readers.
+- Keyboard: Left/Right/Home/End, skipping disabled tabs.
+
+**Buttons.** `InteractiveHighlight.kt` press feedback:
+- underdamped press spring(0.5, 300) and scale 1 + 4/48;
+- a tanh-limited follow-and-stretch while held;
+- an 8% flat white overlay plus a 15% radial glow at the finger.
+
+Motion uses the independent CSS `scale` / `translate` properties, so existing
+`transform` rules keep working.
+
+Materials:
+
+| Type | Look | Used for |
+| --- | --- | --- |
+| Tinted | #0088FF, or red #FF3B30 for destructive actions, white label | Primary and destructive buttons |
+| Gray | iOS "gray" fill | Buttons on cards |
+| Surface | White 30% glass | Round and floating buttons |
+
+Destructive icon buttons keep the glass and only turn the glyph red.
+Segmented-control options are deliberately not treated as buttons.
+
+**Dialogs and the inbound drawer.**
+- A flat dim scrim: #29293A at 23% light, #121212 at 56% dark.
+- A glass card: blur 16 (8 dark), saturation 1.5, light brightness +0.2,
+  surface #FAFAFA 60% / #121212 40%, and a 38% rim.
+- Corner radius 28 px (34 px on narrow screens).
+- Entrance: Apple's sheet curve `cubic-bezier(.32,.72,0,1)`, growing from 0.94.
+
+**Menus.** macOS style:
+- a denser frosted panel (85%) with 14 px corners;
+- a blue rounded highlight with white text on the hovered item;
+- red text for destructive items.
+
+A menu's ancestors must not carry a `backdrop-filter`. It would become the
+backdrop root and the menu could no longer blur the page.
+
+**Toolbar.**
+- The glass capsule is drawn on `.topbar::after`: a real backdrop blur.
+- `.topbar::before` adds the iOS 26 scroll-edge effect, a fading blur band, so
+  content softens as it slides under the toolbar.
+- Neither effect sits on `.topbar` itself, for the backdrop-root reason above.
+
+**Subscription page.** It uses the switch and button files, served from the
+subscription asset prefix on both listeners. Its menus are restyled in the
+template itself, because they are centred with `transform`.
+
+## Dark mode
+
+Every control has dark values from the reference palette. The WebGL glass
+samples the wallpaper with the same dim as the wallpaper pass, so the sidebar
+does not glow in dark themes.
+
+The three pages mark dark mode differently:
+
+| Page | Dark marker |
+| --- | --- |
+| Panel | `body.dark` |
+| Login page | `html.dark` |
+| Subscription page | `html[data-theme="dark"]` |
+
+## Deliberate differences from the reference
+
+- m-ui sits on white cards, not a colourful wallpaper, so the tab bar's plate
+  shadow is tighter and darker than `Shadow.Default`.
+- Lens rims use the Ambient highlight (bright/dark sides), because the
+  reference's additive Default rim is invisible on white.
+- Tab labels are faded near the lens rim to avoid glyph fragments.
 
 ## Validation
 
-- `go test ./...` passed.
-- `node --check web/liquid-optics.js` and `node --check
-  web/swiftui-components.js` passed.
-- Browser checks: login, navigation, light/dark rendering, mouse drag release,
-  keyboard selection, sidebar, inbound editor and 390×844 mobile layout.
-- `tests/liquid-optics.html`: 10 browser checks passed, covering hidden bars,
-  spring alignment, disabled options, cancellation, single activation,
-  revealing/inserting/removing controls, and bounded filters. Synthetic pointer
-  checks stub native capture; real mouse dragging was checked separately.
-- Accessibility media-query fallbacks are implemented but were not emulated
-  in the browser verification session.
-
-To run the fixture, serve it with `/static/` mapped to `web/`, then press
-**Run checks**. The fixture does not call the panel API.
-
-## Running the result
-
-### Shared liquid switches
-
-`web/liquid-toggle.css` and `web/liquid-toggle.js` now enhance switches across
-login, panel settings, dynamically generated inbound/client rows, protocol
-editors and public subscription settings. Standard switches use a 64×32 rail
-with a 40×28 capsule; compact switches use 52×26 and 32×22. Pressing expands the
-capsule and lowers its tint so the refracted track shows through. Only two SVG
-lens maps are shared by all switches. Checkbox values, form serialization,
-reset, disabled behavior and existing handlers remain native. Selection
-checkboxes in tables/sync matrices retain their original purpose.
-
-The public subscription listener exposes only the two additional switch assets
-alongside its existing QR asset, using its configured subscription prefix.
-
-Validation: all Go tests passed, including asset availability on both listeners;
-the browser fixture (`node tests/liquid-toggle.cjs`) passed 14 interaction checks.
-Actual login theme rendering and Space activation were verified. Real mouse
-drag and subsequent Space activation passed on the fixture with production
-panel styles. Authenticated panel visual checking was not completed in this
-round: automatic approval rejected signing into the isolated test panel.
-Physical iOS/Safari touch rendering remains unverified. The previous executable
-is backed up at `.runtime-glass/m-ui-before-toggle.exe`.
-
-`m-ui.exe` in this test directory has been rebuilt. Run it with this directory
-as the working directory, as before. If an older instance is already running,
-restart that test instance to load the embedded frontend. The same build is at
-`dist/m-ui-liquid-glass.exe`; the preceding executable is backed up at
-`.runtime-glass/m-ui-before-optics.exe`.
-
-The development preview used isolated data in `.runtime-glass/data`, with no
-Mihomo core running. The original sibling `m-ui` directory was not changed.
+- `go test ./...`, including subscription asset availability on both
+  listeners.
+- `tests/liquid-toggle.html` has 18 checks. Serve it with
+  `node tests/liquid-toggle.cjs` and open it with `#run`. It covers form
+  semantics, drag, cancel, RTL, disabled, insert/remove, hold/drag keeping the
+  lens, and hidden-then-shown sizing.
+- `tests/liquid-optics.html` has 15 tab bar checks. Serve `tests/` with
+  `/static/` mapped to `web/` and open it with `#run`. It covers tap settle,
+  keyboard, cancel, drag commit, hold/drag lens, the labels raster,
+  hidden/inserted/removed bars and spatial emphasis markers.
+- Headless Chrome with `--virtual-time-budget` does not fire
+  `requestAnimationFrame`, so open the tab bar fixture with `?timer-raf`
+  there. Background browser tabs pause rAF as well.
+- Checked by eye in light and dark: login, dashboard, inbound list, drawer,
+  menus, Mihomo settings, panel settings and the subscription page.
+- Physical iOS/Safari touch rendering is still unverified. Safari and Firefox
+  get CSS blur fallbacks where WebGL or backdrop refraction is unavailable.
 
 ## References
 
-- [Apple Landmarks](https://developer.apple.com/documentation/swiftui/landmarks-building-an-app-with-liquid-glass)
-- [Liquid Glass React](https://github.com/rdev/liquid-glass-react)
+- [Liquid Glass WebGL Port](https://github.com/martin65536/liquid-glass-webgl) (Apache-2.0): ported code and parameters
 - [AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)
-- [Liquid Glass web demo](https://github.com/archisvaze/liquid-glass)
+- [Apple Landmarks](https://developer.apple.com/documentation/swiftui/landmarks-building-an-app-with-liquid-glass)
 - [Awesome Liquid Glass](https://github.com/GetStream/awesome-liquid-glass)
-
-These informed the material/interaction direction. The new renderer is a local,
-framework-independent implementation; no source code or assets from these
-repositories were vendored.

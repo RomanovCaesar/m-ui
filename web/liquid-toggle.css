@@ -1,10 +1,11 @@
-/* True Liquid Glass Switch Toggle Styling (m-ui)
- * Faithful to Apple SwiftUI / iOS Liquid Glass switch geometry and optics.
+/* m-ui Liquid Glass switch (.lg-toggle)
+ * Geometry follows iOS 26 / LiquidToggle.kt: a 64x28 track with a 40x24
+ * knob. Wide screens use macOS-sized switches, narrow screens iOS-sized
+ * ones; liquid-toggle.js scales every other length by height / 28.
  */
 html body .lg-toggle {
-  --lt-width: 60px;
-  --lt-height: 26px;
-  --lt-pad: 2px;
+  --lt-width: 46px;
+  --lt-height: 20px;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -32,15 +33,27 @@ html body .lg-toggle {
 html body .lg-toggle.switch-sm,
 html body .lg-toggle.lt-small,
 html body button.search-toggle.lg-toggle {
-  --lt-width: 46px;
-  --lt-height: 21px;
+  --lt-width: 36px;
+  --lt-height: 16px;
 }
 
-/* WebGL / Canvas Overlay */
+@media (max-width: 768px) {
+  html body .lg-toggle {
+    --lt-width: 64px;
+    --lt-height: 28px;
+  }
+  html body .lg-toggle.switch-sm,
+  html body .lg-toggle.lt-small,
+  html body button.search-toggle.lg-toggle {
+    --lt-width: 50px;
+    --lt-height: 22px;
+  }
+}
+
+/* The canvas is larger than the track so the pressed 1.5x lens and its
+ * shadow fit; liquid-toggle.js sets top/left to minus that margin. */
 html body .lg-toggle > .liquid-toggle-canvas {
   position: absolute !important;
-  top: -14px !important;
-  left: -14px !important;
   pointer-events: none !important;
   z-index: 2 !important;
   display: block !important;

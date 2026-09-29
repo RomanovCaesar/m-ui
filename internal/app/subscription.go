@@ -33,6 +33,8 @@ type subscriptionPageData struct {
 	StaticURL       string
 	ToggleStyleURL  string
 	ToggleScriptURL string
+	ButtonStyleURL  string
+	ButtonScriptURL string
 	DefaultLanguage string
 	Status          string
 	Downloaded      string
@@ -461,6 +463,8 @@ func (a *App) handleSubscriptionRequest(w http.ResponseWriter, r *http.Request) 
 	for name, contentType := range map[string]string{
 		"liquid-toggle.css": "text/css; charset=utf-8",
 		"liquid-toggle.js":  "text/javascript; charset=utf-8",
+		"liquid-button.css": "text/css; charset=utf-8",
+		"liquid-button.js":  "text/javascript; charset=utf-8",
 	} {
 		if r.URL.Path == assetBase+name {
 			a.serveEmbedded(w, "web/"+name, contentType)
@@ -622,6 +626,8 @@ func renderSubscriptionPageAt(w http.ResponseWriter, r *http.Request, snapshot s
 		StaticURL:       subscriptionAssetPublicPath(snapshot.Settings),
 		ToggleStyleURL:  strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-toggle.css",
 		ToggleScriptURL: strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-toggle.js",
+		ButtonStyleURL:  strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-button.css",
+		ButtonScriptURL: strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-button.js",
 		DefaultLanguage: settingsLanguage(snapshot.Settings),
 		Status:          status, Downloaded: formatSubscriptionBytes(down), Uploaded: formatSubscriptionBytes(up),
 		Usage: formatSubscriptionBytes(up + down), Total: "∞", LastOnline: lastOnline, Expiry: "No expiry", Nodes: nodes,

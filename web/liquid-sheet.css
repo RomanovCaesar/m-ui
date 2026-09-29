@@ -1,0 +1,172 @@
+/* m-ui Liquid Glass dialogs, sheets and menus (iOS 26 / macOS 26).
+ *
+ * Dialog material from liquid-glass-webgl's DialogContent.kt port
+ * (Apache-2.0, see NOTICE): a flat dim scrim (#29293A 23% light,
+ * #121212 56% dark) and a glass card with blur 16dp (8dp dark), saturation
+ * 1.5, brightness +0.2 (light), surface #FAFAFA 60% / #121212 40% and the
+ * Plain rim highlight (white 38%). Corner radii are the macOS 26 sheet
+ * radius on wide screens and the iOS one on narrow screens.
+ *
+ * Menus follow macOS 26: a denser frosted panel, 14px corners and a blue
+ * rounded highlight with white text on the hovered item.
+ *
+ * Loaded after the older theme files; the WebGL/CSS pseudo-element glass
+ * those files put on these overlays is switched off here.
+ */
+:root {
+  --lg-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --lg-sheet-radius: 28px;
+  --lg-sheet-fill: rgb(250 250 250 / 0.6);
+  --lg-sheet-filter: blur(16px) saturate(1.5) brightness(1.2);
+  --lg-sheet-rim: rgb(255 255 255 / 0.38);
+  --lg-sheet-line: rgb(0 0 0 / 0.08);
+  --lg-scrim: rgb(41 41 58 / 0.23);
+  --lg-menu-fill: rgb(246 246 248 / 0.85);
+  --lg-menu-filter: blur(24px) saturate(1.8);
+  --lg-menu-rim: rgb(255 255 255 / 0.5);
+  --lg-accent: #0088ff;
+  --lg-destructive: #ff3b30;
+}
+body.dark,
+html.dark {
+  --lg-sheet-fill: rgb(18 18 18 / 0.4);
+  --lg-sheet-filter: blur(8px) saturate(1.5);
+  --lg-sheet-rim: rgb(255 255 255 / 0.16);
+  --lg-sheet-line: rgb(255 255 255 / 0.08);
+  --lg-scrim: rgb(18 18 18 / 0.56);
+  --lg-menu-fill: rgb(40 40 44 / 0.85);
+  --lg-menu-rim: rgb(255 255 255 / 0.14);
+  --lg-accent: #0091ff;
+  --lg-destructive: #ff453a;
+}
+@media (max-width: 768px) {
+  :root { --lg-sheet-radius: 34px; }
+}
+
+/* ---------------- scrim ---------------- */
+html body :is(.modal-backdrop, .drawer-backdrop, .modal-mask),
+html[data-glass-gl] body :is(.modal-backdrop, .drawer-backdrop, .modal-mask) {
+  background: var(--lg-scrim) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html body :is(.modal-backdrop, .drawer-backdrop).open {
+  animation: lg-fade-in 0.2s ease-out !important;
+}
+
+/* ---------------- dialog / sheet ---------------- */
+html body :is(.modal-panel, .drawer) {
+  border: 0.5px solid var(--lg-sheet-rim) !important;
+  border-radius: var(--lg-sheet-radius) !important;
+  background: var(--lg-sheet-fill) !important;
+  -webkit-backdrop-filter: var(--lg-sheet-filter) !important;
+  backdrop-filter: var(--lg-sheet-filter) !important;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 0.1), 0 24px 64px -24px rgb(0 0 0 / 0.28) !important;
+  animation: lg-sheet-in 0.35s var(--lg-ease-sheet) !important;
+}
+html body :is(.modal-panel, .drawer)::before,
+html body :is(.modal-panel, .drawer)::after {
+  content: none !important;
+  display: none !important;
+}
+/* Bars inside the sheet are part of the same glass: no second blur layer. */
+html body :is(.modal-titlebar, .modal-footer, .drawer-head, .drawer-foot) {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  border-color: var(--lg-sheet-line) !important;
+}
+
+/* ---------------- menus ---------------- */
+html body :is(.general-menu, .auto-refresh-menu, .settings-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu, .swift-picker-menu) {
+  padding: 5px !important;
+  border: 0.5px solid var(--lg-menu-rim) !important;
+  border-radius: 14px !important;
+  background: var(--lg-menu-fill) !important;
+  -webkit-backdrop-filter: var(--lg-menu-filter) !important;
+  backdrop-filter: var(--lg-menu-filter) !important;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 10px 30px rgb(0 0 0 / 0.16) !important;
+  transform-origin: top center;
+}
+html body :is(.general-menu, .auto-refresh-menu, .settings-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu, .swift-picker-menu)::before,
+html body :is(.general-menu, .auto-refresh-menu, .settings-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu, .swift-picker-menu)::after {
+  content: none !important;
+  display: none !important;
+}
+html body :is(.general-menu.open, .inbounds-refresh.open .auto-refresh-menu, .inbound-row-menu.open .inbound-menu,
+  .inbound-popover.open, .username-suggestion-menu.open, .swift-picker-menu:not([hidden])) {
+  animation: lg-menu-in 0.2s var(--lg-ease-sheet) !important;
+}
+
+/* The auto-refresh menu is a small form (switch + select), not a list:
+ * keep its own roomy padding instead of the 5px list inset. */
+html body .auto-refresh-menu {
+  padding: 12px 14px !important;
+}
+
+/* A backdrop-filter on an ancestor makes it the backdrop root: the menu's own
+ * blur then only sees that ancestor and the page shows through unblurred.
+ * The refresh split button hosts the auto-refresh menu, so it must not blur. */
+html body .inbounds-refresh {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Menu items: macOS highlight — blue rounded row, white label and glyph. */
+html body :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > button,
+html body .swift-picker-menu li {
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--text-strong, #1d1d1f) !important;
+  transform: none !important;
+  scale: none !important;
+  translate: none !important;
+  transition: none !important;
+}
+html body :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > button:is(:hover, :focus-visible, [aria-selected="true"]),
+html body .swift-picker-menu li:is(:hover, .mui-active) {
+  background: var(--lg-accent) !important;
+  color: #fff !important;
+  outline: none !important;
+}
+html body :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > button:is(:hover, :focus-visible, [aria-selected="true"]) *,
+html body .swift-picker-menu li:is(:hover, .mui-active) * {
+  color: inherit !important;
+}
+html body :is(.general-menu, .inbound-popover, .inbound-menu) > button.danger {
+  color: var(--lg-destructive) !important;
+}
+html body :is(.general-menu, .inbound-popover, .inbound-menu) > button.danger:is(:hover, :focus-visible) {
+  color: #fff !important;
+}
+html body .swift-picker-menu li.mui-selected:not(:hover, .mui-active) {
+  background: transparent !important;
+  color: var(--lg-accent) !important;
+  font-weight: 600;
+}
+html body .username-suggestion-menu button.active:not(:hover) {
+  background: transparent !important;
+  color: var(--lg-accent) !important;
+}
+
+@keyframes lg-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lg-sheet-in {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes lg-menu-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html body :is(.modal-panel, .drawer, .modal-backdrop.open, .drawer-backdrop.open,
+    .general-menu.open, .inbound-popover.open, .swift-picker-menu) {
+    animation: none !important;
+  }
+}

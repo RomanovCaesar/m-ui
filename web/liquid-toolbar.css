@@ -1,0 +1,77 @@
+/* m-ui Liquid Glass toolbar (the sticky .topbar) with the iOS 26 / macOS 26
+ * scroll-edge effect.
+ *
+ * Page content scrolls underneath the toolbar, so its glass cannot come from
+ * the WebGL wallpaper layer (that layer paints behind the content and let
+ * scrolled text show straight through). Instead:
+ *   ::after  — the capsule itself: a real backdrop blur of whatever is under
+ *              it, a light tint, a thin rim and a soft shadow;
+ *   ::before — the scroll-edge band: a wider, lighter blur that fades out
+ *              below the toolbar, so content softens as it slides under it
+ *              instead of colliding with the title.
+ * Both live on pseudo-elements (not on .topbar) because a backdrop-filter on
+ * the toolbar would make it the backdrop root and its children could then
+ * only blur the toolbar itself, not the page.
+ */
+:root {
+  --lg-bar-fill: rgb(250 250 250 / 0.62);
+  --lg-bar-rim: rgb(255 255 255 / 0.55);
+  --lg-bar-filter: blur(18px) saturate(1.8);
+  --lg-bar-shadow: 0 4px 24px rgb(0 0 0 / 0.1);
+  --lg-edge-tint: rgb(242 244 248 / 0.55);
+  --lg-bar-gutter: 28px; /* the toolbar's side margin (liquid-optics.css) */
+  --lg-bar-top: 14px;
+}
+@media (max-width: 768px) {
+  :root { --lg-bar-gutter: 12px; --lg-bar-top: 10px; }
+}
+body.dark {
+  --lg-bar-fill: rgb(28 28 30 / 0.62);
+  --lg-bar-rim: rgb(255 255 255 / 0.14);
+  --lg-bar-shadow: 0 4px 24px rgb(0 0 0 / 0.35);
+  --lg-edge-tint: rgb(20 22 28 / 0.55);
+}
+
+html body .topbar {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  isolation: isolate;
+}
+
+html body .topbar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  border: 0.5px solid var(--lg-bar-rim);
+  background: var(--lg-bar-fill);
+  -webkit-backdrop-filter: var(--lg-bar-filter);
+  backdrop-filter: var(--lg-bar-filter);
+  box-shadow: var(--lg-bar-shadow);
+  pointer-events: none;
+}
+
+html body .topbar::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: calc(-1 * var(--lg-bar-gutter));
+  right: calc(-1 * var(--lg-bar-gutter));
+  top: calc(-1 * var(--lg-bar-top));
+  height: calc(100% + var(--lg-bar-top) + 28px);
+  background: linear-gradient(to bottom, var(--lg-edge-tint), transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html body .topbar::after { background: rgb(250 250 250); }
+  body.dark .topbar::after { background: rgb(28 28 30); }
+}

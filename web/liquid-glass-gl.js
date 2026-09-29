@@ -17,8 +17,7 @@
  *   - Vogel golden-angle Gaussian blur disc      (shaders/element-utils.ts)
  *   - directional rim specular stroke            (shaders/highlight.ts)
  *
- * No source or assets from those repositories are vendored; this is an
- * independent implementation of the same material. WebGL1, no extensions.
+ * Licensed under Apache-2.0 upstream; see NOTICE. WebGL1, no extensions.
  */
 (() => {
   'use strict';
@@ -156,6 +155,7 @@
     uniform float uBright, uContrast, uSat;
     uniform vec4 uTint;
     uniform float uBevel, uLightAngle;
+    uniform float uGlassDim;   // same theme dim as the wallpaper pass
     vec3 colorControls(vec3 c) {
       float invS = 1.0 - uSat;
       float r = 0.213 * invS, g = 0.715 * invS, b = 0.072 * invS;
@@ -195,8 +195,10 @@ ${BLUR_GLSL}
         float d = circleMap(k) * uAmount;
         sampleCoord = screen + d * grad;
       }
+      // The glass must see the wallpaper as it is drawn: dimmed in dark themes.
+      // Sampling the raw texture made the sidebar glow bright blue in dark mode.
       vec4 bg = sampleBlurred(sampleCoord, uBlur);
-      vec3 color = colorControls(bg.rgb);
+      vec3 color = colorControls(bg.rgb * uGlassDim);
 
       // Bevel: brighten toward light on the rim, darken on the far side.
       if (uBand > 0.5) {
@@ -393,6 +395,7 @@ ${BLUR_GLSL}
       if (dark && p._tintDarkA != null) tint[3] = p._tintDarkA;
       if (!dark && p._tintLightA != null) tint[3] = p._tintLightA;
       gl.uniform4f(U(glassProg, 'uTint'), tint[0], tint[1], tint[2], tint[3]);
+      gl.uniform1f(U(glassProg, 'uGlassDim'), themeDim());
       gl.uniform1f(U(glassProg, 'uBevel'), p.bevel);
       gl.uniform1f(U(glassProg, 'uLightAngle'), p.lightAngleDeg * Math.PI / 180);
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, wallTex);
@@ -499,7 +502,12 @@ ${BLUR_GLSL}
       }
       wake();
     }, { passive: true });
-    const mo = new MutationObserver(() => refresh());
+    // Buttons, switches and the tab bar animate inline styles every frame;
+    // those never move a glass surface, so they must not trigger a rescan
+    // and full redraw of this layer.
+    const relevant = r => r.attributeName !== 'style' ||
+      (r.target.nodeType === 1 && (r.target.matches(SURFACE_SELECTOR) || r.target.querySelector(SURFACE_SELECTOR)));
+    const mo = new MutationObserver(records => { if (records.some(relevant)) refresh(); });
     mo.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'open', 'style'] });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
     matchMedia('(prefers-reduced-transparency: reduce)').addEventListener('change', v => { if (v.matches) disable(); });

@@ -1,0 +1,143 @@
+/* m-ui Liquid Glass buttons (iOS 26 / macOS 26).
+ *
+ * Materials follow liquid-glass-webgl's LiquidButton variants (Apache-2.0,
+ * see NOTICE): Tinted (accent / red glass, white label), Surface (white 30%
+ * glass) and, for buttons that sit on opaque cards, the iOS "gray" fill.
+ * All carry the Default rim highlight (white 50% at 45 degrees); tinted and
+ * glass buttons also carry Shadow.Default (24dp, black 10%).
+ *
+ * The press glow is painted as extra background layers driven by the --lb-*
+ * properties that liquid-button.js animates (flat white 8% and a radial
+ * white 15% glow at the finger), so no pseudo-element or positioning is
+ * needed. This file loads after the older styles and overrides them.
+ */
+html body :is(.primary-btn, .danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *), .outline-btn, .small-btn, .icon-btn,
+  .modal-close, .circle-action, .inbound-pill, .mihomo-primary, .mihomo-tool, .mihomo-icon,
+  .overview-action, .client-btn, .settings-button, .login-button, .input-tool, .sider-trigger,
+  .back-top, .cpu-history-open, .ip-card-header-action, .lb-button) {
+  --lb-fill: rgb(118 118 128 / 0.12);
+  --lb-rim: rgb(255 255 255 / 0.5);
+  --lb-text: var(--text-strong, #1d1d1f);
+  --lb-shadow: none;
+  border: 0.5px solid transparent !important;
+  border-radius: 999px !important;
+  color: var(--lb-text) !important;
+  background:
+    radial-gradient(circle var(--lb-r, 40px) at var(--lb-gx, 50%) var(--lb-gy, 50%), rgb(255 255 255 / calc(0.15 * var(--lb-p, 0))), transparent) padding-box,
+    linear-gradient(rgb(255 255 255 / calc(0.08 * var(--lb-p, 0))), rgb(255 255 255 / calc(0.08 * var(--lb-p, 0)))) padding-box,
+    linear-gradient(var(--lb-fill), var(--lb-fill)) padding-box,
+    linear-gradient(135deg, var(--lb-rim), transparent 35%, transparent 65%, var(--lb-rim)) border-box !important;
+  box-shadow: var(--lb-shadow) !important;
+  font-weight: 500;
+  text-decoration: none !important; /* some are <a> download links */
+  transition: opacity 0.15s, color 0.15s !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* No hover lift / :active shrink from the older themes: the spring press replaces them. */
+html body :is(.primary-btn, .danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *), .outline-btn, .small-btn, .icon-btn,
+  .modal-close, .circle-action, .inbound-pill, .mihomo-primary, .mihomo-tool, .mihomo-icon,
+  .overview-action, .client-btn, .settings-button, .login-button, .input-tool, .sider-trigger,
+  .cpu-history-open, .ip-card-header-action, .lb-button):is(:hover, :active) {
+  transform: none !important;
+  filter: none !important;
+}
+html body .back-top.show:is(:hover, :active) {
+  transform: none !important;
+}
+
+html body :is(.primary-btn, .danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *), .outline-btn, .small-btn, .icon-btn,
+  .modal-close, .circle-action, .inbound-pill, .mihomo-primary, .mihomo-tool, .mihomo-icon,
+  .overview-action, .client-btn, .settings-button, .login-button, .input-tool, .sider-trigger,
+  .cpu-history-open, .ip-card-header-action, .lb-button):hover:not(:disabled) {
+  --lb-fill: rgb(118 118 128 / 0.18);
+}
+
+/* Tinted — accent glass. */
+html body :is(.primary-btn, .mihomo-primary, .login-button, #add-inbound) {
+  --lb-fill: #0088ff;
+  --lb-text: #fff;
+  --lb-shadow: 0 4px 24px rgb(0 0 0 / 0.1);
+}
+html body :is(.primary-btn, .mihomo-primary, .login-button, #add-inbound):hover:not(:disabled) {
+  --lb-fill: #0a8fff;
+}
+
+/* Tinted — destructive. */
+html body :is(.danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *)) {
+  --lb-fill: #ff3b30;
+  --lb-text: #fff;
+  --lb-shadow: 0 4px 24px rgb(0 0 0 / 0.1);
+}
+html body :is(.danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *)):hover:not(:disabled) {
+  --lb-fill: #ff463c;
+}
+
+/* Surface — glass buttons that float over the wallpaper or a sheet. */
+html body :is(.icon-btn, .modal-close, .circle-action, .sider-trigger, .back-top, .mihomo-icon, .top-actions .outline-btn):not(.lg-surface) {
+  --lb-fill: rgb(255 255 255 / 0.3);
+  --lb-shadow: 0 4px 24px rgb(0 0 0 / 0.1);
+  -webkit-backdrop-filter: blur(2px) saturate(1.5);
+  backdrop-filter: blur(2px) saturate(1.5);
+}
+html body :is(.icon-btn, .modal-close, .circle-action, .sider-trigger, .back-top, .mihomo-icon, .top-actions .outline-btn):not(.lg-surface):hover:not(:disabled) {
+  --lb-fill: rgb(255 255 255 / 0.4);
+}
+/* Surfaces already painted by the WebGL glass layer keep that glass. */
+html body :is(.icon-btn, .modal-close, .circle-action, .sider-trigger, .back-top, .mihomo-icon, .outline-btn, .inbound-pill, .small-btn).lg-surface:not(#add-inbound) {
+  --lb-fill: transparent;
+}
+
+html body :is(.primary-btn, .danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *), .outline-btn, .small-btn, .icon-btn,
+  .modal-close, .circle-action, .inbound-pill, .mihomo-primary, .mihomo-tool, .mihomo-icon,
+  .overview-action, .client-btn, .settings-button, .login-button, .input-tool, .sider-trigger,
+  .back-top, .cpu-history-open, .ip-card-header-action, .lb-button):disabled {
+  opacity: 0.4 !important;
+  cursor: default !important;
+}
+
+html body :is(.primary-btn, .danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *), .outline-btn, .small-btn, .icon-btn,
+  .modal-close, .circle-action, .inbound-pill, .mihomo-primary, .mihomo-tool, .mihomo-icon,
+  .overview-action, .client-btn, .settings-button, .login-button, .input-tool, .sider-trigger,
+  .back-top, .cpu-history-open, .ip-card-header-action, .lb-button):focus-visible {
+  outline: 2px solid #0088ff !important;
+  outline-offset: 2px;
+}
+
+/* ---------------- dark ---------------- */
+:is(html body.dark, html[data-theme="dark"] body) :is(.primary-btn, .danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *), .outline-btn, .small-btn, .icon-btn,
+  .modal-close, .circle-action, .inbound-pill, .mihomo-primary, .mihomo-tool, .mihomo-icon,
+  .overview-action, .client-btn, .settings-button, .login-button, .input-tool, .sider-trigger,
+  .back-top, .cpu-history-open, .ip-card-header-action, .lb-button) {
+  --lb-fill: rgb(118 118 128 / 0.24);
+  --lb-rim: rgb(255 255 255 / 0.28);
+  --lb-text: #f5f5f7;
+}
+:is(html body.dark, html[data-theme="dark"] body) :is(.outline-btn, .small-btn, .overview-action, .client-btn, .settings-button, .mihomo-tool,
+  .input-tool, .cpu-history-open, .ip-card-header-action, .inbound-pill, .lb-button):hover:not(:disabled) {
+  --lb-fill: rgb(118 118 128 / 0.32);
+}
+:is(html body.dark, html[data-theme="dark"] body) :is(.primary-btn, .mihomo-primary, .login-button, #add-inbound) {
+  --lb-fill: #0091ff;
+  --lb-text: #fff;
+}
+:is(html body.dark, html[data-theme="dark"] body) :is(.danger-btn, button.danger:not(.mihomo-icon, :is(.general-menu, .inbound-popover, .inbound-menu, .username-suggestion-menu) > *)) {
+  --lb-fill: #ff453a;
+  --lb-text: #fff;
+}
+:is(html body.dark, html[data-theme="dark"] body) :is(.icon-btn, .modal-close, .circle-action, .sider-trigger, .back-top, .mihomo-icon, .top-actions .outline-btn):not(.lg-surface) {
+  --lb-fill: rgb(18 18 18 / 0.4);
+  --lb-shadow: 0 4px 24px rgb(0 0 0 / 0.3);
+}
+:is(html body.dark, html[data-theme="dark"] body) :is(.icon-btn, .modal-close, .circle-action, .sider-trigger, .back-top, .mihomo-icon, .outline-btn, .inbound-pill, .small-btn).lg-surface:not(#add-inbound) {
+  --lb-fill: transparent;
+}
+
+/* Destructive icon buttons (delete outbound / rule) keep the glass and turn
+ * only the glyph red, as macOS does. */
+html body button.mihomo-icon.danger {
+  --lb-text: #ff3b30;
+}
+:is(html body.dark, html[data-theme="dark"] body) button.mihomo-icon.danger {
+  --lb-text: #ff453a;
+}

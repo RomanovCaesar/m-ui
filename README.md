@@ -126,6 +126,8 @@ m-ui clear-logs
 m-ui uninstall
 ```
 
+The management menu speaks the same 11 languages as the panel. Pick one with `m-ui --lang <code>` (for example `m-ui --lang zh-cn`); the choice is remembered, and `m-ui --lang` alone lists the codes. The installer itself stays in English.
+
 ## Features
 
 ### Panel and Mihomo

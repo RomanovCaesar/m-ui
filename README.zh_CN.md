@@ -109,6 +109,8 @@ m-ui clear-logs
 m-ui uninstall
 ```
 
+管理菜单支持和面板相同的 11 种语言，用 `m-ui --lang <代码>` 切换（例如 `m-ui --lang zh-cn`），选择会被记住；只输入 `m-ui --lang` 会列出所有语言代码。安装脚本本身保持英文。
+
 ## 运行
 
 在 `m-ui` 目录执行：

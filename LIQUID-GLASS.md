@@ -11,6 +11,10 @@ ported, and the result was compared against its live demo
 Everything is framework-free JavaScript/GLSL and CSS embedded in the Go
 binary. No build step and no remote assets.
 
+For a general, reusable write-up of the approach and the pitfalls met along
+the way (in Chinese, written for developers and AI coding assistants), see
+[`liquid-glass-web-guide.md`](liquid-glass-web-guide.md).
+
 Sizing: wide screens use macOS-sized controls, screens up to 768 px wide use
 iOS-sized ones.
 

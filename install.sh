@@ -466,7 +466,7 @@ install_repo_file() {
 # Files the panel cannot regenerate. Geo databases, cache.db and the logs are
 # intentionally excluded: they are large, re-downloadable, and would push an
 # ordinary snapshot past 40 MB.
-BACKUP_FILES=(state.json config.yaml multi-control.json cross-panel-subscriptions.json)
+BACKUP_FILES=(state.json config.yaml multi-control.json cross-panel-subscriptions.json sub-templates.json)
 
 prune_backups() {
     local keep="$1" existing=() candidate index total

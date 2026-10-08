@@ -13,6 +13,47 @@ import (
 // that selector. Protocols sing-box cannot express are skipped, just like
 // buildMihomoSubscription drops the ones subscriptionProxy returns nil for.
 func buildSingboxSubscription(snapshot subscriptionSnapshot, server string) ([]byte, error) {
+	outbounds, tags := singboxNodeOutbounds(snapshot, server)
+	if len(outbounds) == 0 {
+		return nil, fmt.Errorf("此用户没有 sing-box 可用节点")
+	}
+	if snapshot.Template != nil {
+		return json.MarshalIndent(renderSingboxTemplate(snapshot.Template, outbounds, tags), "", "  ")
+	}
+	selectorTags := make([]any, 0, len(tags)+1)
+	for _, tag := range tags {
+		selectorTags = append(selectorTags, tag)
+	}
+	selectorTags = append(selectorTags, "direct")
+	outbounds = append(outbounds,
+		map[string]any{"type": "selector", "tag": "PROXY", "outbounds": selectorTags, "default": tags[0]},
+		map[string]any{"type": "direct", "tag": "direct"},
+	)
+	config := map[string]any{
+		"log":       map[string]any{"level": "info"},
+		"inbounds":  singboxDefaultInbounds(),
+		"outbounds": outbounds,
+		"route": map[string]any{
+			"rules": []any{
+				map[string]any{"action": "sniff"},
+				map[string]any{"protocol": "dns", "action": "hijack-dns"},
+			},
+			"final":                 "PROXY",
+			"auto_detect_interface": true,
+		},
+	}
+	return json.MarshalIndent(config, "", "  ")
+}
+
+func singboxDefaultInbounds() []any {
+	return []any{
+		map[string]any{"type": "tun", "tag": "tun-in", "address": []any{"172.19.0.1/30"}, "auto_route": true, "strict_route": true, "stack": "mixed"},
+		map[string]any{"type": "mixed", "tag": "mixed-in", "listen": "127.0.0.1", "listen_port": 2080},
+	}
+}
+
+// singboxNodeOutbounds returns one outbound per usable node with unique tags.
+func singboxNodeOutbounds(snapshot subscriptionSnapshot, server string) ([]any, []string) {
 	outbounds := make([]any, 0)
 	tags := make([]string, 0)
 	usedTags := map[string]int{}
@@ -38,35 +79,7 @@ func buildSingboxSubscription(snapshot subscriptionSnapshot, server string) ([]b
 		outbounds = append(outbounds, outbound)
 		tags = append(tags, tag)
 	}
-	if len(outbounds) == 0 {
-		return nil, fmt.Errorf("此用户没有 sing-box 可用节点")
-	}
-	selectorTags := make([]any, 0, len(tags)+1)
-	for _, tag := range tags {
-		selectorTags = append(selectorTags, tag)
-	}
-	selectorTags = append(selectorTags, "direct")
-	outbounds = append(outbounds,
-		map[string]any{"type": "selector", "tag": "PROXY", "outbounds": selectorTags, "default": tags[0]},
-		map[string]any{"type": "direct", "tag": "direct"},
-	)
-	config := map[string]any{
-		"log": map[string]any{"level": "info"},
-		"inbounds": []any{
-			map[string]any{"type": "tun", "tag": "tun-in", "address": []any{"172.19.0.1/30"}, "auto_route": true, "strict_route": true, "stack": "mixed"},
-			map[string]any{"type": "mixed", "tag": "mixed-in", "listen": "127.0.0.1", "listen_port": 2080},
-		},
-		"outbounds": outbounds,
-		"route": map[string]any{
-			"rules": []any{
-				map[string]any{"action": "sniff"},
-				map[string]any{"protocol": "dns", "action": "hijack-dns"},
-			},
-			"final":                 "PROXY",
-			"auto_detect_interface": true,
-		},
-	}
-	return json.MarshalIndent(config, "", "  ")
+	return outbounds, tags
 }
 
 // singboxOutbound translates one inbound+client pair into a sing-box outbound, or

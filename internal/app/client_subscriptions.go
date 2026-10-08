@@ -28,6 +28,9 @@ const (
 
 // buildClientSubscription renders the sub-store-style client formats.
 func buildClientSubscription(snapshot subscriptionSnapshot, server string, format subscriptionFormat) ([]byte, string, error) {
+	if snapshot.Template != nil {
+		return buildTemplateClientSubscription(snapshot, server, format)
+	}
 	switch format {
 	case subscriptionFormatSurge:
 		data, err := buildSurgeFamilySubscription(snapshot, server, "Surge", false)
@@ -401,11 +404,28 @@ const surgeMacExternalPort = 65535
 // spawns /usr/local/bin/mihomo with a base64 single-node config embedded, so
 // vless/reality/… still work on macOS through the external proxy program.
 func buildSurgeMacSubscription(snapshot subscriptionSnapshot, server string) ([]byte, error) {
-	lines := make([]string, 0)
+	nodes, err := surgeMacNodes(snapshot, server)
+	if err != nil {
+		return nil, err
+	}
+	lines := make([]string, 0, len(nodes))
+	for _, node := range nodes {
+		lines = append(lines, node.Line)
+	}
+	if len(lines) == 0 {
+		return nil, fmt.Errorf("此用户没有 Surge Mac 可用节点")
+	}
+	return []byte(strings.Join(lines, "\n") + "\n"), nil
+}
+
+// surgeMacNodes renders native Surge lines where possible and mihomo external
+// lines for the rest.
+func surgeMacNodes(snapshot subscriptionSnapshot, server string) ([]clientNode, error) {
+	nodes := make([]clientNode, 0)
 	nextPort := surgeMacExternalPort
 	for _, proxy := range subscriptionProxies(snapshot, server) {
 		if line, ok := surgeProxyLine(proxy, false); ok {
-			lines = append(lines, line)
+			nodes = append(nodes, clientNode{Name: iniName(proxy), Type: proxyStr(proxy, "type"), Line: line})
 			continue
 		}
 		localPort := nextPort
@@ -441,12 +461,9 @@ func buildSurgeMacSubscription(snapshot subscriptionSnapshot, server string) ([]
 			builder.WriteString(",addresses=" + proxyStr(proxy, "server"))
 		}
 		builder.WriteString(",udp-relay=true")
-		lines = append(lines, builder.String())
+		nodes = append(nodes, clientNode{Name: iniName(proxy), Type: proxyStr(proxy, "type"), Line: builder.String()})
 	}
-	if len(lines) == 0 {
-		return nil, fmt.Errorf("此用户没有 Surge Mac 可用节点")
-	}
-	return []byte(strings.Join(lines, "\n") + "\n"), nil
+	return nodes, nil
 }
 
 // ---- Loon（loon.js） ----
@@ -1202,4 +1219,74 @@ func buildEgernSubscription(snapshot subscriptionSnapshot, server string) ([]byt
 		return nil, fmt.Errorf("此用户没有 Egern 可用节点")
 	}
 	return marshalYAML(map[string]any{"proxies": list})
+}
+
+// ---- 模版输出 ----
+
+// lineClientNodes renders each usable node with lineFn, keeping the name the
+// profile's groups refer to.
+func lineClientNodes(snapshot subscriptionSnapshot, server string, lineFn func(map[string]any) (string, bool)) []clientNode {
+	nodes := make([]clientNode, 0)
+	for _, proxy := range subscriptionProxies(snapshot, server) {
+		if line, ok := lineFn(proxy); ok {
+			nodes = append(nodes, clientNode{Name: iniName(proxy), Type: proxyStr(proxy, "type"), Line: line})
+		}
+	}
+	return nodes
+}
+
+// buildTemplateClientSubscription renders the active template as a complete
+// profile in each client's own format.
+func buildTemplateClientSubscription(snapshot subscriptionSnapshot, server string, format subscriptionFormat) ([]byte, string, error) {
+	template := snapshot.Template
+	ini := func(label string, nodes []clientNode, dialect iniDialect) ([]byte, string, error) {
+		if len(nodes) == 0 {
+			return nil, "", fmt.Errorf("此用户没有 %s 可用节点", label)
+		}
+		return renderIniTemplate(template, nodes, dialect, snapshot.RequestURL), clientSubscriptionTextContentType, nil
+	}
+	switch format {
+	case subscriptionFormatSurge:
+		return ini("Surge", lineClientNodes(snapshot, server, func(proxy map[string]any) (string, bool) { return surgeProxyLine(proxy, false) }), dialectSurge)
+	case subscriptionFormatSurgeMac:
+		nodes, err := surgeMacNodes(snapshot, server)
+		if err != nil {
+			return nil, "", err
+		}
+		return ini("Surge Mac", nodes, dialectSurge)
+	case subscriptionFormatSurfboard:
+		return ini("Surfboard", lineClientNodes(snapshot, server, func(proxy map[string]any) (string, bool) { return surgeProxyLine(proxy, true) }), dialectSurfboard)
+	case subscriptionFormatLoon:
+		return ini("Loon", lineClientNodes(snapshot, server, loonProxyLine), dialectLoon)
+	case subscriptionFormatQX:
+		return ini("Quantumult X", lineClientNodes(snapshot, server, qxProxyLine), dialectQX)
+	case subscriptionFormatStash:
+		proxies := make([]map[string]any, 0)
+		for _, proxy := range subscriptionProxies(snapshot, server) {
+			if stashKeepsProxy(proxy) {
+				stashNormalizeProxy(proxy)
+				proxies = append(proxies, proxy)
+			}
+		}
+		if len(proxies) == 0 {
+			return nil, "", fmt.Errorf("此用户没有 Stash 可用节点")
+		}
+		data, err := renderMihomoTemplate(template, proxies)
+		return data, clientSubscriptionYAMLContentType, err
+	case subscriptionFormatEgern:
+		entries := make([]map[string]any, 0)
+		nodes := make([]clientNode, 0)
+		for _, proxy := range subscriptionProxies(snapshot, server) {
+			if entry, ok := egernProxyEntry(proxy); ok {
+				entries = append(entries, entry)
+				nodes = append(nodes, clientNode{Name: proxyStr(proxy, "name"), Type: proxyStr(proxy, "type")})
+			}
+		}
+		if len(entries) == 0 {
+			return nil, "", fmt.Errorf("此用户没有 Egern 可用节点")
+		}
+		data, err := renderEgernTemplate(template, entries, nodes)
+		return data, clientSubscriptionYAMLContentType, err
+	}
+	return nil, "", fmt.Errorf("未知的客户端订阅格式")
 }

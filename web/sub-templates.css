@@ -1,0 +1,47 @@
+/* ===== 订阅模版页（Subscription Templates） ===== */
+
+.subtpl-page .setting-section-body { padding-top: 4px; }
+/* 和面板设置页的 #settings-form、Mihomo 设置页的 .basics-sections 同一套圆角外框。 */
+.subtpl-sections {
+  border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface);
+  overflow: hidden; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+.subtpl-row { grid-template-columns: minmax(0, 1fr) auto; }
+.subtpl-row .subtpl-info strong { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.subtpl-row .subtpl-info strong > span:first-child { overflow-wrap: anywhere; }
+.subtpl-row .subtpl-meta { color: var(--muted); font-variant-numeric: tabular-nums; }
+.subtpl-badge {
+  display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent);
+  font-size: 12px; font-weight: 600; line-height: 18px;
+}
+.subtpl-badge[hidden] { display: none; }
+.subtpl-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.setting-control.subtpl-actions > * { width: auto; flex: 0 0 auto; }
+.subtpl-actions [hidden] { display: none !important; }
+.subtpl-actions .subtpl-variants { margin-right: 4px; }
+.subtpl-empty { padding: 18px 0 6px; color: var(--muted); font-size: 13px; }
+
+#subtpl-view-modal, #subtpl-import-modal { z-index: 80; }
+.modal-panel.subtpl-modal {
+  width: min(880px, calc(100vw - 32px)); max-height: calc(100dvh - 34px); overflow: auto;
+}
+.subtpl-modal .modal-content { display: flex; flex-direction: column; gap: 12px; padding: 20px 24px; }
+.subtpl-note { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.subtpl-field { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 550; color: var(--text-strong); }
+.subtpl-file { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.subtpl-file span { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subtpl-code {
+  width: 100%; min-height: 260px; box-sizing: border-box; resize: vertical;
+  font: 12.5px/1.55 var(--font-mono); tab-size: 2; white-space: pre; overflow: auto;
+}
+#subtpl-view-code { min-height: min(62dvh, 560px); }
+.subtpl-preview { display: flex; flex-direction: column; gap: 6px; }
+.subtpl-preview p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.subtpl-preview .subtpl-code { min-height: 200px; }
+
+@media (max-width: 768px) {
+  .subtpl-row { grid-template-columns: 1fr; }
+  .subtpl-actions { justify-content: flex-start; }
+  .subtpl-modal .modal-content { padding: 16px; }
+}

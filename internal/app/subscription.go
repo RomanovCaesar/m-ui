@@ -52,6 +52,11 @@ type subscriptionSnapshot struct {
 	Username string
 	Token    string
 	Clients  []subscriptionClient
+	// Template is the active subscription template; nil keeps the plain
+	// node-only output (used by tests and when no template manager exists).
+	Template *compiledSubTemplate
+	// RequestURL is the URL the client fetched, for managed-config headers.
+	RequestURL string
 }
 
 type subscriptionClient struct {
@@ -499,6 +504,8 @@ func (a *App) handleSubscriptionRequest(w http.ResponseWriter, r *http.Request) 
 // linksFn / renderPage closures let local and cross-panel callers plug in their
 // own link source and page URLs while sharing this branching logic.
 func (a *App) respondSubscription(w http.ResponseWriter, r *http.Request, snapshot subscriptionSnapshot, format subscriptionFormat, server string, linksFn func() []subscriptionNode, renderPage func([]subscriptionNode) error) {
+	snapshot.Template = a.subTemplates.active()
+	snapshot.RequestURL = subscriptionScheme(r) + "://" + subscriptionPublicHost(snapshot.Settings, r) + r.URL.RequestURI()
 	switch format {
 	case subscriptionFormatClash:
 		data, err := buildMihomoSubscription(snapshot, server)
@@ -885,6 +892,9 @@ func buildMihomoSubscription(snapshot subscriptionSnapshot, server string) ([]by
 	proxies := subscriptionProxies(snapshot, server)
 	if len(proxies) == 0 {
 		return nil, fmt.Errorf("此用户没有 Mihomo 可用节点")
+	}
+	if snapshot.Template != nil {
+		return renderMihomoTemplate(snapshot.Template, proxies)
 	}
 	names := make([]any, 0, len(proxies)+1)
 	for _, proxy := range proxies {

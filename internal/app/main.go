@@ -639,7 +639,9 @@ type App struct {
 	manager     *CoreManager
 	peers       *PeerNetwork
 	cross       *CrossSubscriptionManager
-	session     string
+	// subTemplates holds the subscription templates; nil disables them.
+	subTemplates *SubTemplateManager
+	session      string
 	// 会话有效期由 Settings.SessionMaxAge 决定。零值表示"不过期"，这样
 	// 直接构造 App{manager: …, session: "token"} 的测试不用管这个字段。
 	sessionMu      sync.Mutex
@@ -715,6 +717,11 @@ func Run(buildVersion string) {
 		log.Printf("Cross-panel subscriptions unavailable: %v", err)
 	} else {
 		app.cross = cross
+	}
+	if templates, err := newSubTemplateManager(dataDir); err != nil {
+		log.Printf("Subscription templates unavailable: %v", err)
+	} else {
+		app.subTemplates = templates
 	}
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt, syscall.SIGTERM)
@@ -998,6 +1005,8 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/api/tools/cross-panel-subscription-path", a.auth(a.handleNewCrossPanelSubscriptionPath))
 	mux.HandleFunc("/api/cross-subscriptions", a.auth(a.handleCrossSubscriptions))
 	mux.HandleFunc("/api/cross-subscriptions/", a.auth(a.handleCrossSubscriptions))
+	mux.HandleFunc("/api/sub-templates", a.auth(a.handleSubTemplates))
+	mux.HandleFunc("/api/sub-templates/", a.auth(a.handleSubTemplates))
 	mux.HandleFunc("/api/tools/reality-keypair", a.auth(a.handleRealityKeyPair))
 	mux.HandleFunc("/api/tools/vless-encryption", a.auth(a.handleVLESSEncryption))
 	mux.HandleFunc("/api/tools/ech-keypair", a.auth(a.handleECHKeyPair))

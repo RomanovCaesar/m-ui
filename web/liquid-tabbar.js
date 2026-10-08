@@ -621,10 +621,13 @@
   }
 
   function sync(ctrl, animate = true) {
+    const hadButtons = !!(ctrl.buttons && ctrl.buttons.length);
     measure(ctrl);
     const index = activeIndex(ctrl);
     ctrl.buttons.forEach((b, i) => b.classList.toggle('lt-selected', i === index));
-    if (ctrl.target === undefined) {
+    // A bar whose buttons are filled in later by script starts where it is,
+    // instead of sliding over from the first tab.
+    if (ctrl.target === undefined || !hadButtons) {
       ctrl.target = ctrl.value = index;
       ctrl.needsDraw = true;
       wake();

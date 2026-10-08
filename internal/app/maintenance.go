@@ -32,6 +32,7 @@ const (
 	backupStateFile     = "state.json"
 	backupPeerFile      = "multi-control.json"
 	backupCrossFile     = crossSubscriptionCacheFile
+	backupTemplateFile  = subTemplateFile
 )
 
 type githubRelease struct {
@@ -162,6 +163,14 @@ func (a *App) exportBackup(w http.ResponseWriter) {
 				name string
 				data []byte
 			}{name: backupCrossFile, data: data})
+		}
+	}
+	if a.subTemplates != nil {
+		if data, err := json.MarshalIndent(a.subTemplates.exportDisk(), "", "  "); err == nil {
+			entries = append(entries, struct {
+				name string
+				data []byte
+			}{name: backupTemplateFile, data: data})
 		}
 	}
 	contents := make([]string, 0, len(entries))
@@ -324,6 +333,7 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	}
 	var peerDiskData *peerDisk
 	var crossDiskData *crossSubscriptionCacheDisk
+	var templateDiskData *subTemplateDisk
 	if format >= 2 {
 		data, err := readBackupEntry(reader, backupPeerFile, 1<<20)
 		if err != nil {
@@ -352,6 +362,22 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 				return outcome, err
 			}
 			crossDiskData = &incoming
+		}
+		// sub-templates.json is optional: archives made before templates
+		// existed simply leave the current templates alone.
+		data, err = readBackupEntry(reader, backupTemplateFile, 8<<20)
+		if err != nil {
+			return outcome, err
+		}
+		if len(data) > 0 {
+			var incoming subTemplateDisk
+			if err := json.Unmarshal(data, &incoming); err != nil {
+				return outcome, fmt.Errorf("备份中的订阅模版无效: %w", err)
+			}
+			if err := validateSubTemplateDisk(&incoming); err != nil {
+				return outcome, err
+			}
+			templateDiskData = &incoming
 		}
 	}
 	if peerDiskData != nil && a.peers == nil {
@@ -387,6 +413,11 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	if crossDiskData != nil {
 		if err := a.cross.restoreDisk(*crossDiskData); err != nil {
 			outcome.Warnings = append(outcome.Warnings, fmt.Sprintf("跨面板订阅缓存恢复失败: %s", err.Error()))
+		}
+	}
+	if templateDiskData != nil && a.subTemplates != nil {
+		if err := a.subTemplates.restoreDisk(*templateDiskData); err != nil {
+			outcome.Warnings = append(outcome.Warnings, fmt.Sprintf("订阅模版恢复失败: %s", err.Error()))
 		}
 	}
 	if configured, valid := panelTLSStatus(restored.Settings); configured && !valid {

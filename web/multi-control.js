@@ -17,6 +17,10 @@
         <div class="setting-row"><div><label for="mc-endpoint" data-i18n="mc.advertisedAddress">Advertised Address</label><p data-i18n="mc.endpointDesc">其他服务器可直接访问的本面板地址，不包含 URI 路径；面板端口或公网地址变更后请在此更新。</p></div><div class="setting-control"><input id="mc-endpoint" placeholder="http://203.0.113.10:2053" required></div></div>
         <div class="mc-local-footer"><span id="mc-local-status">联机设置独立保存，立即生效，无需重启面板。</span><button class="primary-btn" type="submit" id="mc-local-save" data-i18n="mc.saveLocal">保存联机地址</button></div>
       </form></div></details>
+      <details class="setting-section" open><summary data-i18n="mc.clientSection">客户端设备</summary><div class="setting-section-body">
+        <div class="setting-row"><div><strong data-i18n="mc.clientFile">客户端插件文件</strong><p data-i18n="mc.clientFileDesc">在 Clash Caesar 等客户端里导入这个文件，并用本面板的管理员账号登录，设备就能接入整个联机网络，拉取任意面板的订阅或融合订阅。文件不含任何密钥，可以分发到你的所有设备。</p></div><div class="setting-control"><button type="button" class="outline-btn" id="mc-client-file" data-i18n="mc.downloadClientFile">下载插件文件</button></div></div>
+        <div class="setting-row"><div><strong data-i18n="mc.clientDevices">已接入的设备</strong><p data-i18n="mc.clientDevicesDesc">在本面板登录或访问过本面板的设备。吊销会同步到网络里的所有面板，设备需要重新登录。</p></div><div class="setting-control"><button type="button" class="primary-btn" id="mc-devices-open" data-i18n="mc.manageDevices">管理设备</button></div></div>
+      </div></details>
     </div>
     <div id="mc-summary" class="mc-summary"></div><div id="mc-error" role="alert" hidden></div>`;
   auth.parentNode.insertBefore(pane,auth);
@@ -25,6 +29,23 @@
   const connectionsModal=document.createElement('div');connectionsModal.className='modal-backdrop';connectionsModal.id='mc-connections-modal';
   connectionsModal.innerHTML=`<section class="modal-panel mc-modal mc-wide" role="dialog" aria-modal="true" aria-labelledby="mc-connections-title"><header class="modal-titlebar"><span id="mc-connections-title" data-i18n="mc.peerConnections">Peer Connections</span><button type="button" class="modal-close" data-mc-close aria-label="Close" data-i18n-aria="common.close">${SF('close')}</button></header><div class="modal-content"><div class="mc-modal-actions"><button class="primary-btn" type="button" id="mc-add-toggle">${SF('plus')}<span data-i18n="mc.addConnection">添加连接</span></button><button class="outline-btn" type="button" id="mc-refresh">${SF('sync')}<span data-i18n="topbar.refresh">刷新状态</span></button></div><form id="mc-connect-form" hidden><div class="mc-connect-grid"><label data-i18n-multi="mc.ipHost">IP / Host<input name="host" required placeholder="203.0.113.20" autocomplete="off"></label><label data-i18n-multi="mc.panelPort">Panel Port<input name="port" required type="number" min="1" max="65535" value="2053"></label><label data-i18n-multi="mc.protocol">Protocol<select name="scheme"><option value="auto" data-i18n="mc.protoAuto">Auto (HTTPS / HTTP)</option><option value="http">HTTP</option><option value="https">HTTPS</option></select></label><label class="mc-connect-token">Token<input name="token" required minlength="16" maxlength="32" pattern="[a-z0-9]{16,32}" autocomplete="off" spellcheck="false" placeholder="16-32 位小写字母和数字混合" data-i18n-placeholder="mc.tokenHint"></label></div><button class="primary-btn" type="submit" id="mc-connect-submit" data-i18n="mc.connect">连接</button></form><p class="mc-note" data-i18n="mc.addressNote">地址必须能够从服务器之间直接访问。每个节点独立维护连接；暂时离线不会删除节点。HTTPS 使用正常证书校验，使用证书对应域名连接。</p><div id="mc-peer-list"></div><details id="mc-blocked-section" hidden><summary data-i18n="mc.blockedSection">本机已断开的节点</summary><div id="mc-blocked-list"></div></details><div class="mc-modal-error" role="alert" hidden></div></div></section>`;
   document.body.append(tokenModal,connectionsModal);
+  const devicesModal=document.createElement('div');devicesModal.className='modal-backdrop';devicesModal.id='mc-devices-modal';
+  devicesModal.innerHTML=`<section class="modal-panel mc-modal mc-wide" role="dialog" aria-modal="true" aria-labelledby="mc-devices-title"><header class="modal-titlebar"><span id="mc-devices-title" data-i18n="mc.clientDevices">已接入的设备</span><button type="button" class="modal-close" data-mc-close aria-label="Close" data-i18n-aria="common.close">${SF('close')}</button></header><div class="modal-content"><p class="mc-note" data-i18n="mc.clientDevicesDesc">在本面板登录或访问过本面板的设备。吊销会同步到网络里的所有面板，设备需要重新登录。</p><div id="mc-device-list"></div><div class="mc-modal-error" role="alert" hidden></div></div></section>`;
+  document.body.appendChild(devicesModal);
+  let devices=[];
+  function nodeName(id){if(state?.self?.id===id)return state.self.name;const peer=state?.peers?.find(item=>item.id===id);return peer?peer.name:id.slice(0,8);}
+  function millis(value){return value?new Date(value).toLocaleString():'—';}
+  function renderDevices(){
+    $('#mc-device-list').innerHTML=devices.length?`<div class="mc-table-wrap"><table class="mc-peer-table"><thead><tr><th>${muiT('mc.colDevice')}</th><th>${muiT('mc.colIssuer')}</th><th>${muiT('mc.colStatus')}</th><th>${muiT('mc.colLastSeen')}</th><th>${muiT('mc.colActions')}</th></tr></thead><tbody>${devices.map(device=>`<tr><td>${esc(device.name)}<small>${esc(device.id)}</small></td><td>${esc(nodeName(device.issuer))}</td><td><span class="mc-status ${device.revoked?'':'online'}">${device.revoked?muiT('mc.revoked'):muiT('mc.deviceActive')}</span></td><td>${esc(millis(device.lastSeen))}</td><td>${device.revoked?'':`<button type="button" class="danger-btn" data-mc-revoke="${esc(device.id)}">${muiT('mc.revoke')}</button>`}</td></tr>`).join('')}</tbody></table></div>`:`<div class="mc-empty">${muiT('mc.emptyDevices')}</div>`;
+    for(const button of $('[data-mc-revoke]',devicesModal))button.onclick=()=>revokeDevice(button.dataset.mcRevoke);
+  }
+  async function loadDevices(){devices=await api('/api/client-mesh/devices');renderDevices();}
+  function revokeDevice(id){if(!confirm(muiT('mc.confirmRevoke')))return;run(devicesModal,async()=>{devices=await api('/api/client-mesh/devices/revoke',{method:'POST',body:JSON.stringify({id})});renderDevices();});}
+  async function downloadClientFile(){
+    const response=await fetch('api/client-mesh/file',{credentials:'same-origin'});
+    if(!response.ok){let message=response.statusText;try{message=(await response.json()).message||message;}catch{}throw new Error(message);}
+    const url=URL.createObjectURL(await response.blob());const link=document.createElement('a');link.href=url;link.download='m-ui-network.muinet';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
   function modalError(modal,message){const box=$('.mc-modal-error',modal);box.textContent=message;box.hidden=!message;}
   function error(message){$('#mc-error').textContent=message;$('#mc-error').hidden=!message;}
   function date(value){return !value||value.startsWith('0001-')?'—':new Date(value).toLocaleString();}
@@ -71,15 +92,17 @@
   $('#mc-token-disable').onclick=()=>run(tokenModal,async()=>{state=await api('/api/multi-control/token',{method:'DELETE'});$('#mc-token').value='';render();});
   $('#mc-token-copy').onclick=()=>copyShareText($('#mc-token').value,muiT('mc.tokenCopied'));
   $('#mc-connections-open').onclick=()=>{openModal('mc-connections-modal');load();};
+  $('#mc-devices-open').onclick=()=>{openModal('mc-devices-modal');run(devicesModal,loadDevices);};
+  $('#mc-client-file').onclick=()=>run(null,downloadClientFile);
   $('#mc-add-toggle').onclick=()=>{$('#mc-connect-form').hidden=!$('#mc-connect-form').hidden;};
   $('#mc-refresh').onclick=()=>run(connectionsModal,async()=>{await api('/api/multi-control/sync',{method:'POST'});state=await api('/api/multi-control');render();});
   $('#mc-connect-form').onsubmit=event=>{event.preventDefault();const form=event.currentTarget;run(connectionsModal,async()=>{await saveLocal();const data=Object.fromEntries(new FormData(form));data.port=Number(data.port);state=await api('/api/multi-control/connect',{method:'POST',body:JSON.stringify(data)});form.elements.token.value='';form.hidden=true;render();});};
   function disconnect(id){if(!confirm(muiT('mc.confirmDisconnect')))return;run(connectionsModal,async()=>{state=await api('/api/multi-control/disconnect',{method:'POST',body:JSON.stringify({id})});render();});}
-  for(const modal of [tokenModal,connectionsModal]){
+  for(const modal of [tokenModal,connectionsModal,devicesModal]){
     $('[data-mc-close]',modal).onclick=()=>{if(!busy)closeModal(modal);};modal.onclick=event=>{if(event.target===modal&&!busy)closeModal(modal);};
   }
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!busy){closeModal(tokenModal);closeModal(connectionsModal);}});
-  window.addEventListener('mui-langchange',()=>{if(state)render();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!busy){closeModal(tokenModal);closeModal(connectionsModal);closeModal(devicesModal);}});
+  window.addEventListener('mui-langchange',()=>{if(state)render();renderDevices();});
   timer=setInterval(()=>{if(app.currentView==='settings'&&(pane.classList.contains('active')||connectionsModal.classList.contains('open')))load();},5000);
   window.addEventListener('pagehide',()=>clearInterval(timer));
 })();

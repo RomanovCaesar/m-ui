@@ -50,6 +50,7 @@ For complete documentation, visit the [m-ui Wiki](https://github.com/RomanovCaes
 * Peer-to-peer panel network with signed identities and no master node
 * Encrypted inbound synchronization between trusted panels
 * Cross-panel subscription aggregation
+* Client devices: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) imports the network file, signs in once with the panel admin account, and can then see every panel and pull any panel's or the merged subscription through whichever panel it can reach
 
 ## Linux installation
 

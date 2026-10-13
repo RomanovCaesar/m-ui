@@ -33,6 +33,7 @@ const (
 	backupPeerFile      = "multi-control.json"
 	backupCrossFile     = crossSubscriptionCacheFile
 	backupTemplateFile  = subTemplateFile
+	backupClientFile    = clientDevicesFile
 )
 
 type githubRelease struct {
@@ -171,6 +172,14 @@ func (a *App) exportBackup(w http.ResponseWriter) {
 				name string
 				data []byte
 			}{name: backupTemplateFile, data: data})
+		}
+	}
+	if a.clients != nil {
+		if data, err := json.MarshalIndent(a.clients.exportDisk(), "", "  "); err == nil {
+			entries = append(entries, struct {
+				name string
+				data []byte
+			}{name: backupClientFile, data: data})
 		}
 	}
 	contents := make([]string, 0, len(entries))
@@ -334,6 +343,7 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	var peerDiskData *peerDisk
 	var crossDiskData *crossSubscriptionCacheDisk
 	var templateDiskData *subTemplateDisk
+	var clientDiskData *clientDevicesDisk
 	if format >= 2 {
 		data, err := readBackupEntry(reader, backupPeerFile, 1<<20)
 		if err != nil {
@@ -379,6 +389,22 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 			}
 			templateDiskData = &incoming
 		}
+		// client-devices.json is optional as well (archives made before client
+		// mesh access existed); restoring only adds devices and revocations.
+		data, err = readBackupEntry(reader, backupClientFile, 4<<20)
+		if err != nil {
+			return outcome, err
+		}
+		if len(data) > 0 {
+			var incoming clientDevicesDisk
+			if err := json.Unmarshal(data, &incoming); err != nil {
+				return outcome, fmt.Errorf("备份中的客户端设备记录无效: %w", err)
+			}
+			if err := validateClientDevicesDisk(&incoming); err != nil {
+				return outcome, err
+			}
+			clientDiskData = &incoming
+		}
 	}
 	if peerDiskData != nil && a.peers == nil {
 		outcome.Warnings = append(outcome.Warnings, "Multi-control 未启用，备份中的联机身份未恢复")
@@ -418,6 +444,11 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	if templateDiskData != nil && a.subTemplates != nil {
 		if err := a.subTemplates.restoreDisk(*templateDiskData); err != nil {
 			outcome.Warnings = append(outcome.Warnings, fmt.Sprintf("订阅模版恢复失败: %s", err.Error()))
+		}
+	}
+	if clientDiskData != nil && a.clients != nil {
+		if err := a.clients.restoreDisk(*clientDiskData); err != nil {
+			outcome.Warnings = append(outcome.Warnings, fmt.Sprintf("客户端设备记录恢复失败: %s", err.Error()))
 		}
 	}
 	if configured, valid := panelTLSStatus(restored.Settings); configured && !valid {

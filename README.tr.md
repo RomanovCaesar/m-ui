@@ -50,6 +50,7 @@ Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasınd
 * Ana düğümü olmayan, imzalı kimlikler kullanan P2P panel ağı
 * Güvenilen paneller arasında şifreli giriş eşitleme
 * Paneller arası abonelik birleştirme
+* İstemci cihazlar: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) ağ dosyasını içe aktarır, panel yönetici hesabıyla bir kez oturum açar; ardından tüm panelleri görür ve erişebildiği herhangi bir panel üzerinden her panelin veya birleşik aboneliği alır
 
 ## Linux kurulumu
 

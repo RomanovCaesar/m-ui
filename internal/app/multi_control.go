@@ -846,6 +846,18 @@ func (a *App) withPeerNetwork(next http.Handler) http.Handler {
 			a.serveInboundSyncPeer(w, r)
 			return
 		}
+		if strings.HasPrefix(r.URL.Path, clientWireBase) {
+			a.serveClientWire(w, r)
+			return
+		}
+		if r.URL.Path == clientDeviceWirePath {
+			if a.clients == nil {
+				http.NotFound(w, r)
+			} else {
+				a.clients.serveRevocations(w, r)
+			}
+			return
+		}
 		if r.URL.Path == peerWirePath {
 			if a.peers == nil {
 				http.NotFound(w, r)

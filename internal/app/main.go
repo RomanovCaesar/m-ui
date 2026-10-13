@@ -638,7 +638,9 @@ type App struct {
 	inboundSync inboundSyncState
 	manager     *CoreManager
 	peers       *PeerNetwork
-	cross       *CrossSubscriptionManager
+	// clients 管理接入联机网络的用户设备（Clash Caesar 等），依赖 peers
+	clients *ClientMesh
+	cross   *CrossSubscriptionManager
 	// subTemplates holds the subscription templates; nil disables them.
 	subTemplates *SubTemplateManager
 	session      string
@@ -712,6 +714,12 @@ func Run(buildVersion string) {
 	} else {
 		app.peers = peers
 		go peers.run(peerContext)
+		if clients, err := newClientMesh(dataDir, peers); err != nil {
+			log.Printf("Client mesh access unavailable: %v", err)
+		} else {
+			app.clients = clients
+			go clients.runGossip(peerContext.Done())
+		}
 	}
 	if cross, err := newCrossSubscriptionManager(dataDir); err != nil {
 		log.Printf("Cross-panel subscriptions unavailable: %v", err)
@@ -982,6 +990,9 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/api/panel/restart", a.auth(a.handlePanelRestart))
 	mux.HandleFunc("/api/state", a.auth(a.handleState))
 	mux.HandleFunc("/api/config", a.auth(a.handleConfig))
+	mux.HandleFunc("/client/authorize", a.handleClientAuthorize)
+	mux.HandleFunc("/api/client-mesh", a.auth(a.handleClientMesh))
+	mux.HandleFunc("/api/client-mesh/", a.auth(a.handleClientMesh))
 	mux.HandleFunc("/api/multi-control", a.auth(a.handleMultiControl))
 	mux.HandleFunc("/api/multi-control/", a.auth(a.handleMultiControl))
 	mux.HandleFunc("/api/mihomo/settings", a.auth(a.handleMihomoSettings))

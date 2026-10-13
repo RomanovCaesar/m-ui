@@ -50,6 +50,7 @@ A documentação completa está na [Wiki do m-ui](https://github.com/RomanovCaes
 * Rede P2P de painéis sem nó mestre, com identidades assinadas
 * Sincronização criptografada de entradas entre painéis confiáveis
 * Agregação de assinaturas entre painéis
+* Dispositivos cliente: o [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) importa o arquivo de rede, entra uma vez com a conta de administrador do painel e então vê todos os painéis e obtém a assinatura de qualquer painel ou a combinada por qualquer painel alcançável
 
 ## Instalação no Linux
 

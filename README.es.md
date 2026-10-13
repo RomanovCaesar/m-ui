@@ -50,6 +50,7 @@ La documentación completa está en la [Wiki de m-ui](https://github.com/Romanov
 * Red P2P de paneles sin nodo maestro y con identidades firmadas
 * Sincronización cifrada de entradas entre paneles de confianza
 * Agregación de suscripciones entre paneles
+* Dispositivos cliente: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) importa el archivo de red, inicia sesión una vez con la cuenta de administrador del panel y luego ve todos los paneles y obtiene la suscripción de cualquier panel o la combinada a través de cualquier panel alcanzable
 
 ## Instalación en Linux
 

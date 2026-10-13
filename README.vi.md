@@ -50,6 +50,7 @@ Tài liệu đầy đủ có tại [m-ui Wiki](https://github.com/RomanovCaesar/
 * Mạng P2P giữa các bảng điều khiển, không có nút chủ, dùng danh tính có chữ ký
 * Đồng bộ inbound được mã hóa giữa các bảng điều khiển tin cậy
 * Gộp đăng ký từ nhiều bảng điều khiển
+* Thiết bị khách: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) nhập tệp mạng, đăng nhập một lần bằng tài khoản quản trị panel, sau đó xem được mọi panel và lấy subscription của từng panel hoặc subscription hợp nhất qua bất kỳ panel nào kết nối được
 
 ## Cài đặt trên Linux
 

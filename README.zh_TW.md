@@ -50,6 +50,7 @@
 * 沒有主節點的 P2P 面板網路，使用簽章身分
 * 在受信任的面板之間加密同步 Inbound
 * 跨面板訂閱聚合
+* 用戶端裝置：[Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) 匯入外掛檔案、用面板管理員帳號登入一次，即可查看網路裡所有面板的在線情況，並透過任一個能連上的面板拉取各面板訂閱或融合訂閱
 
 ## Linux 安裝
 

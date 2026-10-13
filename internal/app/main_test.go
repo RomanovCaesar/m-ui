@@ -885,7 +885,7 @@ func TestSubscriptionClientConversionToggles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, needle := range []string{"data-toggles=", "clientToggles[client.suffix.slice(1)]===false", "{{if .ClashEnabled}}"} {
+	for _, needle := range []string{"data-toggles=", "clientToggles[client.suffix.slice(1)]===false", "{{if .ClashEnabled}}", "clash-caesar://install-config?url=", "id=\"caesar-import\""} {
 		if !strings.Contains(string(page), needle) {
 			t.Fatalf("subscription page is missing %q", needle)
 		}

@@ -200,14 +200,12 @@ ${BLUR_GLSL}
       vec4 bg = sampleBlurred(sampleCoord, uBlur);
       vec3 color = colorControls(bg.rgb * uGlassDim);
 
-      // Bevel: brighten toward light on the rim, darken on the far side.
+      // Bevel: brighten the rim toward the light. The far side is left alone:
+      // darkening it drew a shadow-like dark line inside the panel edge.
       if (uBand > 0.5) {
         vec2 lightDir = vec2(cos(uLightAngle), sin(uLightAngle));
         float b1 = clamp(dot(grad, lightDir), 0.0, 1.0);
         color *= 1.0 + 0.5 * intensity * b1 * uBevel;
-        float b2 = clamp(dot(grad, -lightDir), 0.0, 1.0);
-        float band = smoothstep(1.0, 0.0, abs(intensity - 0.25) * 6.0);
-        color *= 1.0 - 0.22 * b2 * band * uBevel;
       }
 
       // Translucent glass body tint.

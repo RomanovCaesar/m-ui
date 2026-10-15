@@ -170,7 +170,7 @@ func inboundFromYAMLMap(mapping map[string]any) (Inbound, error) {
 		Listen:         inboundString(native["listen"]),
 		Port:           intValue(native["port"]),
 		Enabled:        true,
-		UDP:            boolValue(native["udp"]),
+		UDP:            importedInboundUDP(native),
 		TrafficReset:   "never",
 		Rule:           inboundString(native["rule"]),
 		Proxy:          inboundString(native["proxy"]),
@@ -468,4 +468,30 @@ func mergeInboundForm(item Inbound) (map[string]any, error) {
 		}
 	}
 	return result, nil
+}
+
+// inboundUDPDefaultsOn reports the listener types whose `udp` option Mihomo turns on when the
+// key is absent (listener/parse.go builds their options with UDP: true before decoding).
+func inboundUDPDefaultsOn(typ string) bool {
+	switch typ {
+	case "mixed", "socks", "shadowsocks", "snell":
+		return true
+	}
+	return false
+}
+
+// importedInboundUDP reads `udp` the way Mihomo does: a missing key means on for the types
+// above, so importing such a listener must not quietly turn its UDP off.
+func importedInboundUDP(native map[string]any) bool {
+	value, ok := native["udp"]
+	if !ok || value == nil {
+		typ := strings.ToLower(inboundString(native["type"]))
+		// Snell only relays UDP from v3 on and m-ui rejects UDP below that, so an old
+		// listener without the key imports as TCP-only instead of failing validation.
+		if version := intValue(native["version"]); typ == "snell" && version > 0 && version < 3 {
+			return false
+		}
+		return inboundUDPDefaultsOn(typ)
+	}
+	return boolValue(value)
 }

@@ -162,3 +162,49 @@ func containsInt(values []int, target int) bool {
 	}
 	return false
 }
+
+// Mihomo turns `udp` on for mixed/socks/shadowsocks/snell when the key is missing, so an
+// unchecked box has to reach the core as an explicit false, and an imported listener without
+// the key has to come in with UDP on.
+func TestInboundUDPFollowsMihomoDefault(t *testing.T) {
+	for _, typ := range []string{"mixed", "socks", "shadowsocks", "snell"} {
+		for _, udp := range []bool{true, false} {
+			inbound := Inbound{Name: typ, Type: typ, Listen: "0.0.0.0", Port: 18000, Enabled: true, UDP: udp, Cipher: "aes-256-gcm",
+				Clients: []Client{{Name: "a", Username: "a", Password: "secret", Enabled: true}}}
+			config, err := inboundConfig(inbound)
+			if err != nil {
+				t.Fatalf("%s: %v", typ, err)
+			}
+			if got, ok := config["udp"]; !ok || got != udp {
+				t.Fatalf("%s udp=%v rendered as %v (present %v)", typ, udp, got, ok)
+			}
+		}
+	}
+	config, err := inboundConfig(Inbound{Name: "vless", Type: "vless", Listen: "0.0.0.0", Port: 18001, Enabled: true, UDP: false,
+		Clients: []Client{{Name: "a", UUID: "e3832839-84fa-4b59-aead-bd3534246c61", Enabled: true}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := config["udp"]; ok {
+		t.Fatalf("vless has no udp option, got %#v", config["udp"])
+	}
+
+	for _, tc := range []struct {
+		yaml string
+		want bool
+	}{
+		{"name: ss\ntype: shadowsocks\nport: 18002\nlisten: 0.0.0.0\ncipher: aes-256-gcm\npassword: secret\n", true},
+		{"name: ss\ntype: shadowsocks\nport: 18002\nlisten: 0.0.0.0\ncipher: aes-256-gcm\npassword: secret\nudp: false\n", false},
+		{"name: sn\ntype: snell\nport: 18003\nlisten: 0.0.0.0\npsk: secret\nversion: 4\n", true},
+		{"name: sn\ntype: snell\nport: 18003\nlisten: 0.0.0.0\npsk: secret\nversion: 2\n", false},
+		{"name: mx\ntype: mixed\nport: 18004\nlisten: 0.0.0.0\n", true},
+	} {
+		inbound, err := parseMihomoInboundYAML(tc.yaml)
+		if err != nil {
+			t.Fatalf("%q: %v", tc.yaml, err)
+		}
+		if inbound.UDP != tc.want {
+			t.Fatalf("%q imported UDP=%v, want %v", tc.yaml, inbound.UDP, tc.want)
+		}
+	}
+}

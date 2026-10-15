@@ -1437,10 +1437,12 @@ func TestSnellAlwaysStatesListenerVersion(t *testing.T) {
 	if got := config["version"]; got != 4 {
 		t.Fatalf("rendered snell version = %v, want 4", got)
 	}
-	for _, omitted := range []string{"udp", "obfs-opts"} {
-		if _, ok := config[omitted]; ok {
-			t.Fatalf("snell listener without that feature must omit %q: %#v", omitted, config)
-		}
+	if _, ok := config["obfs-opts"]; ok {
+		t.Fatalf("snell listener without obfs must omit obfs-opts: %#v", config)
+	}
+	// Mihomo's snell listener turns UDP on when the key is missing, so off must be written out.
+	if got, ok := config["udp"]; !ok || got != false {
+		t.Fatalf("snell listener with UDP off must render udp: false: %#v", config)
 	}
 }
 

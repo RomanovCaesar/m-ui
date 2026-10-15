@@ -2631,8 +2631,10 @@ func managedInboundConfig(i Inbound) (map[string]any, error) {
 	if i.RoutingMark != 0 {
 		result["routing-mark"] = i.RoutingMark
 	}
-	if i.UDP && (i.Type == "mixed" || i.Type == "socks" || i.Type == "shadowsocks" || i.Type == "snell") {
-		result["udp"] = true
+	// Mihomo defaults `udp` to true for these listeners (listener/parse.go), so leaving the key
+	// out when the box is unchecked kept UDP on; write the value explicitly either way.
+	if inboundUDPDefaultsOn(i.Type) {
+		result["udp"] = i.UDP
 	}
 	clients := enabledClients(i)
 	switch i.Type {

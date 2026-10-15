@@ -25,7 +25,7 @@ Tài liệu đầy đủ có tại [m-ui Wiki](https://github.com/RomanovCaesar/
 * Trang tổng quan hiển thị trạng thái hệ thống, lưu lượng, kết nối và Mihomo; Mihomo tự khởi động cùng bảng điều khiển
 * Tạo và kiểm tra YAML gốc của Mihomo, xem trước và tải xuống cấu hình
 * Chuyển phiên bản Mihomo từ bản phát hành chính thức của MetaCubeX, cập nhật GeoIP / GeoSite / MetaDB
-* Sao lưu và khôi phục đầy đủ: cài đặt, inbound, danh tính Multi-control (tùy chọn), bộ đệm liên bảng và mẫu đăng ký
+* Sao lưu và khôi phục đầy đủ: cài đặt, inbound, danh tính Multi-control (tùy chọn), bộ đệm liên bảng, mẫu đăng ký và thiết bị client của Multi-control
 * Giao diện tiếng Anh, tiếng Trung giản thể, tiếng Trung phồn thể, tiếng Nhật, tiếng Nga, tiếng Ba Tư, tiếng Việt, tiếng Tây Ban Nha, tiếng Thổ Nhĩ Kỳ, tiếng Ukraina và tiếng Bồ Đào Nha (Brazil)
 
 **Inbound và client**
@@ -35,7 +35,7 @@ Tài liệu đầy đủ có tại [m-ui Wiki](https://github.com/RomanovCaesar/
 * Liên kết chia sẻ, mã QR, nhập inbound từ YAML listener của Mihomo, đặt lại lưu lượng hàng loạt
 
 **Đăng ký**
-* Trang đăng ký trên trình duyệt hiển thị mức dùng, hạn mức, thời hạn và các nút
+* Trang đăng ký trên trình duyệt hiển thị mức dùng, hạn mức, thời hạn và các nút, kèm nút nhập vào Clash Caesar bằng một cú nhấp
 * **Mẫu đăng ký:** mỗi đăng ký là một cấu hình client hoàn chỉnh, tạo từ mẫu tích hợp (Trung Quốc / Nga / Iran) hoặc mẫu Mihomo của riêng bạn
 * Cấu hình đầy đủ cho Mihomo/Clash, Stash, sing-box, Surge, Surfboard, Loon, Quantumult X và Egern; danh sách nút cho V2Box, V2RayNG, Shadowrocket và các client dùng liên kết khác
 * Token đăng ký riêng cho từng người dùng và cổng đăng ký riêng (tùy chọn)

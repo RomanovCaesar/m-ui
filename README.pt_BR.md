@@ -25,7 +25,7 @@ A documentação completa está na [Wiki do m-ui](https://github.com/RomanovCaes
 * Painel inicial com o estado do sistema, do tráfego, das conexões e do Mihomo; o Mihomo inicia automaticamente com o painel
 * Geração e validação do YAML nativo do Mihomo, com visualização e download da configuração
 * Troca de versão do Mihomo a partir das versões oficiais da MetaCubeX e atualização de GeoIP / GeoSite / MetaDB
-* Backup e restauração completos: configurações, entradas, identidade do Multi-control (opcional), cache entre painéis e modelos de assinatura
+* Backup e restauração completos: configurações, entradas, identidade do Multi-control (opcional), cache entre painéis, modelos de assinatura e dispositivos cliente do Multi-control
 * Interface em inglês, chinês simplificado, chinês tradicional, japonês, russo, persa, vietnamita, espanhol, turco, ucraniano e português do Brasil
 
 **Entradas e clientes**
@@ -35,7 +35,7 @@ A documentação completa está na [Wiki do m-ui](https://github.com/RomanovCaes
 * Links de compartilhamento, QR codes, importação de entradas a partir do YAML de um listener do Mihomo e redefinição de tráfego em massa
 
 **Assinaturas**
-* Página de assinatura no navegador com uso, cota, expiração e nós
+* Página de assinatura no navegador com uso, cota, expiração, nós e importação para o Clash Caesar com um clique
 * **Modelos de assinatura:** cada assinatura é um perfil completo de cliente, gerado a partir do modelo embutido (China / Rússia / Irã) ou do seu próprio modelo do Mihomo
 * Perfis completos para Mihomo/Clash, Stash, sing-box, Surge, Surfboard, Loon, Quantumult X e Egern; listas de nós para V2Box, V2RayNG, Shadowrocket e outros clientes de links
 * Token de assinatura por usuário e porta de assinatura dedicada opcional

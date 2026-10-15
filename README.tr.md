@@ -25,7 +25,7 @@ Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasınd
 * Sistem, trafik, bağlantı ve Mihomo durumunu gösteren gösterge paneli; Mihomo panelle birlikte otomatik başlar
 * Mihomo'nun yerel YAML yapılandırmasını oluşturma ve doğrulama, yapılandırmayı önizleme ve indirme
 * MetaCubeX'in resmi sürümlerinden Mihomo sürümü değiştirme, GeoIP / GeoSite / MetaDB güncelleme
-* Tam yedekleme ve geri yükleme: ayarlar, girişler, Multi-control kimliği (isteğe bağlı), paneller arası önbellek ve abonelik şablonları
+* Tam yedekleme ve geri yükleme: ayarlar, girişler, Multi-control kimliği (isteğe bağlı), paneller arası önbellek, abonelik şablonları ve Multi-control istemci cihazları
 * İngilizce, Basitleştirilmiş Çince, Geleneksel Çince, Japonca, Rusça, Farsça, Vietnamca, İspanyolca, Türkçe, Ukraynaca ve Brezilya Portekizcesi arayüz
 
 **Girişler ve istemciler**
@@ -35,7 +35,7 @@ Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasınd
 * Paylaşım bağlantıları, QR kodları, Mihomo dinleyici YAML'ından giriş içe aktarma ve toplu trafik sıfırlama
 
 **Abonelikler**
-* Kullanım, kota, son kullanma tarihi ve düğümleri gösteren tarayıcı abonelik sayfası
+* Kullanım, kota, son kullanma tarihi ve düğümleri gösteren, Clash Caesar içine tek tıkla aktarma sunan tarayıcı abonelik sayfası
 * **Abonelik şablonları:** her abonelik, yerleşik şablondan (Çin / Rusya / İran) veya kendi Mihomo şablonunuzdan oluşturulan eksiksiz bir istemci profilidir
 * Mihomo/Clash, Stash, sing-box, Surge, Surfboard, Loon, Quantumult X ve Egern için tam profiller; V2Box, V2RayNG, Shadowrocket ve diğer bağlantı tabanlı istemciler için düğüm listeleri
 * Kullanıcı başına abonelik belirteci ve isteğe bağlı ayrı abonelik portu

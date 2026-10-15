@@ -25,7 +25,7 @@
 * 仪表盘显示系统、流量、连接和 Mihomo 状态；面板启动时自动启动 Mihomo
 * 生成并校验 Mihomo 原生 YAML，可预览和下载原始配置
 * 从 MetaCubeX 官方 Release 切换 Mihomo 版本，更新 GeoIP / GeoSite / MetaDB
-* 完整备份与恢复：设置、Inbound、Multi-control 身份（可选恢复）、跨面板缓存和订阅模版
+* 完整备份与恢复：设置、Inbound、Multi-control 身份（可选恢复）、跨面板缓存、订阅模版和 Multi-control 客户端设备
 * 界面支持英语、简体中文、繁體中文、日语、俄语、波斯语、越南语、西班牙语、土耳其语、乌克兰语和巴西葡萄牙语
 
 **Inbound 与 Client**
@@ -35,7 +35,7 @@
 * 分享链接、二维码、通过 Mihomo listener YAML 导入 Inbound、批量重置流量
 
 **订阅**
-* 浏览器订阅页，显示用量、配额、到期时间和节点
+* 浏览器订阅页，显示用量、配额、到期时间和节点，可一键导入 Clash Caesar
 * **订阅模版**：每个订阅都是完整的客户端配置，可使用内置的中国 / 俄国 / 伊朗模版，也可导入自己的 Mihomo 模版
 * 为 Mihomo/Clash、Stash、sing-box、Surge、Surfboard、Loon、Quantumult X、Egern 生成完整配置；为 V2Box、V2RayNG、Shadowrocket 等分享链接类客户端提供节点列表
 * 每个用户独立的订阅 token，可选独立订阅端口

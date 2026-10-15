@@ -25,7 +25,7 @@ La documentación completa está en la [Wiki de m-ui](https://github.com/Romanov
 * Panel principal con el estado del sistema, el tráfico, las conexiones y Mihomo; Mihomo se inicia automáticamente con el panel
 * Generación y validación del YAML nativo de Mihomo, con vista previa y descarga de la configuración
 * Cambio de versión de Mihomo desde las versiones oficiales de MetaCubeX y actualización de GeoIP / GeoSite / MetaDB
-* Copia de seguridad y restauración completas: ajustes, entradas, identidad de Multi-control (opcional), caché entre paneles y plantillas de suscripción
+* Copia de seguridad y restauración completas: ajustes, entradas, identidad de Multi-control (opcional), caché entre paneles, plantillas de suscripción y dispositivos cliente de Multi-control
 * Interfaz en inglés, chino simplificado, chino tradicional, japonés, ruso, persa, vietnamita, español, turco, ucraniano y portugués de Brasil
 
 **Entradas y clientes**
@@ -35,7 +35,7 @@ La documentación completa está en la [Wiki de m-ui](https://github.com/Romanov
 * Enlaces para compartir, códigos QR, importación de entradas desde el YAML de un listener de Mihomo y reinicio masivo del tráfico
 
 **Suscripciones**
-* Página de suscripción en el navegador con uso, cuota, caducidad y nodos
+* Página de suscripción en el navegador con uso, cuota, caducidad, nodos e importación en Clash Caesar con un clic
 * **Plantillas de suscripción:** cada suscripción es un perfil completo de cliente, generado a partir de la plantilla integrada (China / Rusia / Irán) o de tu propia plantilla de Mihomo
 * Perfiles completos para Mihomo/Clash, Stash, sing-box, Surge, Surfboard, Loon, Quantumult X y Egern; listas de nodos para V2Box, V2RayNG, Shadowrocket y otros clientes de enlaces
 * Token de suscripción por usuario y puerto de suscripción dedicado opcional

@@ -25,7 +25,7 @@ For complete documentation, visit the [m-ui Wiki](https://github.com/RomanovCaes
 * Dashboard with system, traffic, connection, and Mihomo status; Mihomo starts automatically with the panel
 * Native Mihomo YAML generation and validation, raw configuration preview and download
 * Mihomo version switching from official MetaCubeX releases, and GeoIP / GeoSite / MetaDB updates
-* Full backup and restore: settings, inbounds, Multi-control identity (opt-in), cross-panel cache, and subscription templates
+* Full backup and restore: settings, inbounds, Multi-control identity (opt-in), cross-panel cache, subscription templates, and Multi-control client devices
 * Interface in English, Simplified Chinese, Traditional Chinese, Japanese, Russian, Persian, Vietnamese, Spanish, Turkish, Ukrainian, and Brazilian Portuguese
 
 **Inbounds and clients**
@@ -35,7 +35,7 @@ For complete documentation, visit the [m-ui Wiki](https://github.com/RomanovCaes
 * Share links, QR codes, inbound import from Mihomo listener YAML, and bulk traffic reset
 
 **Subscriptions**
-* Browser subscription page with usage, quota, expiry, and nodes
+* Browser subscription page with usage, quota, expiry, nodes, and one-click import into Clash Caesar
 * **Subscription templates:** every subscription is a complete client profile built from the built-in China / Russia / Iran template or your own Mihomo template
 * Full profiles for Mihomo/Clash, Stash, sing-box, Surge, Surfboard, Loon, Quantumult X, and Egern; node lists for V2Box, V2RayNG, Shadowrocket, and other share-link clients
 * Per-user subscription tokens and an optional dedicated subscription port

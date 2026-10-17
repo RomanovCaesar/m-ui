@@ -466,7 +466,7 @@ install_repo_file() {
 # Files the panel cannot regenerate. Geo databases, cache.db and the logs are
 # intentionally excluded: they are large, re-downloadable, and would push an
 # ordinary snapshot past 40 MB.
-BACKUP_FILES=(state.json config.yaml multi-control.json cross-panel-subscriptions.json sub-templates.json client-devices.json)
+BACKUP_FILES=(state.json state.json.bak config.yaml multi-control.json cross-panel-subscriptions.json sub-templates.json client-devices.json)
 
 prune_backups() {
     local keep="$1" existing=() candidate index total
@@ -554,6 +554,25 @@ if [[ $new_install -eq 1 ]]; then
     [[ $USERNAME_SET -eq 1 ]] || { USERNAME="$(random_alnum 14)"; USERNAME_SET=1; }
     [[ $PASSWORD_SET -eq 1 ]] || { PASSWORD="$(random_alnum 16)"; PASSWORD_SET=1; }
     validate_config_value
+fi
+
+# A zero-length or truncated state.json (left behind by a power loss) must not be
+# updated over: the snapshot would only keep the broken file and push the older,
+# good snapshots out of the rotation. m-ui v0.2.6+ recovers from state.json.bak on
+# its own, so only stop when that copy is missing too.
+state_json_ok() {
+    local first last
+    [[ -s "$1" ]] || return 1
+    first="$(tr -d '[:space:]' < "$1" | head -c 1)"
+    last="$(tr -d '[:space:]' < "$1" | tail -c 1)"
+    [[ "$first" == "{" && "$last" == "}" ]]
+}
+if [[ $new_install -eq 0 ]] && ! state_json_ok "$DATA_DIR/state.json"; then
+    if state_json_ok "$DATA_DIR/state.json.bak"; then
+        warn "${DATA_DIR}/state.json is empty or damaged; m-ui will restore it from state.json.bak"
+    else
+        die "${DATA_DIR}/state.json is empty or damaged and there is no usable state.json.bak. Restore it from a snapshot in ${BACKUP_DIR} or a panel backup before updating; to start over instead, move it away and run the installer again"
+    fi
 fi
 
 mkdir -p "$INSTALL_DIR" "$DATA_DIR"

@@ -2,6 +2,7 @@ package app
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/rand"
@@ -615,6 +616,7 @@ type CoreManager struct {
 	coreUploadSample   uint64
 	coreDownloadSample uint64
 	lastTrafficSave    time.Time
+	lastStateBackup    time.Time
 	enforcedClients    map[string]bool
 	// External Traffic Inform 攒下的增量，按 3x-ui 的节奏批量上报。
 	externalTrafficInbounds map[string]externalInboundTraffic
@@ -682,7 +684,9 @@ func Run(buildVersion string) {
 	}
 	manager := &CoreManager{dataDir: dataDir, panelStarted: time.Now(), connectionStats: map[string]connectionSample{}, enforcedClients: map[string]bool{}}
 	if err := manager.load(); err != nil {
-		log.Printf("load state: %v", err)
+		// Never serve with a zero State: it listens on :80 with an empty
+		// username and password and an empty Mihomo config.
+		log.Fatalf("load state: %v", err)
 	}
 	// Regenerate the managed YAML on startup so format/order changes and
 	// migrated metadata are reflected even when an older config.yaml exists.
@@ -1165,7 +1169,7 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.manager.mu.Lock()
-	valid := input.Username == a.manager.state.Settings.Username && verifyPassword(a.manager.state.Settings.Password, input.Password)
+	valid := input.Username != "" && input.Username == a.manager.state.Settings.Username && verifyPassword(a.manager.state.Settings.Password, input.Password)
 	a.manager.mu.Unlock()
 	if !valid {
 		writeJSON(w, http.StatusUnauthorized, apiResponse{Message: a.tr("账号或密码错误")})
@@ -1562,8 +1566,28 @@ func logging(next http.Handler) http.Handler {
 func (m *CoreManager) load() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	path := filepath.Join(m.dataDir, "state.json")
+	path := filepath.Join(m.dataDir, stateFileName)
 	data, err := os.ReadFile(path)
+	recovered := false
+	if errors.Is(err, os.ErrNotExist) {
+		if backup, ok := readStateBackup(m.dataDir); ok {
+			log.Printf("state: %s is missing; restored it from %s", stateFileName, stateBackupFileName)
+			data, err, recovered = backup, nil, true
+		}
+	}
+	if err == nil && !recovered && !validStateJSON(data) {
+		backup, ok := readStateBackup(m.dataDir)
+		if !ok {
+			return fmt.Errorf("%s is empty or damaged and there is no usable %s; refusing to start with an empty configuration. Restore state.json from a snapshot in %s or a panel backup",
+				path, stateBackupFileName, filepath.Join(m.dataDir, "backups"))
+		}
+		broken := path + ".broken-" + time.Now().Format("20060102-150405")
+		if renameErr := os.Rename(path, broken); renameErr != nil {
+			return fmt.Errorf("keep damaged %s: %w", stateFileName, renameErr)
+		}
+		log.Printf("state: %s was empty or damaged (kept as %s); restored it from %s", stateFileName, filepath.Base(broken), stateBackupFileName)
+		data, recovered = backup, true
+	}
 	if errors.Is(err, os.ErrNotExist) {
 		m.state = defaultState()
 		subscriptionPath, pathErr := randomSubscriptionPath()
@@ -1583,6 +1607,13 @@ func (m *CoreManager) load() error {
 	}
 	if err := json.Unmarshal(data, &m.state); err != nil {
 		return err
+	}
+	if recovered {
+		defer func() {
+			if err := m.saveLocked(); err != nil {
+				log.Printf("state: write recovered %s: %v", stateFileName, err)
+			}
+		}()
 	}
 	if m.state.Settings.PanelListen == "" {
 		m.state.Settings = defaultState().Settings
@@ -1696,11 +1727,75 @@ func (m *CoreManager) saveLocked() error {
 	if err != nil {
 		return err
 	}
-	tmp := filepath.Join(m.dataDir, "state.json.tmp")
-	if err := os.WriteFile(tmp, data, 0600); err != nil {
+	path := filepath.Join(m.dataDir, stateFileName)
+	// Refresh the backup copy from the last good file before replacing it, at most
+	// every stateBackupInterval: state is saved every few seconds with traffic.
+	if now := time.Now(); m.lastStateBackup.IsZero() || now.Sub(m.lastStateBackup) >= stateBackupInterval {
+		if previous, err := os.ReadFile(path); err == nil && validStateJSON(previous) {
+			if err := writeFileDurable(filepath.Join(m.dataDir, stateBackupFileName), previous, 0600); err != nil {
+				log.Printf("state: refresh %s: %v", stateBackupFileName, err)
+			}
+		}
+		m.lastStateBackup = now
+	}
+	return writeFileDurable(path, data, 0600)
+}
+
+const (
+	stateFileName       = "state.json"
+	stateBackupFileName = "state.json.bak"
+	stateBackupInterval = 10 * time.Minute
+)
+
+// writeFileDurable replaces path atomically and survives a power loss: the data is
+// fsynced before the rename and the directory after it. Without the first fsync a
+// crash on XFS (and ext4 without auto_da_alloc) can leave a zero-length file behind
+// the rename, which is exactly how a panel lost its whole state.json.
+func writeFileDurable(path string, data []byte, perm os.FileMode) error {
+	tmp := path + ".tmp"
+	file, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
+	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, filepath.Join(m.dataDir, "state.json"))
+	_, err = file.Write(data)
+	if syncErr := file.Sync(); err == nil {
+		err = syncErr
+	}
+	if closeErr := file.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		_ = os.Remove(tmp)
+		return err
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		return err
+	}
+	// Directory fsync is not supported everywhere (Windows); the rename has
+	// already happened, so a failure here is not worth failing the save.
+	if dir, err := os.Open(filepath.Dir(path)); err == nil {
+		_ = dir.Sync()
+		_ = dir.Close()
+	}
+	return nil
+}
+
+// validStateJSON reports whether data is a JSON object that decodes as a State.
+func validStateJSON(data []byte) bool {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 || trimmed[0] != '{' {
+		return false
+	}
+	var probe State
+	return json.Unmarshal(trimmed, &probe) == nil
+}
+
+func readStateBackup(dataDir string) ([]byte, bool) {
+	data, err := os.ReadFile(filepath.Join(dataDir, stateBackupFileName))
+	if err != nil || !validStateJSON(data) {
+		return nil, false
+	}
+	return data, true
 }
 
 func (m *CoreManager) updateSettings(input Settings) error {
@@ -4581,6 +4676,10 @@ func hashPassword(password string) (string, error) {
 }
 
 func verifyPassword(encoded, password string) bool {
+	// An empty stored password means the state is broken, never "no password".
+	if encoded == "" || password == "" {
+		return false
+	}
 	parts := strings.Split(encoded, "$")
 	if len(parts) != 4 || parts[0] != "pbkdf2_sha256" {
 		return hmac.Equal([]byte(encoded), []byte(password))

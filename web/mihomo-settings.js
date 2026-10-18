@@ -506,7 +506,8 @@
   function scheduleVPNGatePoll(delay=1500){
     clearTimeout(vpngateTimer);vpngateTimer=setTimeout(async()=>{vpngateTimer=null;if(!$('#vpngate-modal')?.classList.contains('open'))return;try{vpngateData=await api('/api/mihomo/vpngate');renderVPNGateModal();if(vpngateData?.install?.running)scheduleVPNGatePoll(1000);else if(vpngateData?.statuses?.length)scheduleVPNGatePoll(5000);}catch(error){showVPNGateError(error.message);}},delay);
   }
-  function showVPNGateError(message){const box=$('#vpngate-error');if(box){box.textContent=message;box.hidden=!message;}}
+  // The alert sits at the top of a long dialog; bring it into view so an action at the bottom (Uninstall, Reconnect) never looks like it did nothing.
+  function showVPNGateError(message){const box=$('#vpngate-error');if(box){box.textContent=message;box.hidden=!message;if(message)box.scrollIntoView({block:'nearest',behavior:'smooth'});}}
   function syncVPNGateForm(){
     const form=$('#vpngate-form');if(!form)return;
     const country=form.elements.country.value.trim().toUpperCase();form.elements.country.value=country;
@@ -612,7 +613,7 @@
 	  const item=draft.outbounds.find(candidate=>candidate.id===id&&candidate.vpngate);if(!item)return;
 	  const dependencies=outboundDependencies(item.name);
 	  for(const inbound of app.state?.state?.inbounds||[])if(inbound.proxy===item.name)dependencies.push('Inbound '+inbound.name);
-	  if(dependencies.length){showVPNGateError(muiT('mh.cannotDelete',{deps:dependencies.join(muiT('common.listSep')),name:item.name}));return;}
+	  if(dependencies.length){const message=muiT('mh.cannotDelete',{deps:dependencies.join(muiT('common.listSep')),name:item.name});showVPNGateError(message);toast(message,true);return;}
 	  if(!confirm(muiT('mh.vpngateConfirmUninstall',{name:item.name})))return;
 	  draft.outbounds=draft.outbounds.filter(candidate=>candidate.id!==id);vpngateEditingId='';markDirty();
 	  clearTimeout(vpngateTimer);closeModal($('#vpngate-modal'));toast(muiT('mh.vpngateUninstallDrafted'));

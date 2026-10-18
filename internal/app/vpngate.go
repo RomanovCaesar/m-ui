@@ -87,6 +87,15 @@ func vpnGateRoutingMark(slot int) int { return vpnGateTableBase + slot }
 
 func vpnGateAccountName(slot int) string { return fmt.Sprintf("mui-vpngate-%d", slot) }
 
+// vpnGateMissingRouteTable recognises iproute2's answer for a table the kernel does not
+// have. A table only exists while it holds a route, so after a reboot or after Cleanup
+// removed the guard, `ip route show table N` exits 2 with this message. It means
+// "empty", not a failure: treating it as an error made every reconnect fail before the
+// adapter was ever recreated.
+func vpnGateMissingRouteTable(output string) bool {
+	return strings.Contains(output, "FIB table does not exist")
+}
+
 func vpnGateRouteField(line, key string) string {
 	fields := strings.Fields(line)
 	for index := 0; index+1 < len(fields); index++ {

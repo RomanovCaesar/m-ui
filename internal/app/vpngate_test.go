@@ -496,3 +496,15 @@ func TestVPNGateEnglishAPIStatusTranslation(t *testing.T) {
 		t.Fatalf("AppArmor diagnostic was not translated: %q", got)
 	}
 }
+
+func TestVPNGateMissingRouteTableIsEmpty(t *testing.T) {
+	// iproute2 6.1 on Debian 12 for a table without routes (seen after a reboot).
+	if !vpnGateMissingRouteTable("Error: ipv4: FIB table does not exist.\nDump terminated\n") {
+		t.Fatal("a missing table must count as empty")
+	}
+	for _, output := range []string{"", "RTNETLINK answers: Operation not permitted\n", "Error: argument \"x\" is wrong: table id value is invalid\n"} {
+		if vpnGateMissingRouteTable(output) {
+			t.Fatalf("%q is a real failure, not a missing table", output)
+		}
+	}
+}

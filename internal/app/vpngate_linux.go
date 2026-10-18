@@ -696,7 +696,11 @@ func (l vpnGateLinuxLink) installRouting(ctx context.Context, slot int, iface, a
 }
 
 func (l vpnGateLinuxLink) showRouteTable(ctx context.Context, table string) (string, error) {
-	return l.ip(ctx, "route", "show", "table", table)
+	output, err := l.ip(ctx, "route", "show", "table", table)
+	if err != nil && vpnGateMissingRouteTable(output) {
+		return "", nil
+	}
+	return output, err
 }
 
 // ensureFailClosed validates the table and then installs the unreachable guard

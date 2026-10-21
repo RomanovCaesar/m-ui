@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM --platform=$BUILDPLATFORM golang:1.24-bookworm AS m-ui-build
+FROM --platform=$BUILDPLATFORM golang:1.26-bookworm AS m-ui-build
 
 WORKDIR /src
 

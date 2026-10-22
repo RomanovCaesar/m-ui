@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 )
@@ -313,9 +314,6 @@ func (a *App) importBackup(source multipart.File, replaceIdentity bool) (restore
 	restored.Settings.IPInfoTokenSet, restored.Settings.IPInfoTokenClear = false, false
 	if restored.Settings.Username == "" || restored.Settings.Password == "" || restored.Settings.APIAddress == "" {
 		return outcome, fmt.Errorf("备份缺少必要的面板设置")
-	}
-	if restored.Settings.MixedPort < 1 || restored.Settings.MixedPort > 65535 {
-		return outcome, fmt.Errorf("备份中的默认端口无效")
 	}
 	if err := validateSubscriptionServicePort(restored.Settings, restored.Inbounds); err != nil {
 		return outcome, fmt.Errorf("备份中的订阅服务端口无效: %w", err)
@@ -675,10 +673,27 @@ func (m *CoreManager) installCore(ctx context.Context, tag string) (string, erro
 	m.versionCorePath = ""
 	m.addLogLocked("Mihomo 核心已切换: " + version)
 	m.mu.Unlock()
+	pruneCoreBackups(corePath, coreBackupsKept)
 	if err := restart(); err != nil {
 		return version, fmt.Errorf("核心已更新，但重新启动失败: %w", err)
 	}
 	return version, nil
+}
+
+// Every core switch keeps the replaced binary (about 60 MB) as
+// <core>.backup-<YYYYMMDD-HHMMSS>; without pruning they piled up forever.
+const coreBackupsKept = 2
+
+func pruneCoreBackups(corePath string, keep int) {
+	backups, err := filepath.Glob(corePath + ".backup-*")
+	if err != nil || len(backups) <= keep {
+		return
+	}
+	// The timestamp suffix sorts chronologically as a string.
+	sort.Strings(backups)
+	for _, old := range backups[:len(backups)-keep] {
+		_ = os.Remove(old)
+	}
 }
 
 func unpackCoreArchive(archivePath, destination string) error {
@@ -738,6 +753,9 @@ func (m *CoreManager) updateGeofiles(ctx context.Context) error {
 		var downloadErr error
 		for index, sourceURL := range file.URLs {
 			downloadErr = downloadOfficialFile(ctx, sourceURL, temporary, maximumDownload)
+			if downloadErr == nil {
+				downloadErr = verifyGeofileChecksum(ctx, sourceURL, temporary)
+			}
 			if downloadErr == nil {
 				if index > 0 {
 					m.mu.Lock()
@@ -803,6 +821,34 @@ func (m *CoreManager) updateGeofiles(ctx context.Context) error {
 	m.addLogLocked("GeoIP.dat、GeoSite.dat 与 geoip.metadb 已更新")
 	m.mu.Unlock()
 	return startErr
+}
+
+// verifyGeofileChecksum checks a downloaded geo file against the "<file>.sha256sum"
+// that meta-rules-dat publishes next to it (on GitHub and on the jsDelivr mirror).
+// It catches truncated or mismatched files, such as a mirror serving a stale copy;
+// a mirror without a usable checksum counts as failed so the next one is tried.
+func verifyGeofileChecksum(ctx context.Context, sourceURL, path string) error {
+	sumPath := path + ".sha256sum"
+	defer os.Remove(sumPath)
+	if err := downloadOfficialFile(ctx, sourceURL+".sha256sum", sumPath, 4<<10); err != nil {
+		return fmt.Errorf("无法获取校验文件: %w", err)
+	}
+	raw, err := os.ReadFile(sumPath)
+	if err != nil {
+		return err
+	}
+	fields := strings.Fields(string(raw))
+	if len(fields) == 0 || len(fields[0]) != 64 {
+		return fmt.Errorf("校验文件格式无效")
+	}
+	digest, err := fileSHA256(path)
+	if err != nil {
+		return err
+	}
+	if !strings.EqualFold(digest, fields[0]) {
+		return fmt.Errorf("SHA-256 校验失败")
+	}
+	return nil
 }
 
 func downloadOfficialFile(ctx context.Context, sourceURL, destination string, maximum int64) error {

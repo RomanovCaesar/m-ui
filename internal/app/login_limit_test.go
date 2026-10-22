@@ -88,3 +88,56 @@ func TestLoginFailuresExpireAndStayBounded(t *testing.T) {
 		t.Fatalf("limiter tracks %d addresses, more than %d", tracked, loginMaxTracked)
 	}
 }
+
+// Each sign-in gets its own token; logging out kills that token on the server, so a
+// copied cookie stops working, while other browsers stay signed in.
+func TestSessionsArePerLoginAndLogoutRevokes(t *testing.T) {
+	app := newLoginTestApp(t)
+	login := func() (*http.Cookie, *httptest.ResponseRecorder) {
+		request := httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader(`{"username":"admin","password":"right-password"}`))
+		request.RemoteAddr = "203.0.113.20:5000"
+		recorder := httptest.NewRecorder()
+		app.routes().ServeHTTP(recorder, request)
+		for _, cookie := range recorder.Result().Cookies() {
+			if cookie.Name == sessionCookieName {
+				return cookie, recorder
+			}
+		}
+		t.Fatalf("no session cookie: %d %s", recorder.Code, recorder.Body.String())
+		return nil, nil
+	}
+	first, _ := login()
+	second, _ := login()
+	if first.Value == second.Value {
+		t.Fatal("two sign-ins share one token")
+	}
+	if first.Secure {
+		t.Fatal("a plain-HTTP sign-in must not get a Secure cookie")
+	}
+	authed := func(cookie *http.Cookie) int {
+		request := httptest.NewRequest(http.MethodGet, "/api/tools/uuid", nil)
+		request.AddCookie(cookie)
+		recorder := httptest.NewRecorder()
+		app.routes().ServeHTTP(recorder, request)
+		return recorder.Code
+	}
+	logout := httptest.NewRequest(http.MethodPost, "/api/auth/logout", nil)
+	logout.AddCookie(first)
+	app.routes().ServeHTTP(httptest.NewRecorder(), logout)
+	if code := authed(first); code != http.StatusUnauthorized {
+		t.Fatalf("logged-out token still works: %d", code)
+	}
+	if code := authed(second); code == http.StatusUnauthorized {
+		t.Fatal("logging out one browser signed the other out too")
+	}
+
+	request := httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader(`{"username":"admin","password":"right-password"}`))
+	request.RemoteAddr = "203.0.113.21:5000"
+	request.Header.Set("X-Forwarded-Proto", "https")
+	recorder := httptest.NewRecorder()
+	app.routes().ServeHTTP(recorder, request)
+	cookies := recorder.Result().Cookies()
+	if len(cookies) != 1 || !cookies[0].Secure {
+		t.Fatalf("a sign-in over HTTPS must get a Secure cookie: %+v", cookies)
+	}
+}

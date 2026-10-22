@@ -41,7 +41,7 @@ func TestPasswordRoundTrip(t *testing.T) {
 
 func TestRenderConfigUsesManagedListenersOnly(t *testing.T) {
 	m := &CoreManager{dataDir: t.TempDir(), state: State{
-		Settings: Settings{APIAddress: defaultCoreAPI, APISecret: "secret", MixedPort: defaultCorePort, AllowLAN: true, Mode: "rule", LogLevel: "info"},
+		Settings: Settings{APIAddress: defaultCoreAPI, APISecret: "secret", AllowLAN: true, Mode: "rule", LogLevel: "info"},
 		Inbounds: []Inbound{{ID: "one", Name: "test-mixed", Type: "mixed", Listen: "127.0.0.1", Port: 19080, Enabled: true, UDP: true}},
 	}}
 	data, err := m.renderConfig()
@@ -1003,7 +1003,6 @@ func TestSubscriptionPageSettingsMenuWiring(t *testing.T) {
 	content := string(page)
 	for _, needle := range []string{
 		`id="settings-button"`, `id="settings-menu"`, `id="dark-mode"`, `id="ultra-dark"`, `id="language-select"`,
-		"persistGlobalLanguage", "'/api/language'",
 		`data-theme="dark"`, `data-ultra-dark="true"`, `html[data-theme="dark"]`, `html[data-theme="dark"][data-ultra-dark="true"]`,
 		"function toggleSettings()", "function closeSettings(", "function applyTheme(", "function applyUltraDark(", "function applyLanguage(",
 		"mui-theme", "mui-is-ultra-dark", "mui-language", "Panel Settings", "Ultra Dark", "面板设置", "超暗色",
@@ -1013,6 +1012,9 @@ func TestSubscriptionPageSettingsMenuWiring(t *testing.T) {
 		if !strings.Contains(content, needle) {
 			t.Fatalf("subscription settings menu is missing %q", needle)
 		}
+	}
+	if strings.Contains(content, "/api/language") {
+		t.Fatal("the subscription page must not change the panel language")
 	}
 }
 
@@ -4281,8 +4283,8 @@ func TestLoginPageCarriesTheConfiguredLanguage(t *testing.T) {
 	if !strings.Contains(string(login), "document.documentElement.dataset.defaultLanguage") {
 		t.Fatal("web/login.html must fall back to the injected language when localStorage is empty")
 	}
-	if !strings.Contains(string(login), "base + 'api/language'") || !strings.Contains(string(login), "persistGlobalLanguage") {
-		t.Fatal("the login page must persist a language selection globally before authentication")
+	if !strings.Contains(string(login), "base + 'api/language'") || !strings.Contains(string(login), "await persistGlobalLanguage(languageSelect.value)") {
+		t.Fatal("the login page must save the chosen language once the sign-in succeeded")
 	}
 	manager := &CoreManager{dataDir: t.TempDir(), state: defaultState()}
 	app := &App{manager: manager}
@@ -4446,6 +4448,10 @@ func TestUpdateSettingsAcceptsEveryUsableListenSpelling(t *testing.T) {
 func TestCredentialsEndpointChecksCurrentPairAndRotatesSession(t *testing.T) {
 	manager := &CoreManager{dataDir: t.TempDir(), state: defaultState()}
 	app := &App{manager: manager, session: "old-token"}
+	other, err := app.startSession(time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
 	post := func(body string) *httptest.ResponseRecorder {
 		recorder := httptest.NewRecorder()
 		app.handleCredentials(recorder, httptest.NewRequest(http.MethodPost, "/api/auth/credentials", strings.NewReader(body)))
@@ -4470,9 +4476,8 @@ func TestCredentialsEndpointChecksCurrentPairAndRotatesSession(t *testing.T) {
 	if !verifyPassword(manager.state.Settings.Password, "s3cret") {
 		t.Fatal("the new password must be stored as a verifiable hash")
 	}
-	token, _ := app.currentSession()
-	if token == "old-token" || token == "" {
-		t.Fatalf("the session token must be rotated, got %q", token)
+	if app.validSession("old-token") || app.validSession(other) {
+		t.Fatal("a credential change must sign every browser out")
 	}
 	if cookies := recorder.Result().Cookies(); len(cookies) != 1 || cookies[0].Name != "mui_session" || cookies[0].MaxAge >= 0 {
 		t.Fatalf("the response must clear the session cookie, got %+v", cookies)
@@ -4481,8 +4486,11 @@ func TestCredentialsEndpointChecksCurrentPairAndRotatesSession(t *testing.T) {
 
 func TestSessionExpiresAfterSessionMaxAge(t *testing.T) {
 	manager := &CoreManager{dataDir: t.TempDir(), state: defaultState()}
-	app := &App{manager: manager, session: "live-token"}
-	token := app.refreshSession(50 * time.Millisecond)
+	app := &App{manager: manager}
+	token, err := app.startSession(50 * time.Millisecond)
+	if err != nil {
+		t.Fatal(err)
+	}
 	request := httptest.NewRequest(http.MethodGet, "/api/state", nil)
 	request.AddCookie(&http.Cookie{Name: "mui_session", Value: token})
 	if !app.isLoggedIn(request) {
@@ -4492,12 +4500,12 @@ func TestSessionExpiresAfterSessionMaxAge(t *testing.T) {
 	if app.isLoggedIn(request) {
 		t.Fatal("an expired session must be rejected")
 	}
-	// 直接构造的 App 没有过期时间，测试里当成"永不过期"，别退化成"立刻过期"。
+	// 直接构造 App 时填的 session 是测试用的固定令牌，永不过期。
 	plain := &App{manager: manager, session: "token"}
 	plainRequest := httptest.NewRequest(http.MethodGet, "/api/state", nil)
 	plainRequest.AddCookie(&http.Cookie{Name: "mui_session", Value: "token"})
 	if !plain.isLoggedIn(plainRequest) {
-		t.Fatal("a session without an expiry must stay valid")
+		t.Fatal("the fixed test session must stay valid")
 	}
 }
 
@@ -4729,7 +4737,7 @@ func TestSettingsPageReplicates3xUiLayout(t *testing.T) {
 		`name="sessionMaxAge"`, `name="pageSize"`, `name="language"`,
 		`name="expireDiff"`, `name="trafficDiff"`, `name="panelCertFile"`, `name="panelKeyFile"`,
 		`name="externalTrafficInformEnable"`, `name="externalTrafficInformURI"`, `name="timeLocation"`,
-		`name="corePath"`, `name="apiAddress"`, `name="apiSecret"`, `name="mixedPort"`, `name="mode"`, `name="logLevel"`, `name="allowLan"`,
+		`name="corePath"`, `name="apiAddress"`, `name="apiSecret"`, `name="mode"`, `name="logLevel"`, `name="allowLan"`,
 		`name="oldUsername"`, `name="oldPassword"`, `name="newUsername"`, `name="newPassword"`, `id="save-credentials"`,
 		"The IP address for the web panel. (leave blank to listen on all IPs)",
 		"The port number for the web panel. (must be an unused port)",

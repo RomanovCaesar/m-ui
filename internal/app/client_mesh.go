@@ -721,9 +721,9 @@ func parseClientAuthorize(values url.Values) (clientAuthorizeRequest, error) {
 	return req, nil
 }
 
-func (a *App) clientAuthorizeCSRF(req clientAuthorizeRequest) string {
-	session, _ := a.currentSession()
-	mac := hmac.New(sha256.New, []byte(session))
+// clientAuthorizeCSRF binds the consent form to the browser's own session token.
+func (a *App) clientAuthorizeCSRF(r *http.Request, req clientAuthorizeRequest) string {
+	mac := hmac.New(sha256.New, []byte(sessionToken(r)))
 	_, _ = mac.Write([]byte("client-authorize\x00" + req.Challenge + "\x00" + req.RedirectURI + "\x00" + req.State))
 	return hex.EncodeToString(mac.Sum(nil))
 }
@@ -754,7 +754,7 @@ func (a *App) handleClientAuthorize(w http.ResponseWriter, r *http.Request) {
 			"CSRF":      "",
 		}
 		if loggedIn {
-			data["CSRF"] = a.clientAuthorizeCSRF(req)
+			data["CSRF"] = a.clientAuthorizeCSRF(r, req)
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(status)
@@ -784,7 +784,7 @@ func (a *App) handleClientAuthorize(w http.ResponseWriter, r *http.Request) {
 	}
 	ip := remoteIP(r)
 	if loggedIn {
-		if !hmac.Equal([]byte(r.PostForm.Get("csrf")), []byte(a.clientAuthorizeCSRF(req))) {
+		if !hmac.Equal([]byte(r.PostForm.Get("csrf")), []byte(a.clientAuthorizeCSRF(r, req))) {
 			render(http.StatusForbidden, a.tr("请求已失效，请刷新页面重试"))
 			return
 		}

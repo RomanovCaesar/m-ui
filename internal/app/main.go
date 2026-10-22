@@ -41,7 +41,6 @@ var webFS = webassets.FS
 const (
 	defaultListen    = "127.0.0.1:2053"
 	defaultCoreAPI   = "127.0.0.1:9093"
-	defaultCorePort  = 12080
 	defaultConfigDir = "data"
 )
 
@@ -78,10 +77,13 @@ type Settings struct {
 	PanelKeyFile               string          `json:"panelKeyFile,omitempty"`
 	APIAddress                 string          `json:"apiAddress"`
 	APISecret                  string          `json:"apiSecret"`
-	MixedPort                  int             `json:"mixedPort"`
-	AllowLAN                   bool            `json:"allowLan"`
-	Mode                       string          `json:"mode"`
-	LogLevel                   string          `json:"logLevel"`
+	// MixedPort is no longer used: it was validated and saved but never written to
+	// the Mihomo config, and writing it would open an unauthenticated proxy on every
+	// interface (allow-lan, bind-address "*"). Kept so old state files still load.
+	MixedPort int    `json:"mixedPort,omitempty"`
+	AllowLAN  bool   `json:"allowLan"`
+	Mode      string `json:"mode"`
+	LogLevel  string `json:"logLevel"`
 	// 面板自身的行为设置，字段名和语义都照 3x-ui 的 AllSetting 来，方便对照。
 	RemarkModel                 string `json:"remarkModel"`
 	SessionMaxAge               int    `json:"sessionMaxAge"`
@@ -646,12 +648,14 @@ type App struct {
 	// subTemplates holds the subscription templates; nil disables them.
 	subTemplates *SubTemplateManager
 	// logins limits failed sign-ins per IP (panel login and device authorization).
-	logins  loginLimiter
-	session string
-	// 会话有效期由 Settings.SessionMaxAge 决定。零值表示"不过期"，这样
-	// 直接构造 App{manager: …, session: "token"} 的测试不用管这个字段。
-	sessionMu      sync.Mutex
-	sessionExpires time.Time
+	logins loginLimiter
+	// session is a fixed, non-expiring token for tests that build App directly;
+	// the running panel leaves it empty and issues one token per sign-in instead.
+	session   string
+	sessionMu sync.Mutex
+	// sessions maps each signed-in browser's token to its expiry
+	// (Settings.SessionMaxAge after sign-in).
+	sessions map[string]time.Time
 	// Restart Panel 按钮往这里发一下信号，main() 收到后重建 http.Server。
 	// 缓冲 1，且用 select/default 发送，所以 nil 或者没人收都不会阻塞。
 	restart chan struct{}
@@ -698,11 +702,7 @@ func Run(buildVersion string) {
 	go manager.monitorTraffic()
 	// 已保存的 VPNGate 出站在面板启动时就恢复拨号，不用等用户再点一次保存。
 	go manager.syncVPNGateTasks()
-	var session string
-	if err := randomToken(&session); err != nil {
-		log.Fatal(err)
-	}
-	app := &App{manager: manager, session: session, restart: make(chan struct{}, 1)}
+	app := &App{manager: manager, restart: make(chan struct{}, 1)}
 	// Start Mihomo together with the panel. A bad or missing core/config should
 	// not make the management UI unreachable: keep serving the panel and expose
 	// the actionable error in the runtime log so the operator can fix it and
@@ -743,7 +743,7 @@ func Run(buildVersion string) {
 	// 新的 TLS 证书都会立刻生效，不用手动重启进程。
 	for {
 		settings := manager.settingsSnapshot()
-		panelServer := &http.Server{Addr: settings.PanelListen, Handler: app.panelRoutes(settings.SubscriptionPort == 0), ReadHeaderTimeout: 10 * time.Second}
+		panelServer := newPanelServer(settings.PanelListen, app.panelRoutes(settings.SubscriptionPort == 0))
 		panelCert, panelKey := strings.TrimSpace(settings.PanelCertFile), strings.TrimSpace(settings.PanelKeyFile)
 		panelConfigured, panelTLS := panelTLSStatus(settings)
 		if panelConfigured && !panelTLS {
@@ -770,7 +770,7 @@ func Run(buildVersion string) {
 		log.Printf("m-ui %s listening at %s://%s%s", appVersion, scheme, panelServer.Addr, manager.panelPath())
 		servers := []*http.Server{panelServer}
 		if settings.SubscriptionPort != 0 {
-			subscriptionServer := &http.Server{Addr: subscriptionListenAddress(settings), Handler: app.subscriptionRoutes(), ReadHeaderTimeout: 10 * time.Second}
+			subscriptionServer := newSubscriptionServer(subscriptionListenAddress(settings), app.subscriptionRoutes())
 			servers = append(servers, subscriptionServer)
 			log.Printf("subscription service listening at %s://%s%s", scheme, subscriptionServer.Addr, normalizeSubscriptionPath(settings.SubscriptionPath))
 		}
@@ -817,6 +817,19 @@ func Run(buildVersion string) {
 			return
 		}
 	}
+}
+
+// Only ReadHeaderTimeout used to be set, so a client could hold a connection open by
+// sending the body (or nothing at all after a keep-alive) arbitrarily slowly.
+// The panel gets no WriteTimeout: a core or geo update runs inside one request and
+// can take minutes. ReadTimeout still bounds the 32 MB backup upload generously.
+func newPanelServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 5 * time.Minute, IdleTimeout: 2 * time.Minute}
+}
+
+// Subscription requests are small and answered at once, so all limits are tight.
+func newSubscriptionServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{Addr: addr, Handler: handler, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 2 * time.Minute, IdleTimeout: time.Minute}
 }
 
 // outboundsSnapshot 复制一份已保存的出站列表，供不能持有 mu 的长任务读取。
@@ -965,10 +978,6 @@ func (a *App) withPanelPath(next http.Handler) http.Handler {
 // live outside PanelPath, matching 3x-ui's independent subscription path.
 func (a *App) withSubscriptions(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/language" {
-			a.handleLanguage(w, r)
-			return
-		}
 		if a.handleSubscriptionRequest(w, r) {
 			return
 		}
@@ -990,7 +999,7 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/static/", a.handleStatic)
 	mux.HandleFunc("/media/", a.handleMedia)
 	mux.HandleFunc("/api/auth/login", a.handleLogin)
-	mux.HandleFunc("/api/language", a.handleLanguage)
+	mux.HandleFunc("/api/language", a.auth(a.handleLanguage))
 	mux.HandleFunc("/api/auth/logout", a.handleLogout)
 	mux.HandleFunc("/api/auth/credentials", a.auth(a.handleCredentials))
 	mux.HandleFunc("/api/panel/restart", a.auth(a.handlePanelRestart))
@@ -1048,10 +1057,6 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 
 func (a *App) subscriptionRoutes() http.Handler {
 	return logging(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/language" {
-			a.handleLanguage(w, r)
-			return
-		}
 		if !a.handleSubscriptionRequest(w, r) {
 			http.NotFound(w, r)
 		}
@@ -1184,13 +1189,43 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.logins.succeed(ip)
+	a.upgradePasswordHash(input.Password)
 	// Scoping the cookie to the panel prefix keeps it out of every other path on
 	// the port, and makes changing the prefix invalidate the browser's session.
 	base := a.manager.panelPath()
 	minutes := a.sessionMaxAgeMinutes()
-	token := a.refreshSession(time.Duration(minutes) * time.Minute)
-	http.SetCookie(w, &http.Cookie{Name: "mui_session", Value: token, Path: base, HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: minutes * 60})
+	token, err := a.startSession(time.Duration(minutes) * time.Minute)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, apiResponse{Message: a.tr(err.Error())})
+		return
+	}
+	a.setSessionCookie(w, r, token, minutes*60)
 	writeJSON(w, http.StatusOK, apiResponse{OK: true, Data: map[string]string{"redirect": base}})
+}
+
+// upgradePasswordHash re-hashes a correct password stored with weaker parameters.
+// The hash is computed outside the lock and only stored if nobody changed the
+// password in the meantime.
+func (a *App) upgradePasswordHash(password string) {
+	a.manager.mu.Lock()
+	stored := a.manager.state.Settings.Password
+	a.manager.mu.Unlock()
+	if !passwordNeedsRehash(stored) {
+		return
+	}
+	upgraded, err := hashPassword(password)
+	if err != nil {
+		return
+	}
+	a.manager.mu.Lock()
+	defer a.manager.mu.Unlock()
+	if a.manager.state.Settings.Password != stored {
+		return
+	}
+	a.manager.state.Settings.Password = upgraded
+	if err := a.manager.saveLocked(); err != nil {
+		a.manager.state.Settings.Password = stored
+	}
 }
 
 // handleCredentials 对应 Authentication 页签：先验旧账号密码，再整体换掉。
@@ -1218,12 +1253,9 @@ func (a *App) handleCredentials(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Message: a.tr(err.Error())})
 		return
 	}
-	// 改完就换令牌，所有已登录的浏览器（包括当前这个）都得重新登录。
-	if err := a.rotateSession(); err != nil {
-		writeJSON(w, http.StatusInternalServerError, apiResponse{Message: a.tr(err.Error())})
-		return
-	}
-	http.SetCookie(w, &http.Cookie{Name: "mui_session", Value: "", Path: a.manager.panelPath(), MaxAge: -1, HttpOnly: true})
+	// 改完就作废全部会话，所有已登录的浏览器（包括当前这个）都得重新登录。
+	a.endAllSessions()
+	a.clearSessionCookie(w, r)
 	writeJSON(w, http.StatusOK, apiResponse{OK: true, Message: a.tr("账号信息已更新，请重新登录")})
 }
 
@@ -1257,14 +1289,16 @@ func (m *CoreManager) updateCredentials(oldUsername, oldPassword, newUsername, n
 }
 
 func (a *App) handleLogout(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{Name: "mui_session", Value: "", Path: a.manager.panelPath(), MaxAge: -1, HttpOnly: true})
+	a.endSession(sessionToken(r))
+	a.clearSessionCookie(w, r)
 	writeJSON(w, http.StatusOK, apiResponse{OK: true})
 }
 
-// handleLanguage is intentionally public: both the login page and token-based
-// subscription page can change the panel-wide language before authentication.
-// It only updates this one low-risk preference; the normal settings endpoint
-// remains authenticated and continues to require an explicit Save.
+// handleLanguage saves the panel-wide language. It requires a session: it used to be
+// public, so anyone holding a subscription link could change the administrator's
+// language (and force a state write) from the subscription page. The subscription
+// page now keeps its choice in the visitor's browser, and the login page sends its
+// choice right after a successful sign-in.
 func (a *App) handleLanguage(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, apiResponse{Message: "method not allowed"})
@@ -1513,44 +1547,7 @@ func (a *App) auth(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func (a *App) isLoggedIn(r *http.Request) bool {
-	cookie, err := r.Cookie("mui_session")
-	if err != nil || cookie.Value == "" {
-		return false
-	}
-	token, expires := a.currentSession()
-	if cookie.Value != token {
-		return false
-	}
-	// 过期时间为零值表示"不过期"，直接构造 App 的测试就是这种情况。
-	return expires.IsZero() || time.Now().Before(expires)
-}
-
-// currentSession 读一份会话令牌和过期时间。
-func (a *App) currentSession() (string, time.Time) {
-	a.sessionMu.Lock()
-	defer a.sessionMu.Unlock()
-	return a.session, a.sessionExpires
-}
-
-// refreshSession 把服务端的会话过期时间推到 now+d，并返回当前令牌。
-func (a *App) refreshSession(d time.Duration) string {
-	a.sessionMu.Lock()
-	defer a.sessionMu.Unlock()
-	a.sessionExpires = time.Now().Add(d)
-	return a.session
-}
-
-// rotateSession 换一个新令牌，让所有已登录的浏览器立刻掉线。
-func (a *App) rotateSession() error {
-	var token string
-	if err := randomToken(&token); err != nil {
-		return err
-	}
-	a.sessionMu.Lock()
-	a.session = token
-	a.sessionExpires = time.Time{}
-	a.sessionMu.Unlock()
-	return nil
+	return a.validSession(sessionToken(r))
 }
 
 // sessionMaxAgeMinutes 读当前的会话时长设置，异常值回落到默认的 360 分钟。
@@ -1726,9 +1723,9 @@ func defaultState() State {
 	if runtime.GOOS == "windows" {
 		core += ".exe"
 	}
-	password, _ := hashPassword("admin")
+	password := defaultAdminPasswordHash()
 	return State{
-		Settings:           Settings{Username: "admin", Password: password, CorePath: core, PanelListen: defaultListen, PanelPath: "/", ClashPath: "/clash", APIAddress: defaultCoreAPI, APISecret: newAPISecret(), MixedPort: defaultCorePort, AllowLAN: true, Mode: "rule", LogLevel: "info", RemarkModel: defaultRemarkModel, SessionMaxAge: defaultSessionMaxAge, PageSize: defaultPageSize, ExpireDiff: defaultExpireDiff, TrafficDiff: defaultTrafficDiff, TimeLocation: defaultTimeLocation, Language: defaultLanguage},
+		Settings:           Settings{Username: "admin", Password: password, CorePath: core, PanelListen: defaultListen, PanelPath: "/", ClashPath: "/clash", APIAddress: defaultCoreAPI, APISecret: newAPISecret(), AllowLAN: true, Mode: "rule", LogLevel: "info", RemarkModel: defaultRemarkModel, SessionMaxAge: defaultSessionMaxAge, PageSize: defaultPageSize, ExpireDiff: defaultExpireDiff, TrafficDiff: defaultTrafficDiff, TimeLocation: defaultTimeLocation, Language: defaultLanguage},
 		RoutingRules:       defaultMihomoRoutingRules(),
 		SubscriptionTokens: map[string]string{},
 		Inbounds:           []Inbound{},
@@ -1852,9 +1849,6 @@ func (m *CoreManager) updateSettings(input Settings) error {
 	}
 	if err := validateSubscriptionServicePort(input, nil); err != nil {
 		return err
-	}
-	if input.MixedPort < 1 || input.MixedPort > 65535 {
-		return fmt.Errorf("代理端口必须在 1-65535 之间")
 	}
 	if input.Mode != "rule" && input.Mode != "global" && input.Mode != "direct" {
 		return fmt.Errorf("运行模式无效")
@@ -4694,6 +4688,33 @@ func randomToken(out *string) error {
 	return nil
 }
 
+// passwordHashIterations follows OWASP's PBKDF2-HMAC-SHA256 recommendation. It was
+// 120000; older hashes are upgraded on the next successful sign-in.
+const passwordHashIterations = 600000
+
+var (
+	defaultAdminHashOnce sync.Once
+	defaultAdminHash     string
+)
+
+// defaultAdminPasswordHash is the placeholder "admin" password of a fresh state,
+// computed once: defaultState runs several times at startup, and every install
+// replaces the placeholder with a random password right away.
+func defaultAdminPasswordHash() string {
+	defaultAdminHashOnce.Do(func() { defaultAdminHash, _ = hashPassword("admin") })
+	return defaultAdminHash
+}
+
+// passwordNeedsRehash reports a stored hash weaker than the current parameters.
+func passwordNeedsRehash(encoded string) bool {
+	parts := strings.Split(encoded, "$")
+	if len(parts) != 4 || parts[0] != "pbkdf2_sha256" {
+		return true
+	}
+	iterations, err := strconv.Atoi(parts[1])
+	return err != nil || iterations < passwordHashIterations
+}
+
 func hashPassword(password string) (string, error) {
 	if password == "" {
 		return "", fmt.Errorf("密码不能为空")
@@ -4702,9 +4723,8 @@ func hashPassword(password string) (string, error) {
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	const iterations = 120000
-	key := pbkdf2SHA256([]byte(password), salt, iterations, 32)
-	return fmt.Sprintf("pbkdf2_sha256$%d$%s$%s", iterations, base64.RawStdEncoding.EncodeToString(salt), base64.RawStdEncoding.EncodeToString(key)), nil
+	key := pbkdf2SHA256([]byte(password), salt, passwordHashIterations, 32)
+	return fmt.Sprintf("pbkdf2_sha256$%d$%s$%s", passwordHashIterations, base64.RawStdEncoding.EncodeToString(salt), base64.RawStdEncoding.EncodeToString(key)), nil
 }
 
 func verifyPassword(encoded, password string) bool {

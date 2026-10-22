@@ -310,40 +310,48 @@ func TestIndexPageCarriesThePanelLanguage(t *testing.T) {
 	}
 }
 
-func TestPublicLanguageUpdatePersistsFromPanelAndSubscriptionPorts(t *testing.T) {
+// The language endpoint used to be public, so anyone with a subscription link could
+// change the administrator's panel language. It now needs a session.
+func TestLanguageUpdateRequiresSession(t *testing.T) {
 	app := i18nTestApp(t)
 	app.manager.state.Settings.PanelPath = "/hidden/"
+	app.manager.state.Settings.Language = "zh-CN"
+	app.session = "admin-session"
 	originalUsername := app.manager.state.Settings.Username
 
-	post := func(handler http.Handler, path, language string) *httptest.ResponseRecorder {
+	post := func(handler http.Handler, path, language string, signedIn bool) *httptest.ResponseRecorder {
 		t.Helper()
 		request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"language":"`+language+`"}`))
 		request.Header.Set("Content-Type", "application/json")
+		if signedIn {
+			request.AddCookie(&http.Cookie{Name: "mui_session", Value: "admin-session"})
+		}
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, request)
 		return response
 	}
 
-	// The login page uses the panel-relative endpoint before authentication.
+	if response := post(app.panelRoutes(false), "/hidden/api/language", "en", false); response.Code != http.StatusUnauthorized {
+		t.Fatalf("anonymous panel language update: %d", response.Code)
+	}
+	if response := post(app.subscriptionRoutes(), "/api/language", "en", false); response.Code != http.StatusNotFound {
+		t.Fatalf("subscription port still exposes the language endpoint: %d", response.Code)
+	}
+	if response := post(app.routes(), "/api/language", "en", false); response.Code == http.StatusOK {
+		t.Fatal("the shared port still exposes a public language endpoint")
+	}
+	if app.manager.state.Settings.Language != "zh-CN" {
+		t.Fatalf("an anonymous request changed the language to %q", app.manager.state.Settings.Language)
+	}
+
 	for _, language := range []string{"en", "zh-TW", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"} {
-		if response := post(app.panelRoutes(false), "/hidden/api/language", language); response.Code != http.StatusOK {
-			t.Fatalf("login-page %s language update: %d %s", language, response.Code, response.Body.String())
+		if response := post(app.panelRoutes(false), "/hidden/api/language", language, true); response.Code != http.StatusOK {
+			t.Fatalf("signed-in %s language update: %d %s", language, response.Code, response.Body.String())
 		}
 		if app.manager.state.Settings.Language != language {
 			t.Fatalf("language = %q, want %q", app.manager.state.Settings.Language, language)
 		}
 	}
-
-	// A dedicated subscription listener exposes the same one-setting endpoint.
-	if response := post(app.subscriptionRoutes(), "/api/language", "zh-CN"); response.Code != http.StatusOK {
-		t.Fatalf("subscription-page language update: %d %s", response.Code, response.Body.String())
-	}
-	// On the shared panel port, the public root endpoint remains outside the
-	// secret PanelPath so a subscription page can reach it.
-	if response := post(app.routes(), "/api/language", "en"); response.Code != http.StatusOK {
-		t.Fatalf("shared-port language update: %d %s", response.Code, response.Body.String())
-	}
-
 	data, err := os.ReadFile(filepath.Join(app.manager.dataDir, "state.json"))
 	if err != nil {
 		t.Fatal(err)
@@ -352,10 +360,10 @@ func TestPublicLanguageUpdatePersistsFromPanelAndSubscriptionPorts(t *testing.T)
 	if err = json.Unmarshal(data, &stored); err != nil {
 		t.Fatal(err)
 	}
-	if stored.Settings.Language != "en" || stored.Settings.Username != originalUsername {
-		t.Fatalf("public endpoint changed the wrong settings: %#v", stored.Settings)
+	if stored.Settings.Language != "pt-BR" || stored.Settings.Username != originalUsername {
+		t.Fatalf("language endpoint changed the wrong settings: %#v", stored.Settings)
 	}
-	if response := post(app.routes(), "/api/language", "fr"); response.Code != http.StatusBadRequest || app.manager.state.Settings.Language != "en" {
+	if response := post(app.panelRoutes(false), "/hidden/api/language", "fr", true); response.Code != http.StatusBadRequest || app.manager.state.Settings.Language != "pt-BR" {
 		t.Fatalf("invalid language update: %d %s", response.Code, response.Body.String())
 	}
 }

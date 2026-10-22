@@ -71,9 +71,11 @@ func (l *loginLimiter) fail(ip string) {
 			l.recentLocked(other, now)
 		}
 		if len(l.fails) >= loginMaxTracked {
-			oldestIP, oldest := "", now
+			// Timestamps can tie at the clock's resolution, so the first entry is
+			// always a candidate; otherwise nothing might be evicted at all.
+			oldestIP, oldest := "", time.Time{}
 			for other, times := range l.fails {
-				if last := times[len(times)-1]; last.Before(oldest) {
+				if last := times[len(times)-1]; oldestIP == "" || last.Before(oldest) {
 					oldestIP, oldest = other, last
 				}
 			}

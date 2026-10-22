@@ -549,13 +549,9 @@
       });
       return languageSave;
     }
-    languageSelect.addEventListener('change', () => {
-      const language = languageSelect.value;
-      applyLanguage(language);
-      persistGlobalLanguage(language).catch(exception => {
-        if (languageSelect.value === language) document.getElementById('error').textContent = exception.message || (messages[language] || messages['zh-CN']).languageFailed;
-      });
-    });
+    // The choice is kept in this browser until sign-in; /api/language needs a session,
+    // so it is saved as the panel language right after a successful login.
+    languageSelect.addEventListener('change', () => applyLanguage(languageSelect.value));
 
     passwordToggle.addEventListener('click', () => {
       const visible = passwordInput.type === 'text';
@@ -579,6 +575,7 @@
         const response = await fetch(base + 'api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || lang.failed);
+        await persistGlobalLanguage(languageSelect.value).catch(() => {});
         window.location.href = (data.data && data.data.redirect) || base;
       } catch (exception) {
         error.textContent = exception.message;

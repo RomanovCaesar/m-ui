@@ -645,7 +645,9 @@ type App struct {
 	cross   *CrossSubscriptionManager
 	// subTemplates holds the subscription templates; nil disables them.
 	subTemplates *SubTemplateManager
-	session      string
+	// logins limits failed sign-ins per IP (panel login and device authorization).
+	logins  loginLimiter
+	session string
 	// 会话有效期由 Settings.SessionMaxAge 决定。零值表示"不过期"，这样
 	// 直接构造 App{manager: …, session: "token"} 的测试不用管这个字段。
 	sessionMu      sync.Mutex
@@ -1168,13 +1170,20 @@ func (a *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Message: "invalid request"})
 		return
 	}
+	ip := remoteIP(r)
+	if a.logins.blocked(ip) {
+		writeJSON(w, http.StatusTooManyRequests, apiResponse{Message: a.tr(loginFailMessage)})
+		return
+	}
 	a.manager.mu.Lock()
 	valid := input.Username != "" && input.Username == a.manager.state.Settings.Username && verifyPassword(a.manager.state.Settings.Password, input.Password)
 	a.manager.mu.Unlock()
 	if !valid {
+		a.logins.fail(ip)
 		writeJSON(w, http.StatusUnauthorized, apiResponse{Message: a.tr("账号或密码错误")})
 		return
 	}
+	a.logins.succeed(ip)
 	// Scoping the cookie to the panel prefix keeps it out of every other path on
 	// the port, and makes changing the prefix invalidate the browser's session.
 	base := a.manager.panelPath()
@@ -1660,6 +1669,12 @@ func (m *CoreManager) load() error {
 		m.state.SubscriptionTokens = map[string]string{}
 		settingsMigrated = true
 	}
+	// Every install used to share the same controller secret. An empty secret is the
+	// operator's explicit "no auth" choice and is left alone.
+	if m.state.Settings.APISecret == legacyAPISecret {
+		m.state.Settings.APISecret = newAPISecret()
+		settingsMigrated = true
+	}
 	if m.state.RoutingRules == nil {
 		m.state.RoutingRules = defaultMihomoRoutingRules()
 		settingsMigrated = true
@@ -1713,7 +1728,7 @@ func defaultState() State {
 	}
 	password, _ := hashPassword("admin")
 	return State{
-		Settings:           Settings{Username: "admin", Password: password, CorePath: core, PanelListen: defaultListen, PanelPath: "/", ClashPath: "/clash", APIAddress: defaultCoreAPI, APISecret: "m-ui-local", MixedPort: defaultCorePort, AllowLAN: true, Mode: "rule", LogLevel: "info", RemarkModel: defaultRemarkModel, SessionMaxAge: defaultSessionMaxAge, PageSize: defaultPageSize, ExpireDiff: defaultExpireDiff, TrafficDiff: defaultTrafficDiff, TimeLocation: defaultTimeLocation, Language: defaultLanguage},
+		Settings:           Settings{Username: "admin", Password: password, CorePath: core, PanelListen: defaultListen, PanelPath: "/", ClashPath: "/clash", APIAddress: defaultCoreAPI, APISecret: newAPISecret(), MixedPort: defaultCorePort, AllowLAN: true, Mode: "rule", LogLevel: "info", RemarkModel: defaultRemarkModel, SessionMaxAge: defaultSessionMaxAge, PageSize: defaultPageSize, ExpireDiff: defaultExpireDiff, TrafficDiff: defaultTrafficDiff, TimeLocation: defaultTimeLocation, Language: defaultLanguage},
 		RoutingRules:       defaultMihomoRoutingRules(),
 		SubscriptionTokens: map[string]string{},
 		Inbounds:           []Inbound{},
@@ -2624,7 +2639,7 @@ func renderStateConfig(state State) ([]byte, error) {
 		"unified-delay":            basics.UnifiedDelay,
 		"external-controller":      state.Settings.APIAddress,
 		"secret":                   state.Settings.APISecret,
-		"external-controller-cors": map[string]any{"allow-origins": []string{"*"}, "allow-private-network": true},
+		"external-controller-cors": map[string]any{"allow-origins": []string{controllerCORSOrigin}, "allow-private-network": false},
 		"profile":                  map[string]any{"store-selected": true},
 		"proxies":                  proxies,
 		"proxy-groups":             proxyGroups,
@@ -4651,6 +4666,23 @@ func (m *CoreManager) coreRequest(method, path string) (any, error) {
 		data = map[string]any{}
 	}
 	return data, err
+}
+
+// legacyAPISecret was the controller secret of every install before v0.2.10.
+const legacyAPISecret = "m-ui-local"
+
+// controllerCORSOrigin is the only origin the Mihomo controller answers. The panel
+// talks to the controller from the server, never from the browser, so no web page
+// needs it. It cannot simply be omitted: an empty allow-origins list means "allow
+// every origin" in the CORS library Mihomo uses. `.invalid` can never resolve.
+const controllerCORSOrigin = "https://m-ui.invalid"
+
+func newAPISecret() string {
+	var secret string
+	if err := randomToken(&secret); err != nil {
+		panic(fmt.Sprintf("generate controller secret: %v", err))
+	}
+	return secret
 }
 
 func randomToken(out *string) error {

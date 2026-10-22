@@ -290,7 +290,7 @@ func TestClientAuthorizeValidationAndLoginLimit(t *testing.T) {
 	}
 
 	// 连续输错密码后暂时锁定，正确密码也不行
-	for i := 0; i < clientLoginMaxFails; i++ {
+	for i := 0; i < loginMaxFails; i++ {
 		if response, _ := clientTestAuthorize(t, pa, verifier, url.Values{"decision": {"allow"}, "username": {"admin"}, "password": {"wrong"}}); response.StatusCode != http.StatusUnauthorized {
 			t.Fatalf("wrong password not rejected: %d", response.StatusCode)
 		}

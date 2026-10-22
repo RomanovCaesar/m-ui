@@ -601,18 +601,14 @@ func (m *CoreManager) installCore(ctx context.Context, tag string) (string, erro
 		return "", fmt.Errorf("版本 %s 没有适合 %s/%s 的兼容构建", tag, runtime.GOOS, runtime.GOARCH)
 	}
 	m.mu.Lock()
-	wasRunning := m.runningLocked()
 	corePath := strings.TrimSpace(m.state.Settings.CorePath)
 	m.mu.Unlock()
 	if corePath == "" {
 		return "", fmt.Errorf("未配置 Mihomo 核心路径")
 	}
-	if wasRunning {
-		if err := m.stopCore(); err != nil {
-			return "", err
-		}
-		time.Sleep(250 * time.Millisecond)
-	}
+	// Download, verify and test-run the new core while the old one keeps serving.
+	// The core used to be stopped first, so a failed or cancelled download (closing
+	// the browser tab cancels the request context) left the proxy down for good.
 	temporaryDirectory, err := os.MkdirTemp(m.dataDir, "core-update-*")
 	if err != nil {
 		return "", err
@@ -645,13 +641,33 @@ func (m *CoreManager) installCore(ctx context.Context, tag string) (string, erro
 	if newline := strings.IndexByte(version, '\n'); newline >= 0 {
 		version = strings.TrimSpace(version[:newline])
 	}
+
+	// Only now take the core down, for the few milliseconds of the swap.
+	m.mu.Lock()
+	wasRunning := m.runningLocked()
+	m.mu.Unlock()
+	if wasRunning {
+		if err := m.stopCore(); err != nil {
+			_ = os.Remove(newCorePath)
+			return "", err
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+	restart := func() error {
+		if !wasRunning {
+			return nil
+		}
+		return m.startCore()
+	}
 	backupPath := corePath + ".backup-" + time.Now().Format("20060102-150405")
 	if err := os.Rename(corePath, backupPath); err != nil {
 		_ = os.Remove(newCorePath)
+		_ = restart()
 		return "", fmt.Errorf("备份旧核心失败: %w", err)
 	}
 	if err := os.Rename(newCorePath, corePath); err != nil {
 		_ = os.Rename(backupPath, corePath)
+		_ = restart()
 		return "", fmt.Errorf("替换核心失败: %w", err)
 	}
 	m.mu.Lock()
@@ -659,10 +675,8 @@ func (m *CoreManager) installCore(ctx context.Context, tag string) (string, erro
 	m.versionCorePath = ""
 	m.addLogLocked("Mihomo 核心已切换: " + version)
 	m.mu.Unlock()
-	if wasRunning {
-		if err := m.startCore(); err != nil {
-			return version, fmt.Errorf("核心已更新，但重新启动失败: %w", err)
-		}
+	if err := restart(); err != nil {
+		return version, fmt.Errorf("核心已更新，但重新启动失败: %w", err)
 	}
 	return version, nil
 }
@@ -710,15 +724,15 @@ func (m *CoreManager) updateGeofiles(ctx context.Context) error {
 		{"GeoSite.dat", []string{"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geosite.dat", "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"}},
 		{"geoip.metadb", []string{"https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.metadb", "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.metadb"}},
 	}
-	m.mu.Lock()
-	wasRunning := m.runningLocked()
-	m.mu.Unlock()
-	if wasRunning {
-		if err := m.stopCore(); err != nil {
-			return err
+	// Download all three first while Mihomo keeps running; the core is only stopped
+	// for the swap, and a failed download no longer leaves it stopped or leaves a mix
+	// of new and old files behind.
+	downloaded := make([]string, 0, len(files))
+	defer func() {
+		for _, path := range downloaded {
+			_ = os.Remove(path)
 		}
-		time.Sleep(250 * time.Millisecond)
-	}
+	}()
 	for _, file := range files {
 		temporary := filepath.Join(m.dataDir, file.Name+".download")
 		var downloadErr error
@@ -738,31 +752,57 @@ func (m *CoreManager) updateGeofiles(ctx context.Context) error {
 		}
 		if downloadErr != nil {
 			_ = os.Remove(temporary)
-			if wasRunning {
-				_ = m.startCore()
-			}
 			return fmt.Errorf("下载 %s 失败：GitHub 与 jsDelivr 均不可用，请检查网络或 HTTPS_PROXY", file.Name)
 		}
+		downloaded = append(downloaded, temporary)
+	}
+
+	m.mu.Lock()
+	wasRunning := m.runningLocked()
+	m.mu.Unlock()
+	if wasRunning {
+		if err := m.stopCore(); err != nil {
+			return err
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+	var swapErr error
+	replaced := make([]string, 0, len(files))
+	for _, file := range files {
 		target := filepath.Join(m.dataDir, file.Name)
 		backup := target + ".backup"
 		_ = os.Remove(backup)
 		if _, err := os.Stat(target); err == nil {
 			if err := os.Rename(target, backup); err != nil {
-				return err
+				swapErr = err
+				break
 			}
 		}
-		if err := os.Rename(temporary, target); err != nil {
+		if err := os.Rename(filepath.Join(m.dataDir, file.Name+".download"), target); err != nil {
 			_ = os.Rename(backup, target)
-			return err
+			swapErr = err
+			break
 		}
+		replaced = append(replaced, file.Name)
+	}
+	if swapErr != nil {
+		// Put the previous set back so the core never starts on a mixed set.
+		for _, name := range replaced {
+			target := filepath.Join(m.dataDir, name)
+			_ = os.Rename(target+".backup", target)
+		}
+	}
+	var startErr error
+	if wasRunning {
+		startErr = m.startCore()
+	}
+	if swapErr != nil {
+		return swapErr
 	}
 	m.mu.Lock()
 	m.addLogLocked("GeoIP.dat、GeoSite.dat 与 geoip.metadb 已更新")
 	m.mu.Unlock()
-	if wasRunning {
-		return m.startCore()
-	}
-	return nil
+	return startErr
 }
 
 func downloadOfficialFile(ctx context.Context, sourceURL, destination string, maximum int64) error {

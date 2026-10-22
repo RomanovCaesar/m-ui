@@ -14,7 +14,6 @@ import (
 	"html/template"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -39,19 +38,17 @@ import (
 // 的 Clash 订阅。所有管理操作都不对设备开放。
 
 const (
-	clientSpec            = "m-ui-client/1"
-	clientWireBase        = "/_m-ui/client/v1/"
-	clientDeviceWirePath  = "/_m-ui/peer/device/v1"
-	clientDevicesFile     = "client-devices.json"
-	clientCertTTL         = 30 * 24 * time.Hour
-	clientClockSkew       = 5 * time.Minute
-	clientCodeTTL         = 2 * time.Minute
-	clientWireLimit       = 64 << 10
-	clientMaxDevices      = 512
-	clientLoginFailWindow = 10 * time.Minute
-	clientLoginMaxFails   = 5
-	clientGossipInterval  = 10 * time.Minute
-	clientFileMagic       = "MUIN"
+	clientSpec           = "m-ui-client/1"
+	clientWireBase       = "/_m-ui/client/v1/"
+	clientDeviceWirePath = "/_m-ui/peer/device/v1"
+	clientDevicesFile    = "client-devices.json"
+	clientCertTTL        = 30 * 24 * time.Hour
+	clientClockSkew      = 5 * time.Minute
+	clientCodeTTL        = 2 * time.Minute
+	clientWireLimit      = 64 << 10
+	clientMaxDevices     = 512
+	clientGossipInterval = 10 * time.Minute
+	clientFileMagic      = "MUIN"
 
 	clientDomainNetwork     = "m-ui-client-network-v1"
 	clientDomainCert        = "m-ui-device-cert-v1"
@@ -185,7 +182,6 @@ type ClientMesh struct {
 	disk      clientDevicesDisk
 	codes     map[string]clientPendingCode
 	replays   map[string]time.Time
-	fails     map[string][]time.Time
 	persisted time.Time
 	peers     *PeerNetwork
 }
@@ -196,7 +192,6 @@ func newClientMesh(dataDir string, peers *PeerNetwork) (*ClientMesh, error) {
 		disk:    clientDevicesDisk{Devices: map[string]clientDeviceRecord{}, Revoked: map[string]int64{}},
 		codes:   map[string]clientPendingCode{},
 		replays: map[string]time.Time{},
-		fails:   map[string][]time.Time{},
 		peers:   peers,
 	}
 	data, err := os.ReadFile(c.path)
@@ -733,33 +728,6 @@ func (a *App) clientAuthorizeCSRF(req clientAuthorizeRequest) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-func clientRemoteIP(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
-}
-
-func (c *ClientMesh) loginBlocked(ip string) bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	recent := c.fails[ip][:0]
-	for _, at := range c.fails[ip] {
-		if time.Since(at) < clientLoginFailWindow {
-			recent = append(recent, at)
-		}
-	}
-	c.fails[ip] = recent
-	return len(recent) >= clientLoginMaxFails
-}
-
-func (c *ClientMesh) recordLoginFailure(ip string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.fails[ip] = append(c.fails[ip], time.Now())
-}
-
 func (a *App) handleClientAuthorize(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("X-Frame-Options", "DENY")
@@ -814,25 +782,26 @@ func (a *App) handleClientAuthorize(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, redirect.String(), http.StatusSeeOther)
 		return
 	}
-	ip := clientRemoteIP(r)
+	ip := remoteIP(r)
 	if loggedIn {
 		if !hmac.Equal([]byte(r.PostForm.Get("csrf")), []byte(a.clientAuthorizeCSRF(req))) {
 			render(http.StatusForbidden, a.tr("请求已失效，请刷新页面重试"))
 			return
 		}
 	} else {
-		if a.clients.loginBlocked(ip) {
-			render(http.StatusTooManyRequests, a.tr("登录失败次数过多，请稍后再试"))
+		if a.logins.blocked(ip) {
+			render(http.StatusTooManyRequests, a.tr(loginFailMessage))
 			return
 		}
 		a.manager.mu.Lock()
 		valid := r.PostForm.Get("username") == a.manager.state.Settings.Username && verifyPassword(a.manager.state.Settings.Password, r.PostForm.Get("password"))
 		a.manager.mu.Unlock()
 		if !valid {
-			a.clients.recordLoginFailure(ip)
+			a.logins.fail(ip)
 			render(http.StatusUnauthorized, a.tr("账号或密码错误"))
 			return
 		}
+		a.logins.succeed(ip)
 	}
 	code, err := randomURLToken(32)
 	if err != nil {

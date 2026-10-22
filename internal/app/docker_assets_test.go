@@ -2,6 +2,7 @@ package app
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -90,5 +91,48 @@ func TestDockerAssetsStayWiredForRelease(t *testing.T) {
 	}
 	if !buildPushFound {
 		t.Fatal("the Docker release job must push a linux/amd64 image")
+	}
+}
+
+// The bundled Mihomo version is written in four places, and the release workflow's
+// build-args override the Dockerfile default. On 2026-10-08 only three were bumped,
+// so the published GHCR image kept shipping 1.19.30 for two weeks.
+func TestDockerMihomoVersionMatchesEverywhere(t *testing.T) {
+	read := func(name string) string {
+		t.Helper()
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	value := func(name, content string, pattern *regexp.Regexp) string {
+		t.Helper()
+		match := pattern.FindStringSubmatch(content)
+		if match == nil {
+			t.Fatalf("%s: no match for %s", name, pattern)
+		}
+		return match[1]
+	}
+	sources := map[string][2]*regexp.Regexp{
+		"Dockerfile":                    {regexp.MustCompile(`(?m)^ARG MIHOMO_VERSION=(\S+)$`), regexp.MustCompile(`(?m)^ARG MIHOMO_SHA256=(\S+)$`)},
+		"docker-compose.yml":            {regexp.MustCompile(`MIHOMO_VERSION: \$\{MIHOMO_VERSION:-([^}]+)\}`), regexp.MustCompile(`MIHOMO_SHA256: \$\{MIHOMO_SHA256:-([^}]+)\}`)},
+		".env.example":                  {regexp.MustCompile(`(?m)^MIHOMO_VERSION=(\S+)$`), regexp.MustCompile(`(?m)^MIHOMO_SHA256=(\S+)$`)},
+		".github/workflows/release.yml": {regexp.MustCompile(`(?m)^\s+MIHOMO_VERSION=(\S+)$`), regexp.MustCompile(`(?m)^\s+MIHOMO_SHA256=(\S+)$`)},
+	}
+	wantVersion, wantSHA := "", ""
+	for _, name := range []string{"Dockerfile", "docker-compose.yml", ".env.example", ".github/workflows/release.yml"} {
+		content := read(name)
+		version, sha := value(name, content, sources[name][0]), value(name, content, sources[name][1])
+		if !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(sha) {
+			t.Fatalf("%s: MIHOMO_SHA256 %q is not a sha256 hex digest", name, sha)
+		}
+		if wantVersion == "" {
+			wantVersion, wantSHA = version, sha
+			continue
+		}
+		if version != wantVersion || sha != wantSHA {
+			t.Fatalf("%s pins Mihomo %s (%s…), Dockerfile pins %s (%s…)", name, version, sha[:12], wantVersion, wantSHA[:12])
+		}
 	}
 }

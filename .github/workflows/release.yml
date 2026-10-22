@@ -263,7 +263,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             MUI_VERSION=${{ github.ref_name }}
-            MIHOMO_VERSION=1.19.30
-            MIHOMO_SHA256=db214c7a2517e63c150d123178d16d102e03a241ccdae4e5e07ffbe9cf56c6f9
+            MIHOMO_VERSION=1.19.33
+            MIHOMO_SHA256=386508bfb1c72c43b6a0eda73708ecdce82546581b0ebcb16366c53757c622b6
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -25,7 +25,7 @@ type xrayImportSource struct {
 	Rules          []map[string]any
 	Balancers      []map[string]any
 	DomainStrategy string
-	Notes          []string
+	Notes          []xrayText
 }
 
 type xrayImportInbound struct {
@@ -331,7 +331,7 @@ func parseXUIDatabase(data []byte) (xrayImportSource, error) {
 		for _, row := range joins {
 			links[int64Value(row["inbound_id"])] = append(links[int64Value(row["inbound_id"])], row)
 		}
-		source.Notes = append(source.Notes, "3x-ui 3.x database: clients read from the clients table")
+		source.Notes = append(source.Notes, xt("3x-ui 3.x database: clients read from the clients table"))
 	}
 
 	// 3x-ui 3.1+ keeps fallbacks in their own table instead of the settings JSON.
@@ -406,7 +406,7 @@ func parseXUIDatabase(data []byte) (xrayImportSource, error) {
 			}
 			template := jsonObject(row["value"])
 			if template == nil {
-				source.Notes = append(source.Notes, "xrayTemplateConfig could not be parsed; outbounds and routing rules were not imported")
+				source.Notes = append(source.Notes, xt("xrayTemplateConfig could not be parsed; outbounds and routing rules were not imported"))
 				break
 			}
 			source.Outbounds = mapList(template["outbounds"])
@@ -418,7 +418,7 @@ func parseXUIDatabase(data []byte) (xrayImportSource, error) {
 		}
 	}
 	if len(source.Outbounds) == 0 && len(source.Rules) == 0 {
-		source.Notes = append(source.Notes, "the database has no xrayTemplateConfig: 3x-ui used its default template (direct, blocked) and default rules")
+		source.Notes = append(source.Notes, xt("the database has no xrayTemplateConfig: 3x-ui used its default template (direct, blocked) and default rules"))
 	}
 	return source, nil
 }

@@ -210,7 +210,7 @@ func (m *CoreManager) applyScheduledTrafficResets() {
 				inbound.Clients[clientIndex].Traffic.Up, inbound.Clients[clientIndex].Traffic.Down = 0, 0
 			}
 			inbound.LastTrafficReset = now.Format(time.RFC3339)
-			m.addLogLocked(fmt.Sprintf("Inbound %s 已执行 %s 周期流量重置", inbound.Name, inbound.TrafficReset))
+			m.addLogLocked(fmt.Sprintf("Inbound %s 已执行周期流量重置（%s）", inbound.Name, inbound.TrafficReset))
 			changed = true
 		}
 		for clientIndex := range inbound.Clients {
@@ -225,7 +225,7 @@ func (m *CoreManager) applyScheduledTrafficResets() {
 			if trafficResetDue(client.TrafficReset, client.TrafficResetDay, scheduleStart(client.LastTrafficReset, client.CreatedAt, now), now) {
 				client.Traffic.Up, client.Traffic.Down = 0, 0
 				client.LastTrafficReset = now.Format(time.RFC3339)
-				m.addLogLocked(fmt.Sprintf("客户端 %s/%s 已执行 %s 周期流量重置", inbound.Name, client.Name, client.TrafficReset))
+				m.addLogLocked(fmt.Sprintf("客户端 %s/%s 已执行周期流量重置（%s）", inbound.Name, client.Name, client.TrafficReset))
 				changed = true
 			}
 		}

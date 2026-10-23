@@ -502,7 +502,7 @@ func (a *App) serveClientWire(w http.ResponseWriter, r *http.Request) {
 	action := strings.TrimPrefix(r.URL.Path, clientWireBase)
 	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, clientWireLimit))
 	if err != nil {
-		clientError(w, http.StatusBadRequest, "bad_request", "请求过大或无法读取")
+		clientError(w, http.StatusBadRequest, "bad_request", a.tr("请求过大或无法读取"))
 		return
 	}
 	if action == "enroll" && r.Method == http.MethodPost {
@@ -511,7 +511,7 @@ func (a *App) serveClientWire(w http.ResponseWriter, r *http.Request) {
 	}
 	cert, nonce, err := a.clients.authenticate(r, body)
 	if errors.Is(err, errClientRevoked) {
-		clientError(w, http.StatusForbidden, "revoked", "设备已被吊销，请重新登录")
+		clientError(w, http.StatusForbidden, "revoked", a.tr("设备已被吊销，请重新登录"))
 		return
 	}
 	if err != nil {
@@ -522,21 +522,21 @@ func (a *App) serveClientWire(w http.ResponseWriter, r *http.Request) {
 	case action == "network" && r.Method == http.MethodGet:
 		envelope, err := a.clientNetworkEnvelope()
 		if err != nil {
-			clientError(w, http.StatusInternalServerError, "internal", err.Error())
+			clientError(w, http.StatusInternalServerError, "internal", a.tr(err.Error()))
 			return
 		}
 		writeClientJSON(w, map[string]string{"network": envelope})
 	case action == "renew" && r.Method == http.MethodPost:
 		envelope, _, err := a.clients.issueCert(cert.DeviceID, cert.PublicKey, cert.Name)
 		if err != nil {
-			clientError(w, http.StatusInternalServerError, "internal", err.Error())
+			clientError(w, http.StatusInternalServerError, "internal", a.tr(err.Error()))
 			return
 		}
 		writeClientJSON(w, map[string]string{"cert": envelope})
 	case action == "config" && r.Method == http.MethodGet:
 		a.clientConfig(w, r, nonce)
 	default:
-		clientError(w, http.StatusNotFound, "not_found", "接口不存在")
+		clientError(w, http.StatusNotFound, "not_found", a.tr("接口不存在"))
 	}
 }
 
@@ -563,12 +563,12 @@ func (a *App) clientEnroll(w http.ResponseWriter, body []byte) {
 	decoder := json.NewDecoder(bytes.NewReader(body))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		clientError(w, http.StatusBadRequest, "bad_request", "请求格式无效")
+		clientError(w, http.StatusBadRequest, "bad_request", a.tr("请求格式无效"))
 		return
 	}
 	key, err := base64.StdEncoding.DecodeString(input.PublicKey)
 	if err != nil || len(key) != ed25519.PublicKeySize || !clientDeviceIDPattern.MatchString(input.DeviceID) || !clientVerifierPattern.MatchString(input.CodeVerifier) {
-		clientError(w, http.StatusBadRequest, "bad_request", "请求格式无效")
+		clientError(w, http.StatusBadRequest, "bad_request", a.tr("请求格式无效"))
 		return
 	}
 	c := a.clients
@@ -581,16 +581,16 @@ func (a *App) clientEnroll(w http.ResponseWriter, body []byte) {
 	if !ok || time.Now().After(pending.Expires) ||
 		!hmac.Equal([]byte(base64.RawURLEncoding.EncodeToString(challenge[:])), []byte(pending.Challenge)) ||
 		pending.RedirectURI != input.RedirectURI || pending.ClientID != input.ClientID {
-		clientError(w, http.StatusBadRequest, "invalid_grant", "登录已过期或无效，请重新登录")
+		clientError(w, http.StatusBadRequest, "invalid_grant", a.tr("登录已过期或无效，请重新登录"))
 		return
 	}
 	if revoked {
-		clientError(w, http.StatusForbidden, "revoked", "该设备 ID 已被吊销，请重新登录")
+		clientError(w, http.StatusForbidden, "revoked", a.tr("该设备 ID 已被吊销，请重新登录"))
 		return
 	}
 	certEnvelope, cert, err := c.issueCert(input.DeviceID, input.PublicKey, pending.DeviceName)
 	if err != nil {
-		clientError(w, http.StatusInternalServerError, "internal", err.Error())
+		clientError(w, http.StatusInternalServerError, "internal", a.tr(err.Error()))
 		return
 	}
 	c.mu.Lock()
@@ -598,7 +598,7 @@ func (a *App) clientEnroll(w http.ResponseWriter, body []byte) {
 	c.mu.Unlock()
 	network, err := a.clientNetworkEnvelope()
 	if err != nil {
-		clientError(w, http.StatusInternalServerError, "internal", err.Error())
+		clientError(w, http.StatusInternalServerError, "internal", a.tr(err.Error()))
 		return
 	}
 	writeClientJSON(w, map[string]string{"cert": certEnvelope, "network": network})
@@ -644,12 +644,12 @@ func (a *App) clientConfig(w http.ResponseWriter, r *http.Request, nonce string)
 	username := strings.TrimSpace(r.URL.Query().Get("username"))
 	source := r.URL.Query().Get("source")
 	if username == "" || (source != "merged" && !peerIDPattern.MatchString(source)) {
-		clientError(w, http.StatusBadRequest, "bad_request", "请求格式无效")
+		clientError(w, http.StatusBadRequest, "bad_request", a.tr("请求格式无效"))
 		return
 	}
 	snapshot, ok := a.clientSnapshot(username, source)
 	if !ok {
-		clientError(w, http.StatusNotFound, "not_found", "该面板上没有这个 Username 的可用节点")
+		clientError(w, http.StatusNotFound, "not_found", a.tr("该面板上没有这个 Username 的可用节点"))
 		return
 	}
 	if a.subTemplates != nil {

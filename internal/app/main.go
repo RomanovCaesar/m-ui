@@ -1359,7 +1359,7 @@ func (a *App) handleState(w http.ResponseWriter, r *http.Request) {
 	panelTLSConfigured, panelTLSValid := panelTLSStatus(state.Settings)
 	data := map[string]any{
 		"version": appVersion, "state": state, "running": running, "startedAt": started,
-		"logs": logs, "platform": runtime.GOOS, "coreVersion": a.manager.coreVersion(), "system": stats,
+		"logs": translateLogs(logs, a.lang()), "platform": runtime.GOOS, "coreVersion": a.manager.coreVersion(), "system": stats,
 		"panelTLS": map[string]bool{"configured": panelTLSConfigured, "valid": panelTLSValid, "chainIncomplete": panelTLSValid && currentPanelChainStatus().Incomplete},
 	}
 	if running {
@@ -1550,7 +1550,7 @@ func (a *App) handleCoreLogs(w http.ResponseWriter, r *http.Request) {
 	a.manager.mu.Lock()
 	logs := append([]string(nil), a.manager.logs...)
 	a.manager.mu.Unlock()
-	writeJSON(w, http.StatusOK, apiResponse{OK: true, Data: logs})
+	writeJSON(w, http.StatusOK, apiResponse{OK: true, Data: translateLogs(logs, a.lang())})
 }
 
 func (a *App) auth(next http.HandlerFunc) http.HandlerFunc {

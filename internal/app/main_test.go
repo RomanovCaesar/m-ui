@@ -4784,7 +4784,7 @@ func TestSettingsPageReplicates3xUiLayout(t *testing.T) {
 	for _, needle := range []string{
 		"setupSubscriptionUI", "setupSubscriptionPortUI", "Subscription Service Port", `name="subscriptionPort"`, "Subscription Path", "Clash / Mihomo Path", "Manage Tokens", "Export All Subscriptions",
 		`id="all-links-modal"`, `id="all-subscriptions-modal"`, "function openAllLinksModal()", "function openAllSubscriptionsModal()",
-		"regenerate-subscription-path", "muiT('tool.generateSubPath')", "'/api/tools/subscription-path'",
+		"regenerate-subscription-path", "'regenerate-subscription-path','tool.generateSubPath'", "'/api/tools/subscription-path'",
 	} {
 		if !strings.Contains(content, needle) {
 			t.Fatalf("the settings page is missing subscription feature %s", needle)

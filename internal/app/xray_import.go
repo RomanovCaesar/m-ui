@@ -57,7 +57,7 @@ func (a *App) handleXrayImport(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Message: a.tr(err.Error())})
 		return
 	}
-	result, err := a.manager.importXray(source)
+	result, err := a.manager.importXray(source, a.lang())
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, apiResponse{Message: a.tr(err.Error()), Data: result})
 		return
@@ -130,10 +130,12 @@ func (m *CoreManager) reserveSubscriptionToken(username, token string) bool {
 	return true
 }
 
-func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, error) {
+// importXray adds what input describes to the panel. The conversion log is
+// written in language.
+func (m *CoreManager) importXray(input xrayImportSource, language string) (xrayImportResult, error) {
 	result := xrayImportResult{Source: input.Kind}
-	log := &xrayImportLog{}
-	log.lines = append(log.lines, "m-ui import from "+input.Kind+" — "+time.Now().Format("2006-01-02 15:04:05"))
+	log := &xrayImportLog{language: language}
+	log.lines = append(log.lines, xt("m-ui import from %s — %s", input.Kind, time.Now().Format("2006-01-02 15:04:05")).render(language))
 	for _, note := range input.Notes {
 		log.info("%s", note)
 	}
@@ -170,26 +172,26 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 			log.warn("%s: it was a fallback target of %s; Mihomo has no fallbacks, so it is imported as a separate listener on its own port", label, source.FallbackOf)
 		}
 		listener, skip := xrayListener(source, log)
-		if skip != "" {
+		if skip.set() {
 			log.warn("%s: skipped — %s", label, skip)
 			result.InboundsSkipped++
 			continue
 		}
 		port := intValue(listener["port"])
 		listen := outboundStringValue(listener["listen"])
-		conflict := ""
+		conflict := xrayText{}
 		for _, existing := range occupied {
 			if existing.Port == port && listenAddressesOverlap(existing.Listen, listen) {
-				conflict = fmt.Sprintf("port %d is already used by inbound %q (kept)", port, existing.Name)
+				conflict = xt("port %d is already used by inbound %q (kept)", port, existing.Name)
 				break
 			}
 		}
-		if conflict == "" {
+		if !conflict.set() {
 			if reserved := reservedPanelPortConflict(settings, listen, port); reserved != "" {
-				conflict = fmt.Sprintf("port %d is used by the panel (%s)", port, reserved)
+				conflict = xt("port %d is used by the panel (%s)", port, reserved)
 			}
 		}
-		if conflict != "" {
+		if conflict.set() {
 			log.warn("%s: skipped — %s", label, conflict)
 			result.InboundsSkipped++
 			continue
@@ -279,7 +281,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 
 		inbound, err := inboundFromYAMLMap(listener)
 		if err != nil {
-			log.warn("%s: skipped — %v", label, err)
+			log.warn("%s: skipped — %s", label, err)
 			result.InboundsSkipped++
 			delete(inboundNames, name)
 			continue
@@ -294,7 +296,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 				inbound.TrafficResetDay = source.ResetDay
 			}
 		}
-		inbound.Notes = "Imported from " + input.Kind
+		inbound.Notes = xt("Imported from %s", input.Kind).render(language)
 		if source.Tag != "" {
 			inbound.Notes += " (" + source.Tag + ")"
 		}
@@ -338,7 +340,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 			}
 		}
 		if err := m.saveInbound(inbound); err != nil {
-			log.warn("%s: skipped — %s", label, err.Error())
+			log.warn("%s: skipped — %s", label, err)
 			result.InboundsSkipped++
 			delete(inboundNames, name)
 			continue
@@ -350,9 +352,9 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 		}
 		result.Inbounds++
 		result.Clients += len(inbound.Clients)
-		renamed := ""
+		renamed := xrayText{}
 		if name != base {
-			renamed = fmt.Sprintf(" (renamed from %q: the name was taken)", base)
+			renamed = xt(" (renamed from %q: the name was taken)", base)
 		}
 		log.info("%s → %s %s on port %d, %d client(s)%s", label, inbound.Type, name, port, len(inbound.Clients), renamed)
 	}
@@ -375,10 +377,10 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 	var sourceTags []string
 	for index, raw := range input.Outbounds {
 		tag := outboundStringValue(raw["tag"])
-		label := valueOr(tag, fmt.Sprintf("outbound #%d", index+1))
+		label := valueOr(tag, xt("outbound #%d", index+1).render(language))
 		proxy, builtin, dialer, skip := xrayOutbound(raw, log)
 		switch {
-		case skip != "":
+		case skip.set():
 			log.warn("%s: skipped — %s", label, skip)
 			result.OutboundsSkipped++
 			continue
@@ -418,16 +420,16 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 			_, err = normalizeMihomoOutbounds(append(append([]MihomoOutbound(nil), accepted...), outbound))
 		}
 		if err != nil {
-			log.warn("%s: skipped — %s", label, err.Error())
+			log.warn("%s: skipped — %s", label, err)
 			result.OutboundsSkipped++
 			delete(target, item.tag)
 			continue
 		}
 		accepted = append(accepted, outbound)
 		result.Outbounds++
-		renamed := ""
+		renamed := xrayText{}
 		if outbound.Name != xrayImportName(item.tag) {
-			renamed = " (renamed: the name was taken)"
+			renamed = xt(" (renamed: the name was taken)")
 		}
 		log.info("%s → %s proxy %s%s", label, outbound.Type, outbound.Name, renamed)
 	}
@@ -438,7 +440,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 			name, ok := target[tag]
 			return name, ok && name != "DIRECT" && name != "REJECT"
 		})
-		if skip != "" {
+		if skip.set() {
 			log.warn("balancer %s: skipped — %s", tag, skip)
 			result.OutboundsSkipped++
 			continue
@@ -449,7 +451,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 			_, err = normalizeMihomoOutbounds(append(append([]MihomoOutbound(nil), accepted...), outbound))
 		}
 		if err != nil {
-			log.warn("balancer %s: skipped — %s", tag, err.Error())
+			log.warn("balancer %s: skipped — %s", tag, err)
 			result.OutboundsSkipped++
 			continue
 		}
@@ -483,7 +485,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 	}
 	var newRules []MihomoRoutingRule
 	for index, raw := range input.Rules {
-		label := fmt.Sprintf("rule #%d", index+1)
+		label := xt("rule #%d", index+1).render(language)
 		if tags := stringListRaw(raw["inboundTag"]); outboundStringValue(raw["outboundTag"]) == "api" || containsString(tags, "api") || containsString(tags, "panel-egress") {
 			log.info("%s: skipped (3x-ui internal rule)", label)
 			continue
@@ -494,7 +496,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 			result.RulesSkipped++
 			continue
 		}
-		if why != "" {
+		if why.set() {
 			log.warn("%s: %s", label, why)
 		}
 		for _, rule := range rules {
@@ -504,7 +506,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 				continue
 			}
 			if _, err := normalizeMihomoRoutingRules([]MihomoRoutingRule{rule}, normalized); err != nil {
-				log.warn("%s: %s,%s skipped — %s", label, rule.Type, rule.Payload, err.Error())
+				log.warn("%s: %s,%s skipped — %s", label, rule.Type, rule.Payload, err)
 				result.RulesSkipped++
 				continue
 			}
@@ -529,13 +531,13 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 			combined = append(combined, newRules...)
 		}
 		if err := m.updateMihomoSettings(mihomoSettingsPayload{Outbounds: accepted, RoutingRules: combined}); err != nil {
-			log.warn("outbounds and routing rules could not be saved: %v", err)
+			log.warn("outbounds and routing rules could not be saved: %s", err)
 			result.Outbounds, result.Groups, result.Rules = 0, 0, 0
 		}
 	}
 
 	if err := m.writeConfig(); err != nil {
-		log.warn("the Mihomo configuration could not be written: %v", err)
+		log.warn("the Mihomo configuration could not be written: %s", err)
 	}
 
 	log.section("Summary")

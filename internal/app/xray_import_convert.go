@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"net"
 	"os"
 	"sort"
@@ -13,21 +12,22 @@ import (
 // proxies and rules. Everything Mihomo cannot express is reported, never guessed.
 
 type xrayImportLog struct {
+	language string
 	lines    []string
 	warnings int
 }
 
 func (l *xrayImportLog) info(format string, args ...any) {
-	l.lines = append(l.lines, "  "+fmt.Sprintf(format, args...))
+	l.lines = append(l.lines, "  "+xt(format, args...).render(l.language))
 }
 
 func (l *xrayImportLog) warn(format string, args ...any) {
 	l.warnings++
-	l.lines = append(l.lines, "  ! "+fmt.Sprintf(format, args...))
+	l.lines = append(l.lines, "  ! "+xt(format, args...).render(l.language))
 }
 
 func (l *xrayImportLog) section(title string) {
-	l.lines = append(l.lines, "", "== "+title)
+	l.lines = append(l.lines, "", "== "+xt(title).render(l.language))
 }
 
 // ---- inbounds ----
@@ -35,27 +35,27 @@ func (l *xrayImportLog) section(title string) {
 // xrayListener converts one inbound to a Mihomo listener without its users (they
 // depend on the usernames chosen when importing). A non-empty skip reason means
 // the inbound cannot be imported.
-func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, string) {
+func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, xrayText) {
 	switch in.Protocol {
 	case "tunnel", "dokodemo-door":
-		return nil, "m-ui has no tunnel (dokodemo-door) inbound"
+		return nil, xt("m-ui has no tunnel (dokodemo-door) inbound")
 	case "wireguard":
-		return nil, "Mihomo has no WireGuard server (listener)"
+		return nil, xt("Mihomo has no WireGuard server (listener)")
 	case "tun":
-		return nil, "TUN inbounds are not imported"
+		return nil, xt("TUN inbounds are not imported")
 	case "mtproto", "amneziawg", "masque":
-		return nil, fmt.Sprintf("%s is a 3x-ui add-on protocol that Mihomo does not provide", in.Protocol)
+		return nil, xt("%s is a 3x-ui add-on protocol that Mihomo does not provide", in.Protocol)
 	case "vless", "vmess", "trojan", "shadowsocks", "socks", "mixed", "http", "hysteria", "hysteria2", "tuic":
 	default:
-		return nil, fmt.Sprintf("unknown protocol %q", in.Protocol)
+		return nil, xt("unknown protocol %q", in.Protocol)
 	}
 	port, ok := xrayPort(in.Port)
 	if !ok {
-		return nil, fmt.Sprintf("port %v is not a single port (port ranges are not supported)", in.Port)
+		return nil, xt("port %v is not a single port (port ranges are not supported)", in.Port)
 	}
 	listen := in.Listen
 	if strings.HasPrefix(listen, "/") || strings.HasPrefix(listen, "@") {
-		return nil, "listens on a Unix socket (" + listen + ")"
+		return nil, xt("listens on a Unix socket (%s)", listen)
 	}
 	if listen == "" {
 		listen = "0.0.0.0"
@@ -77,7 +77,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 		clients := in.Clients
 		if strings.HasPrefix(method, "2022-") {
 			if len(clients) > 0 {
-				return nil, "Shadowsocks 2022 with per-client keys (multi-user) is not supported by Mihomo listeners"
+				return nil, xt("Shadowsocks 2022 with per-client keys (multi-user) is not supported by Mihomo listeners")
 			}
 		} else {
 			switch len(clients) {
@@ -86,18 +86,18 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 				password = valueOr(clients[0].Password, password)
 				method = valueOr(strings.ToLower(clients[0].Method), method)
 			default:
-				return nil, "Shadowsocks with several clients on one port is not supported by Mihomo listeners"
+				return nil, xt("Shadowsocks with several clients on one port is not supported by Mihomo listeners")
 			}
 		}
 		if method == "" || password == "" {
-			return nil, "Shadowsocks without a method or password"
+			return nil, xt("Shadowsocks without a method or password")
 		}
 		listener["cipher"], listener["password"] = method, password
 		listener["udp"] = strings.Contains(strings.ToLower(valueOr(outboundStringValue(settings["network"]), "tcp,udp")), "udp")
-		if err := xrayRejectTransport(stream, "tcp"); err != "" {
+		if err := xrayRejectTransport(stream, "tcp"); err.set() {
 			return nil, err
 		}
-		return listener, ""
+		return listener, xrayText{}
 	case "socks", "mixed", "http":
 		listener["type"] = in.Protocol
 		if in.Protocol != "http" {
@@ -112,16 +112,16 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 		} else {
 			log.warn("%s: no accounts, so the imported %s inbound accepts anyone who can reach port %d", in.Tag, in.Protocol, port)
 		}
-		if err := xrayRejectTransport(stream, "tcp"); err != "" {
+		if err := xrayRejectTransport(stream, "tcp"); err.set() {
 			return nil, err
 		}
-		return listener, ""
+		return listener, xrayText{}
 	case "hysteria", "hysteria2":
 		if version := intValue(settings["version"]); version != 0 && version != 2 {
-			return nil, fmt.Sprintf("Hysteria version %d (only version 2 is supported)", version)
+			return nil, xt("Hysteria version %d (only version 2 is supported)", version)
 		}
 		listener["type"] = "hysteria2"
-		if err := xrayListenerTLS(listener, stream, in.Tag, log, true); err != "" {
+		if err := xrayListenerTLS(listener, stream, in.Tag, log, true); err.set() {
 			return nil, err
 		}
 		hysteria := mapValue(stream["hysteriaSettings"])
@@ -148,7 +148,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 		if alpn := stringList(mapValue(stream["tlsSettings"])["alpn"]); len(alpn) > 0 {
 			listener["alpn"] = alpn
 		}
-		return listener, ""
+		return listener, xrayText{}
 	case "tuic":
 		// 3x-ui 3.x runs TUIC outside Xray; its settings mirror tuic-server's.
 		server := settings
@@ -159,7 +159,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 		listener["certificate"] = outboundStringValue(server["certificate"])
 		listener["private-key"] = outboundStringValue(server["private_key"])
 		if listener["certificate"] == "" || listener["private-key"] == "" {
-			return nil, "TUIC without a certificate"
+			return nil, xt("TUIC without a certificate")
 		}
 		xrayCheckCertificateFiles(listener, in.Tag, log)
 		if congestion := outboundStringValue(server["congestion_control"]); congestion != "" {
@@ -171,7 +171,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 		if size := intValue(server["max_udp_relay_packet_size"]); size > 0 {
 			listener["max-udp-relay-packet-size"] = size
 		}
-		return listener, ""
+		return listener, xrayText{}
 	}
 
 	// vless / vmess / trojan
@@ -180,7 +180,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 	switch network {
 	case "tcp":
 		if header := mapValue(mapValue(firstNonNil(stream["rawSettings"], stream["tcpSettings"]))["header"]); strings.EqualFold(outboundStringValue(header["type"]), "http") {
-			return nil, "TCP with HTTP header obfuscation is not supported by Mihomo listeners"
+			return nil, xt("TCP with HTTP header obfuscation is not supported by Mihomo listeners")
 		}
 	case "ws":
 		ws := mapValue(stream["wsSettings"])
@@ -196,18 +196,18 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 		}
 	case "xhttp":
 		if in.Protocol != "vless" {
-			return nil, "XHTTP is only supported for VLESS listeners in Mihomo"
+			return nil, xt("XHTTP is only supported for VLESS listeners in Mihomo")
 		}
 		listener["xhttp-config"] = xrayXHTTPConfig(firstMap(stream["xhttpSettings"], stream["splithttpSettings"]), in.Tag, log)
 	case "mkcp":
 		if in.Protocol != "vmess" {
-			return nil, "mKCP is only supported for VMess listeners in Mihomo"
+			return nil, xt("mKCP is only supported for VMess listeners in Mihomo")
 		}
 		listener["mkcp-config"] = xrayMKCPConfig(mapValue(stream["kcpSettings"]))
 	case "httpupgrade":
-		return nil, "HTTPUpgrade transport is not supported by Mihomo listeners"
+		return nil, xt("HTTPUpgrade transport is not supported by Mihomo listeners")
 	default:
-		return nil, fmt.Sprintf("transport %q is not supported by Mihomo listeners", network)
+		return nil, xt("transport %q is not supported by Mihomo listeners", network)
 	}
 	if boolValue(mapValue(stream["sockopt"])["acceptProxyProtocol"]) || boolValue(mapValue(stream["wsSettings"])["acceptProxyProtocol"]) || boolValue(mapValue(firstNonNil(stream["rawSettings"], stream["tcpSettings"]))["acceptProxyProtocol"]) {
 		log.warn("%s: PROXY protocol (acceptProxyProtocol) is not supported by Mihomo listeners; a front proxy that sends it will break connections", in.Tag)
@@ -215,12 +215,12 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 	switch strings.ToLower(outboundStringValue(stream["security"])) {
 	case "", "none":
 	case "tls":
-		if err := xrayListenerTLS(listener, stream, in.Tag, log, false); err != "" {
+		if err := xrayListenerTLS(listener, stream, in.Tag, log, false); err.set() {
 			return nil, err
 		}
 	case "reality":
 		if in.Protocol != "vless" && in.Protocol != "trojan" && in.Protocol != "vmess" {
-			return nil, "Reality is not supported for this protocol"
+			return nil, xt("Reality is not supported for this protocol")
 		}
 		reality := mapValue(stream["realitySettings"])
 		config := map[string]any{
@@ -230,7 +230,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 			"server-names": stringList(reality["serverNames"]),
 		}
 		if config["dest"] == "" || config["private-key"] == "" {
-			return nil, "Reality without a target or private key"
+			return nil, xt("Reality without a target or private key")
 		}
 		listener["reality-config"] = config
 		for _, key := range []string{"xver", "minClientVer", "maxClientVer", "maxTimeDiff", "mldsa65Seed"} {
@@ -239,7 +239,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 			}
 		}
 	default:
-		return nil, fmt.Sprintf("security %q is not supported", outboundStringValue(stream["security"]))
+		return nil, xt("security %q is not supported", outboundStringValue(stream["security"]))
 	}
 	if in.Protocol == "vless" {
 		if decryption := outboundStringValue(settings["decryption"]); decryption != "" && decryption != "none" {
@@ -249,7 +249,7 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, str
 	if len(anyList(settings["fallbacks"])) > 0 || in.Fallbacks > 0 {
 		log.warn("%s: fallbacks are not supported by Mihomo listeners and were dropped", in.Tag)
 	}
-	return listener, ""
+	return listener, xrayText{}
 }
 
 func xrayPort(value any) (int, bool) {
@@ -293,26 +293,26 @@ func xrayNetwork(stream map[string]any) string {
 	}
 }
 
-func xrayRejectTransport(stream map[string]any, allowed string) string {
+func xrayRejectTransport(stream map[string]any, allowed string) xrayText {
 	if network := xrayNetwork(stream); network != allowed {
-		return fmt.Sprintf("transport %q is not supported for this protocol", network)
+		return xt("transport %q is not supported for this protocol", network)
 	}
 	if security := strings.ToLower(outboundStringValue(stream["security"])); security != "" && security != "none" {
-		return fmt.Sprintf("security %q is not supported for this protocol", security)
+		return xt("security %q is not supported for this protocol", security)
 	}
-	return ""
+	return xrayText{}
 }
 
 // xrayListenerTLS copies the first certificate of tlsSettings. Files are kept as
 // paths (they must exist on this server); inline certificates become PEM content.
-func xrayListenerTLS(listener map[string]any, stream map[string]any, tag string, log *xrayImportLog, required bool) string {
+func xrayListenerTLS(listener map[string]any, stream map[string]any, tag string, log *xrayImportLog, required bool) xrayText {
 	tls := mapValue(stream["tlsSettings"])
 	certificates := mapList(tls["certificates"])
 	if len(certificates) == 0 {
 		if required || strings.EqualFold(outboundStringValue(stream["security"]), "tls") {
-			return "TLS without a certificate"
+			return xt("TLS without a certificate")
 		}
-		return ""
+		return xrayText{}
 	}
 	first := certificates[0]
 	certificate := outboundStringValue(first["certificateFile"])
@@ -324,7 +324,7 @@ func xrayListenerTLS(listener map[string]any, stream map[string]any, tag string,
 		key = strings.Join(lines, "\n")
 	}
 	if certificate == "" || key == "" {
-		return "TLS certificate or key is missing"
+		return xt("TLS certificate or key is missing")
 	}
 	listener["certificate"], listener["private-key"] = certificate, key
 	if len(certificates) > 1 {
@@ -334,7 +334,7 @@ func xrayListenerTLS(listener map[string]any, stream map[string]any, tag string,
 		log.info("%s: ECH server keys were not imported", tag)
 	}
 	xrayCheckCertificateFiles(listener, tag, log)
-	return ""
+	return xrayText{}
 }
 
 // stringListRaw keeps every line of a JSON string array (PEM lines must not be
@@ -454,7 +454,7 @@ func xrayMKCPConfig(kcp map[string]any) map[string]any {
 
 // xrayOutbound converts an outbound. builtin is DIRECT or REJECT for freedom and
 // blackhole, which need no proxy entry. dialer names another outbound tag.
-func xrayOutbound(out map[string]any, log *xrayImportLog) (proxy map[string]any, builtin, dialer, skip string) {
+func xrayOutbound(out map[string]any, log *xrayImportLog) (proxy map[string]any, builtin, dialer string, skip xrayText) {
 	tag := outboundStringValue(out["tag"])
 	protocol := strings.ToLower(outboundStringValue(out["protocol"]))
 	settings, stream := mapValue(out["settings"]), mapValue(out["streamSettings"])
@@ -478,13 +478,13 @@ func xrayOutbound(out map[string]any, log *xrayImportLog) (proxy map[string]any,
 		if len(dropped) > 0 {
 			log.info("%s: freedom outbound mapped to DIRECT; %s not supported", tag, strings.Join(dropped, ", "))
 		}
-		return nil, "DIRECT", "", ""
+		return nil, "DIRECT", "", xrayText{}
 	case "blackhole", "block":
-		return nil, "REJECT", "", ""
+		return nil, "REJECT", "", xrayText{}
 	case "dns":
-		return nil, "", "", "DNS outbounds have no Mihomo proxy equivalent"
+		return nil, "", "", xt("DNS outbounds have no Mihomo proxy equivalent")
 	case "loopback":
-		return nil, "", "", "loopback outbounds have no Mihomo proxy equivalent"
+		return nil, "", "", xt("loopback outbounds have no Mihomo proxy equivalent")
 	}
 
 	server := map[string]any{}
@@ -557,17 +557,17 @@ func xrayOutbound(out map[string]any, log *xrayImportLog) (proxy map[string]any,
 	case "wireguard":
 		return xrayWireGuardOutbound(tag, settings, log)
 	default:
-		return nil, "", "", fmt.Sprintf("unknown outbound protocol %q", protocol)
+		return nil, "", "", xt("unknown outbound protocol %q", protocol)
 	}
 	if address == "" || port <= 0 {
-		return nil, "", "", "the outbound has no server address or port"
+		return nil, "", "", xt("the outbound has no server address or port")
 	}
 
 	if protocol != "hysteria" {
 		switch network := xrayNetwork(stream); network {
 		case "tcp":
 			if header := mapValue(mapValue(firstNonNil(stream["rawSettings"], stream["tcpSettings"]))["header"]); strings.EqualFold(outboundStringValue(header["type"]), "http") {
-				return nil, "", "", "TCP with HTTP header obfuscation is not supported by Mihomo"
+				return nil, "", "", xt("TCP with HTTP header obfuscation is not supported by Mihomo")
 			}
 		case "ws", "httpupgrade":
 			ws := mapValue(stream["wsSettings"])
@@ -596,7 +596,7 @@ func xrayOutbound(out map[string]any, log *xrayImportLog) (proxy map[string]any,
 			}
 			proxy["network"], proxy["xhttp-opts"] = "xhttp", opts
 		default:
-			return nil, "", "", fmt.Sprintf("transport %q is not supported for Mihomo proxies", network)
+			return nil, "", "", xt("transport %q is not supported for Mihomo proxies", network)
 		}
 	}
 
@@ -632,7 +632,7 @@ func xrayOutbound(out map[string]any, log *xrayImportLog) (proxy map[string]any,
 		}
 		proxy["client-fingerprint"] = valueOr(outboundStringValue(reality["fingerprint"]), "chrome")
 	default:
-		return nil, "", "", fmt.Sprintf("security %q is not supported", security)
+		return nil, "", "", xt("security %q is not supported", security)
 	}
 	// SNI only makes sense for the protocol the proxy type reads it from.
 	if proxy["type"] == "vless" || proxy["type"] == "vmess" {
@@ -648,19 +648,19 @@ func xrayOutbound(out map[string]any, log *xrayImportLog) (proxy map[string]any,
 	if mux := mapValue(out["mux"]); boolValue(mux["enabled"]) {
 		log.info("%s: Xray mux was not imported", tag)
 	}
-	return proxy, "", dialer, ""
+	return proxy, "", dialer, xrayText{}
 }
 
-func xrayWireGuardOutbound(tag string, settings map[string]any, log *xrayImportLog) (map[string]any, string, string, string) {
+func xrayWireGuardOutbound(tag string, settings map[string]any, log *xrayImportLog) (map[string]any, string, string, xrayText) {
 	peers := mapList(settings["peers"])
 	if len(peers) == 0 {
-		return nil, "", "", "WireGuard outbound without peers"
+		return nil, "", "", xt("WireGuard outbound without peers")
 	}
 	peer := peers[0]
 	host, portText, err := net.SplitHostPort(outboundStringValue(peer["endpoint"]))
 	port, _ := strconv.Atoi(portText)
 	if err != nil || port <= 0 {
-		return nil, "", "", "WireGuard peer endpoint is not host:port"
+		return nil, "", "", xt("WireGuard peer endpoint is not host:port")
 	}
 	proxy := map[string]any{
 		"name": tag, "type": "wireguard", "server": host, "port": port,
@@ -695,7 +695,7 @@ func xrayWireGuardOutbound(tag string, settings map[string]any, log *xrayImportL
 	if len(peers) > 1 {
 		log.info("%s: only the first of %d WireGuard peers was imported", tag, len(peers))
 	}
-	return proxy, "", "", ""
+	return proxy, "", "", xrayText{}
 }
 
 // ---- routing rules ----
@@ -723,22 +723,22 @@ func simpleLeaf(kind, payload string, noResolve bool) xrayRuleLeaf {
 
 // xrayRule converts one Xray routing rule. A rule whose conditions span several
 // fields becomes one AND rule; several values of one field are alternatives.
-func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, string) {
+func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, xrayText) {
 	var target string
 	if tag := outboundStringValue(raw["outboundTag"]); tag != "" {
 		name, ok := ctx.target(tag)
 		if !ok {
-			return nil, fmt.Sprintf("its outbound %q was not imported", tag)
+			return nil, xt("its outbound %q was not imported", tag)
 		}
 		target = name
 	} else if tag := outboundStringValue(raw["balancerTag"]); tag != "" {
 		name, ok := ctx.balancer(tag)
 		if !ok {
-			return nil, fmt.Sprintf("its balancer %q was not imported", tag)
+			return nil, xt("its balancer %q was not imported", tag)
 		}
 		target = name
 	} else {
-		return nil, "it has no outboundTag or balancerTag"
+		return nil, xt("it has no outboundTag or balancerTag")
 	}
 	for _, key := range []string{"protocol", "attrs", "localIP", "vlessRoute", "process", "webhook"} {
 		if value, ok := raw[key]; ok && value != nil && (outboundStringValue(value) != "" || len(anyList(value)) > 0 || len(mapValue(value)) > 0) {
@@ -746,12 +746,12 @@ func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, str
 			if detail == "" {
 				detail = outboundStringValue(value)
 			}
-			return nil, fmt.Sprintf("Mihomo cannot match %q (%s)", key, detail)
+			return nil, xt("Mihomo cannot match %q (%s)", key, detail)
 		}
 	}
 
 	var fields [][]xrayRuleLeaf
-	var dropped []string
+	var dropped xrayList
 	add := func(leaves []xrayRuleLeaf) {
 		if len(leaves) > 0 {
 			fields = append(fields, leaves)
@@ -761,21 +761,21 @@ func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, str
 	var domainLeaves []xrayRuleLeaf
 	for _, value := range append(stringListRaw(raw["domain"]), stringListRaw(raw["domains"])...) {
 		leaf, why := xrayDomainLeaf(value)
-		if why != "" {
-			dropped = append(dropped, value+" ("+why+")")
+		if why.set() {
+			dropped = append(dropped, xt("%s (%s)", value, why))
 			continue
 		}
 		domainLeaves = append(domainLeaves, leaf)
 	}
 	if (len(anyList(raw["domain"])) > 0 || len(anyList(raw["domains"])) > 0) && len(domainLeaves) == 0 {
-		return nil, "none of its domains can be expressed: " + strings.Join(dropped, ", ")
+		return nil, xt("none of its domains can be expressed: %s", dropped)
 	}
 	add(domainLeaves)
 
 	ipLeaves, ipDropped := xrayIPLeaves(stringListRaw(raw["ip"]), false, ctx.noResolve)
 	dropped = append(dropped, ipDropped...)
 	if len(anyList(raw["ip"])) > 0 && len(ipLeaves) == 0 {
-		return nil, "none of its IPs can be expressed: " + strings.Join(ipDropped, ", ")
+		return nil, xt("none of its IPs can be expressed: %s", ipDropped)
 	}
 	add(ipLeaves)
 
@@ -783,7 +783,7 @@ func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, str
 	srcLeaves, srcDropped := xrayIPLeaves(sources, true, false)
 	dropped = append(dropped, srcDropped...)
 	if len(sources) > 0 && len(srcLeaves) == 0 {
-		return nil, "none of its source IPs can be expressed"
+		return nil, xt("none of its source IPs can be expressed")
 	}
 	add(srcLeaves)
 
@@ -808,7 +808,7 @@ func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, str
 			}
 		}
 		if len(names) == 0 {
-			return nil, "none of its inbounds were imported"
+			return nil, xt("none of its inbounds were imported")
 		}
 		add([]xrayRuleLeaf{simpleLeaf("IN-NAME", strings.Join(names, "/"), false)})
 	}
@@ -825,13 +825,13 @@ func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, str
 			}
 		}
 		if len(users) == 0 {
-			return nil, "none of its users were imported"
+			return nil, xt("none of its users were imported")
 		}
 		add([]xrayRuleLeaf{simpleLeaf("IN-USER", strings.Join(users, "/"), false)})
 	}
 
 	if len(fields) == 0 {
-		return nil, "it has no condition Mihomo can match"
+		return nil, xt("it has no condition Mihomo can match")
 	}
 	var rules []MihomoRoutingRule
 	if len(fields) == 1 {
@@ -860,50 +860,50 @@ func xrayRule(raw map[string]any, ctx xrayRuleContext) ([]MihomoRoutingRule, str
 		rules = append(rules, MihomoRoutingRule{Type: "AND", Payload: "(" + strings.Join(parts, ",") + ")", Target: target})
 	}
 	if len(dropped) > 0 {
-		return rules, "partly imported; dropped " + strings.Join(dropped, ", ")
+		return rules, xt("partly imported; dropped %s", dropped)
 	}
-	return rules, ""
+	return rules, xrayText{}
 }
 
-func xrayDomainLeaf(value string) (xrayRuleLeaf, string) {
+func xrayDomainLeaf(value string) (xrayRuleLeaf, xrayText) {
 	value = strings.TrimSpace(value)
 	prefix, payload := "", value
 	if colon := strings.Index(value, ":"); colon > 0 {
 		prefix, payload = strings.ToLower(value[:colon]), value[colon+1:]
 	}
 	if payload == "" {
-		return xrayRuleLeaf{}, "empty"
+		return xrayRuleLeaf{}, xt("empty")
 	}
 	switch prefix {
 	case "geosite":
 		if strings.Contains(payload, "@") {
-			return xrayRuleLeaf{}, "geosite attributes are not supported"
+			return xrayRuleLeaf{}, xt("geosite attributes are not supported")
 		}
-		return simpleLeaf("GEOSITE", payload, false), ""
+		return simpleLeaf("GEOSITE", payload, false), xrayText{}
 	case "domain":
-		return simpleLeaf("DOMAIN-SUFFIX", payload, false), ""
+		return simpleLeaf("DOMAIN-SUFFIX", payload, false), xrayText{}
 	case "full":
-		return simpleLeaf("DOMAIN", payload, false), ""
+		return simpleLeaf("DOMAIN", payload, false), xrayText{}
 	case "keyword":
-		return simpleLeaf("DOMAIN-KEYWORD", payload, false), ""
+		return simpleLeaf("DOMAIN-KEYWORD", payload, false), xrayText{}
 	case "regexp":
 		if strings.ContainsAny(payload, ",()") {
-			return xrayRuleLeaf{}, "the regular expression contains , ( or )"
+			return xrayRuleLeaf{}, xt("the regular expression contains a comma or a parenthesis")
 		}
-		return simpleLeaf("DOMAIN-REGEX", payload, false), ""
+		return simpleLeaf("DOMAIN-REGEX", payload, false), xrayText{}
 	case "ext", "dotless":
-		return xrayRuleLeaf{}, prefix + ": matchers are not supported"
+		return xrayRuleLeaf{}, xt("%s: matchers are not supported", prefix)
 	case "":
 		// A plain string is a substring match in Xray.
-		return simpleLeaf("DOMAIN-KEYWORD", payload, false), ""
+		return simpleLeaf("DOMAIN-KEYWORD", payload, false), xrayText{}
 	default:
-		return simpleLeaf("DOMAIN-KEYWORD", value, false), ""
+		return simpleLeaf("DOMAIN-KEYWORD", value, false), xrayText{}
 	}
 }
 
-func xrayIPLeaves(values []string, source bool, noResolve bool) ([]xrayRuleLeaf, []string) {
+func xrayIPLeaves(values []string, source bool, noResolve bool) ([]xrayRuleLeaf, xrayList) {
 	var leaves []xrayRuleLeaf
-	var dropped []string
+	var dropped xrayList
 	geoKind, cidrKind := "GEOIP", "IP-CIDR"
 	if source {
 		geoKind, cidrKind = "SRC-GEOIP", "SRC-IP-CIDR"
@@ -926,7 +926,7 @@ func xrayIPLeaves(values []string, source bool, noResolve bool) ([]xrayRuleLeaf,
 			}
 			leaves = append(leaves, leaf)
 		case strings.HasPrefix(lower, "ext:") || strings.HasPrefix(lower, "ext-ip:"):
-			dropped = append(dropped, value+" (external IP files are not supported)")
+			dropped = append(dropped, xt("%s (external IP files are not supported)", value))
 		default:
 			cidr := value
 			if !strings.Contains(cidr, "/") {
@@ -940,7 +940,7 @@ func xrayIPLeaves(values []string, source bool, noResolve bool) ([]xrayRuleLeaf,
 			}
 			ip, _, err := net.ParseCIDR(cidr)
 			if err != nil {
-				dropped = append(dropped, value+" (not an IP or CIDR)")
+				dropped = append(dropped, xt("%s (not an IP or CIDR)", value))
 				continue
 			}
 			kind := cidrKind
@@ -970,7 +970,7 @@ func xrayPorts(value any) string {
 
 // xrayBalancerGroup turns a balancer into a Mihomo group over the outbounds whose
 // tag starts with one of its selector prefixes.
-func xrayBalancerGroup(balancer map[string]any, tags []string, nameOf func(string) (string, bool)) (map[string]any, string) {
+func xrayBalancerGroup(balancer map[string]any, tags []string, nameOf func(string) (string, bool)) (map[string]any, xrayText) {
 	tag := outboundStringValue(balancer["tag"])
 	var members []string
 	seen := map[string]bool{}
@@ -986,7 +986,7 @@ func xrayBalancerGroup(balancer map[string]any, tags []string, nameOf func(strin
 	}
 	sort.Strings(members)
 	if len(members) == 0 {
-		return nil, "no imported outbound matches its selector"
+		return nil, xt("no imported outbound matches its selector")
 	}
 	// []any like decoded YAML/JSON: the outbound parser reads lists of that shape.
 	proxies := make([]any, len(members))
@@ -1002,7 +1002,7 @@ func xrayBalancerGroup(balancer map[string]any, tags []string, nameOf func(strin
 	default:
 		group["type"], group["strategy"] = "load-balance", "consistent-hashing"
 	}
-	return group, ""
+	return group, xrayText{}
 }
 
 // xrayFlowAllowed mirrors 3x-ui's inboundCanEnableTlsFlow plus the 3.7+

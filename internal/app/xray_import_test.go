@@ -88,7 +88,7 @@ func TestXrayConfigImport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	result, err := m.importXray(source)
+	result, err := m.importXray(source, "en")
 	if err != nil {
 		t.Fatalf("%v\n%s", err, result.Log)
 	}
@@ -243,7 +243,7 @@ func importXUIFixture(t *testing.T, name string) (*CoreManager, xrayImportResult
 		t.Fatalf("source kind %q", source.Kind)
 	}
 	m := newEmptyImportManager(t)
-	result, err := m.importXray(source)
+	result, err := m.importXray(source, "en")
 	if err != nil {
 		t.Fatalf("%v\n%s", err, result.Log)
 	}

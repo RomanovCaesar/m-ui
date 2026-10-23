@@ -2352,6 +2352,10 @@ m-ui 界面多语言核心（简体中文 / 繁體中文 / English / 日本語 /
   window.muiGetLang = muiGetLang;
   window.muiGetAppliedLang = function () { return lang; };
 
+  // Text that page scripts build before DOMContentLoaded (tool button titles,
+  // for example) must already be in the chosen language, not zh-CN.
+  lang = muiGetLang();
+
   function boot() {
     lang = muiGetLang();
     muiApply(document);

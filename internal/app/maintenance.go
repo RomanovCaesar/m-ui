@@ -88,7 +88,7 @@ func (a *App) handleLogsDownload(w http.ResponseWriter, r *http.Request) {
 	a.manager.mu.Unlock()
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="mihomo.log"`)
-	_, _ = io.WriteString(w, strings.Join(logs, "\n")+"\n")
+	_, _ = io.WriteString(w, strings.Join(translateLogs(logs, a.lang()), "\n")+"\n")
 }
 
 func (a *App) handleBackup(w http.ResponseWriter, r *http.Request) {

@@ -275,7 +275,7 @@ func TestXUIDatabaseImportV2(t *testing.T) {
 		t.Fatalf("vip client: %+v", vip)
 	}
 	trial := clientByName(main, "trial@main")
-	if trial == nil || trial.ExpireAfterDays != 7 || trial.ExpiryTime != 0 {
+	if trial == nil || trial.ExpireAfterDays != 7 || trial.ExpiryTime != 0 || trial.RenewDays != 30 {
 		t.Fatalf("trial client (expire 7 days after first use): %+v", trial)
 	}
 	banned := clientByName(main, "banned@main")
@@ -324,8 +324,17 @@ func TestXUIDatabaseImportV3(t *testing.T) {
 		anna.Notes != "from clients table" || anna.Username != "annasub000000001" || anna.Traffic.Up != 100 {
 		t.Fatalf("anna must come from the clients table: %+v", anna)
 	}
+	if main.TrafficReset != "monthly" || main.TrafficResetDay != 20 {
+		t.Fatalf("inbound monthly reset on the 20th: %q %d", main.TrafficReset, main.TrafficResetDay)
+	}
+	if anna.RenewDay != 1 || anna.RenewMax != 12 || anna.RenewCount != 3 || anna.TrafficReset != "" {
+		t.Fatalf("anna renews on the 1st, 3 of 12 renewals used: %+v", anna)
+	}
 	ben := clientByName(main, "ben")
-	if ben == nil || ben.Enabled {
+	if ben == nil || ben.TrafficReset != "monthly" || ben.TrafficResetDay != 15 || ben.RenewDay != 0 {
+		t.Fatalf("ben resets monthly on the 15th: %+v", ben)
+	}
+	if ben.Enabled {
 		t.Fatalf("ben (disabled, only in the clients table): %+v", ben)
 	}
 	if findInbound(m, "On node") != nil {
@@ -347,7 +356,7 @@ func TestXUIDatabaseImportV3(t *testing.T) {
 	}
 	for _, needle := range []string{"remote 3x-ui node", "mtproto is a 3x-ui add-on", "/etc/x-ui/cert.pem does not exist",
 		"in-443-tcp: fallbacks are not supported", "in-20001-ws: it was a fallback target of in-443-tcp",
-		"per-client traffic reset schedules"} {
+		"anna keeps its traffic reset / renewal schedule"} {
 		if !strings.Contains(result.Log, needle) {
 			t.Fatalf("log does not mention %q", needle)
 		}

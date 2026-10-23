@@ -32,7 +32,7 @@
 **Inbound 與 Client**
 * 支援 `mixed`、`socks`、`http`、`shadowsocks`、`snell`、`vmess`、`vless`、`trojan`、`hysteria2`、`tuic`、`anytls`、`mieru`、`sudoku`、`shadowquic`、`trusttunnel` 和 `hysteria2-realm` 監聽
 * TLS、Reality、ShadowTLS、RestTLS、TLSMirror、JLS、Trojan SS、XHTTP、mKCP、Mekya 和混淆設定
-* 每個 Client 的憑證、流量配額、到期時間、重設週期和線上狀態；Inbound 也可設定總量和到期
+* 每個 Client 的憑證、流量配額、到期時間、流量重設週期、到期自動續期和線上狀態；Inbound 也可設定總量和到期
 * 分享連結、QR Code、透過 Mihomo listener YAML 匯入 Inbound、批次重設流量
 
 **訂閱**

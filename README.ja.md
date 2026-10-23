@@ -32,7 +32,7 @@
 **インバウンドとクライアント**
 * `mixed`、`socks`、`http`、`shadowsocks`、`snell`、`vmess`、`vless`、`trojan`、`hysteria2`、`tuic`、`anytls`、`mieru`、`sudoku`、`shadowquic`、`trusttunnel`、`hysteria2-realm` のリスナー
 * TLS、Reality、ShadowTLS、RestTLS、TLSMirror、JLS、Trojan SS、XHTTP、mKCP、Mekya、難読化の設定
-* クライアントごとの認証情報、通信量の上限、有効期限、リセット周期、オンライン状態。インバウンド単位の上限も設定可能
+* クライアントごとの認証情報、通信量の上限、有効期限、リセット周期、期限切れ時の自動更新、オンライン状態。インバウンド単位の上限も設定可能
 * 共有リンク、QR コード、Mihomo リスナー YAML からのインバウンドのインポート、通信量の一括リセット
 
 **サブスクリプション**

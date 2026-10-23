@@ -140,6 +140,7 @@ type Inbound struct {
 	Total                uint64                 `json:"total"`
 	ExpiryTime           int64                  `json:"expiryTime"`
 	TrafficReset         string                 `json:"trafficReset,omitempty"`
+	TrafficResetDay      int                    `json:"trafficResetDay,omitempty"` // monthly: day of month 1-31, 0 means 1
 	LastTrafficReset     string                 `json:"lastTrafficReset,omitempty"`
 	Rule                 string                 `json:"rule,omitempty"`
 	Proxy                string                 `json:"proxy,omitempty"`
@@ -575,6 +576,21 @@ type Client struct {
 	ExpireAfterDays int          `json:"expireAfterDays,omitempty"`
 	CreatedAt       string       `json:"createdAt,omitempty"`
 	Notes           string       `json:"notes,omitempty"`
+
+	// Periodic traffic reset of this client alone, on top of the inbound's own
+	// schedule (3x-ui 3.7+ semantics).
+	TrafficReset     string `json:"trafficReset,omitempty"`    // never, hourly, daily, weekly, monthly
+	TrafficResetDay  int    `json:"trafficResetDay,omitempty"` // monthly: day of month 1-31, 0 means 1
+	LastTrafficReset string `json:"lastTrafficReset,omitempty"`
+
+	// Automatic renewal when the client expires: push the expiry to the next
+	// period and clear its traffic. At most one of RenewDays, RenewDay and
+	// RenewWeekday is set; RenewMax limits the renewals (0 = unlimited).
+	RenewDays    int `json:"renewDays,omitempty"`    // every N days
+	RenewDay     int `json:"renewDay,omitempty"`     // monthly, on this day of month 1-31
+	RenewWeekday int `json:"renewWeekday,omitempty"` // weekly, on this weekday 1-7 (Monday-Sunday)
+	RenewMax     int `json:"renewMax,omitempty"`
+	RenewCount   int `json:"renewCount,omitempty"`
 }
 
 type TrafficStats struct {
@@ -2167,6 +2183,7 @@ func mergeClientCounters(existing, incoming []Client) []Client {
 			continue
 		}
 		incoming[index].Traffic = stored.Traffic
+		carryClientSchedule(stored, &incoming[index], time.Now())
 		incoming[index].LastOnline = stored.LastOnline
 		incoming[index].FirstOnline = stored.FirstOnline
 		if incoming[index].CreatedAt == "" {
@@ -2258,6 +2275,7 @@ func (m *CoreManager) saveInbound(input Inbound) error {
 		if m.state.Inbounds[i].ID == input.ID {
 			input.SyncOrigin = m.state.Inbounds[i].SyncOrigin
 			input.Traffic = m.state.Inbounds[i].Traffic
+			carryInboundSchedule(m.state.Inbounds[i], &input, time.Now())
 			if input.Clients == nil {
 				input.Clients = m.state.Inbounds[i].Clients
 			} else {
@@ -2279,6 +2297,14 @@ func (m *CoreManager) saveInbound(input Inbound) error {
 }
 
 func validateInbound(inbound Inbound) error {
+	if err := validateResetDay(inbound.TrafficReset, inbound.TrafficResetDay); err != nil {
+		return err
+	}
+	for _, client := range inbound.Clients {
+		if err := validateClientSchedule(client); err != nil {
+			return err
+		}
+	}
 	if inbound.CertificateMode != "" && inbound.CertificateMode != "file" && inbound.CertificateMode != "content" {
 		return fmt.Errorf("证书模式无效: %s", inbound.CertificateMode)
 	}
@@ -2644,7 +2670,7 @@ func renderStateConfig(state State) ([]byte, error) {
 	rendered := make(map[string]bool, len(state.Inbounds))
 	now := time.Now().UnixMilli()
 	for _, inbound := range state.Inbounds {
-		if !inbound.Enabled || (inbound.ExpiryTime > 0 && inbound.ExpiryTime <= now) || (inbound.Total > 0 && inbound.Traffic.Up+inbound.Traffic.Down >= inbound.Total) {
+		if inboundDepleted(inbound, now) {
 			continue
 		}
 		if singleSecretType(inbound.Type) && len(enabledClients(inbound)) == 0 {
@@ -4253,6 +4279,10 @@ func enabledClients(inbound Inbound) []Client {
 	return clients
 }
 
+func inboundDepleted(inbound Inbound, now int64) bool {
+	return !inbound.Enabled || (inbound.ExpiryTime > 0 && inbound.ExpiryTime <= now) || (inbound.Total > 0 && inbound.Traffic.Up+inbound.Traffic.Down >= inbound.Total)
+}
+
 func clientDepleted(client Client, now int64) bool {
 	return !client.Enabled || (client.ExpiryTime > 0 && client.ExpiryTime <= now) || (client.Total > 0 && client.Traffic.Up+client.Traffic.Down >= client.Total)
 }
@@ -4263,6 +4293,9 @@ func (m *CoreManager) initializeEnforcedClientsLocked() {
 	}
 	now := time.Now().UnixMilli()
 	for _, inbound := range m.state.Inbounds {
+		if inboundDepleted(inbound, now) {
+			m.enforcedClients[inbound.ID] = true
+		}
 		for _, client := range inbound.Clients {
 			if clientDepleted(client, now) {
 				m.enforcedClients[inbound.ID+":"+client.ID] = true

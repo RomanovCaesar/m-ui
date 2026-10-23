@@ -4552,25 +4552,25 @@ func TestTrafficResetDueFollowsTheConfiguredZone(t *testing.T) {
 	last := time.Date(2026, 3, 5, 10, 0, 0, 0, time.UTC)
 	// UTC 还是 3-5，但东八区已经跨到 3-6 的凌晨，daily 必须判定为到期。
 	crossed := time.Date(2026, 3, 5, 23, 30, 0, 0, time.UTC)
-	if trafficResetDue("daily", last, crossed) {
+	if trafficResetDue("daily", 0, last, crossed) {
 		t.Fatal("同一个 UTC 日期不应该触发 daily 重置")
 	}
-	if !trafficResetDue("daily", last.In(shanghai), crossed.In(shanghai)) {
+	if !trafficResetDue("daily", 0, last.In(shanghai), crossed.In(shanghai)) {
 		t.Fatal("东八区已经跨天，daily 必须触发重置")
 	}
 	sameDay := time.Date(2026, 3, 5, 14, 0, 0, 0, time.UTC)
-	if trafficResetDue("daily", last.In(shanghai), sameDay.In(shanghai)) {
+	if trafficResetDue("daily", 0, last.In(shanghai), sameDay.In(shanghai)) {
 		t.Fatal("东八区同一天不应该触发 daily 重置")
 	}
 	monthLast := time.Date(2026, 2, 28, 10, 0, 0, 0, time.UTC)
 	monthNow := time.Date(2026, 2, 28, 17, 0, 0, 0, time.UTC)
-	if trafficResetDue("monthly", monthLast, monthNow) {
+	if trafficResetDue("monthly", 0, monthLast, monthNow) {
 		t.Fatal("UTC 还在 2 月，monthly 不应该触发重置")
 	}
-	if !trafficResetDue("monthly", monthLast.In(shanghai), monthNow.In(shanghai)) {
+	if !trafficResetDue("monthly", 0, monthLast.In(shanghai), monthNow.In(shanghai)) {
 		t.Fatal("东八区已经进入 3 月，monthly 必须触发重置")
 	}
-	if trafficResetDue("never", last, crossed) || trafficResetDue("", last, crossed) {
+	if trafficResetDue("never", 0, last, crossed) || trafficResetDue("", 0, last, crossed) {
 		t.Fatal("never/空周期不应该触发重置")
 	}
 }

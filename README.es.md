@@ -32,7 +32,7 @@ La documentación completa está en la [Wiki de m-ui](https://github.com/Romanov
 **Entradas y clientes**
 * Escuchas `mixed`, `socks`, `http`, `shadowsocks`, `snell`, `vmess`, `vless`, `trojan`, `hysteria2`, `tuic`, `anytls`, `mieru`, `sudoku`, `shadowquic`, `trusttunnel` y `hysteria2-realm`
 * Ajustes de TLS, Reality, ShadowTLS, RestTLS, TLSMirror, JLS, Trojan SS, XHTTP, mKCP, Mekya y ofuscación
-* Credenciales, cuotas de tráfico, caducidad, reinicios periódicos y estado en línea por cliente; también límites por entrada
+* Credenciales, cuotas de tráfico, caducidad, reinicios periódicos, renovación automática y estado en línea por cliente; también límites por entrada
 * Enlaces para compartir, códigos QR, importación de entradas desde el YAML de un listener de Mihomo y reinicio masivo del tráfico
 
 **Suscripciones**

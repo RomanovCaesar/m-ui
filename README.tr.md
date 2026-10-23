@@ -32,7 +32,7 @@ Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasınd
 **Girişler ve istemciler**
 * `mixed`, `socks`, `http`, `shadowsocks`, `snell`, `vmess`, `vless`, `trojan`, `hysteria2`, `tuic`, `anytls`, `mieru`, `sudoku`, `shadowquic`, `trusttunnel` ve `hysteria2-realm` dinleyicileri
 * TLS, Reality, ShadowTLS, RestTLS, TLSMirror, JLS, Trojan SS, XHTTP, mKCP, Mekya ve gizleme ayarları
-* İstemci başına kimlik bilgileri, trafik kotası, son kullanma tarihi, periyodik sıfırlama ve çevrimiçi durum; giriş düzeyinde sınırlar da var
+* İstemci başına kimlik bilgileri, trafik kotası, son kullanma tarihi, periyodik sıfırlama, otomatik yenileme ve çevrimiçi durum; giriş düzeyinde sınırlar da var
 * Paylaşım bağlantıları, QR kodları, Mihomo dinleyici YAML'ından giriş içe aktarma ve toplu trafik sıfırlama
 
 **Abonelikler**

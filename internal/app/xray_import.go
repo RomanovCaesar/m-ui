@@ -154,7 +154,7 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 	importedInbound := map[string]string{} // xray tag -> listener name
 	usernamesByEmail := map[string][]string{}
 	occupied := append([]Inbound(nil), existingInbounds...)
-	limitIPNoted, resetNoted := false, false
+	limitIPNoted := false
 	for _, source := range input.Inbounds {
 		label := valueOr(source.Tag, fmt.Sprintf("%s:%v", source.Protocol, source.Port))
 		if isXUIInternalInbound(source) {
@@ -290,6 +290,9 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 		inbound.Traffic.Up, inbound.Traffic.Down = source.Up, source.Down
 		if containsString([]string{"never", "hourly", "daily", "weekly", "monthly"}, source.TrafficReset) {
 			inbound.TrafficReset = source.TrafficReset
+			if source.TrafficReset == "monthly" && source.ResetDay >= 1 && source.ResetDay <= 31 {
+				inbound.TrafficResetDay = source.ResetDay
+			}
 		}
 		inbound.Notes = "Imported from " + input.Kind
 		if source.Tag != "" {
@@ -325,9 +328,8 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 				limitIPNoted = true
 				log.warn("per-client IP limits (limitIp) are not supported by m-ui and were dropped")
 			}
-			if from.Reset != "" && from.Reset != "never" && !resetNoted {
-				resetNoted = true
-				log.warn("per-client traffic reset schedules (3x-ui 3.7+) are not supported by m-ui; set a reset schedule on the inbound instead")
+			if xrayImportSchedule(client, from) {
+				log.info("%s: %s keeps its traffic reset / renewal schedule", name, from.Email)
 			}
 			if source.FromDB && client.Username == from.SubID {
 				if m.reserveSubscriptionToken(client.Username, from.SubID) {
@@ -552,4 +554,29 @@ func (m *CoreManager) importXray(input xrayImportSource) (xrayImportResult, erro
 		return result, errors.New("没有可以导入的内容，详情见转换日志")
 	}
 	return result, nil
+}
+
+// xrayImportSchedule copies a 3x-ui client's periodic traffic reset and expiry
+// renewal. 3x-ui prefers the renewal day of month, then the weekday, then the
+// number of days, so only that one is kept.
+func xrayImportSchedule(client *Client, from xrayImportClient) bool {
+	if containsString([]string{"hourly", "daily", "weekly", "monthly"}, from.TrafficReset) {
+		client.TrafficReset = from.TrafficReset
+		if from.TrafficReset == "monthly" && from.TrafficResetDay >= 1 && from.TrafficResetDay <= 31 {
+			client.TrafficResetDay = from.TrafficResetDay
+		}
+	}
+	switch {
+	case from.RenewDay >= 1 && from.RenewDay <= 31:
+		client.RenewDay = from.RenewDay
+	case from.RenewWeekday >= 1 && from.RenewWeekday <= 7:
+		client.RenewWeekday = from.RenewWeekday
+	case from.Renew >= 1 && from.Renew <= 3650:
+		client.RenewDays = from.Renew
+	}
+	if client.RenewDays > 0 || client.RenewDay > 0 || client.RenewWeekday > 0 {
+		client.RenewMax = max(from.RenewMax, 0)
+		client.RenewCount = max(from.RenewCount, 0)
+	}
+	return client.TrafficReset != "" || client.RenewDays > 0 || client.RenewDay > 0 || client.RenewWeekday > 0
 }

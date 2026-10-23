@@ -44,6 +44,7 @@ type xrayImportInbound struct {
 	ExpiryTime   int64
 	Up, Down     uint64
 	TrafficReset string
+	ResetDay     int  // 3.6+: day of month of the monthly reset
 	NodeID       bool // the inbound runs on a remote 3x-ui node
 	DisableFlow  bool // 3.7+: 3x-ui drops the clients' flow for this inbound
 	Fallbacks    int  // 3.1+: rows of inbound_fallbacks with this inbound as master
@@ -67,9 +68,15 @@ type xrayImportClient struct {
 	SubID      string
 	Comment    string
 	LimitIP    int
-	Reset      string // 3.7+: per-client traffic reset schedule
 	Up, Down   uint64
-	AllTime    uint64
+
+	// 3.7+ periodic reset of the client's traffic.
+	TrafficReset    string
+	TrafficResetDay int
+	// Renewal when the client expires: every Renew days (also in 2.x), or on a
+	// day of month / weekday (3.7+ / 3.9+), at most RenewMax times.
+	Renew, RenewDay, RenewWeekday, RenewMax, RenewCount int
+	AllTime                                             uint64
 }
 
 func parseXrayImportSource(data []byte) (xrayImportSource, error) {
@@ -260,6 +267,13 @@ func xrayClientsFromSettings(settings map[string]any) []xrayImportClient {
 			SubID:      outboundStringValue(raw["subId"]),
 			Comment:    outboundStringValue(raw["comment"]),
 			LimitIP:    intValue(raw["limitIp"]),
+
+			TrafficReset:    outboundStringValue(raw["trafficReset"]),
+			TrafficResetDay: intValue(raw["trafficResetDay"]),
+			Renew:           intValue(raw["reset"]),
+			RenewDay:        intValue(raw["resetDay"]),
+			RenewWeekday:    intValue(raw["resetWeekday"]),
+			RenewMax:        intValue(raw["resetMax"]),
 		}
 		if enable, ok := raw["enable"].(bool); ok {
 			client.Enabled = enable
@@ -355,6 +369,7 @@ func parseXUIDatabase(data []byte) (xrayImportSource, error) {
 			Up:           uint64Value(row["up"]),
 			Down:         uint64Value(row["down"]),
 			TrafficReset: outboundStringValue(row["traffic_reset"]),
+			ResetDay:     intValue(row["traffic_reset_day"]),
 			// node_id (3.0+) marks an inbound pushed to a node; origin_node_guid
 			// (3.3+) one synced up from a node. Neither runs on this server.
 			NodeID:      (row["node_id"] != nil && int64Value(row["node_id"]) != 0) || strings.TrimSpace(outboundStringValue(row["origin_node_guid"])) != "",
@@ -373,6 +388,7 @@ func parseXUIDatabase(data []byte) (xrayImportSource, error) {
 			if stats := traffic[client.Email]; stats != nil {
 				client.Up, client.Down = uint64Value(stats["up"]), uint64Value(stats["down"])
 				client.AllTime = uint64Value(stats["all_time"])
+				client.RenewCount = intValue(stats["reset_count"])
 			}
 		}
 		source.Inbounds = append(source.Inbounds, inbound)
@@ -454,7 +470,17 @@ func mergeXUIClientRecords(clients []xrayImportClient, joins []map[string]any, r
 		if value, ok := record["limit_ip"]; ok {
 			client.LimitIP = intValue(value)
 		}
-		set(&client.Reset, record["traffic_reset"])
+		set(&client.TrafficReset, record["traffic_reset"])
+		setInt := func(target *int, key string) {
+			if value, ok := record[key]; ok && value != nil {
+				*target = intValue(value)
+			}
+		}
+		setInt(&client.TrafficResetDay, "traffic_reset_day")
+		setInt(&client.Renew, "reset")
+		setInt(&client.RenewDay, "reset_day")
+		setInt(&client.RenewWeekday, "reset_weekday")
+		setInt(&client.RenewMax, "reset_max")
 		if exists {
 			clients[index] = client
 		} else {

@@ -85,69 +85,22 @@ func (m *CoreManager) monitorTraffic() {
 	}
 }
 
-func (m *CoreManager) applyScheduledTrafficResets() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	// 周期重置要按设置里的时区判断"跨天/跨周/跨月"，否则服务器跑 UTC 而用户在东八区时，
-	// 每日重置会拖到当地早上八点才发生。
-	location, locationErr := resolveTimeLocation(m.state.Settings.TimeLocation)
-	if locationErr != nil {
-		location = time.Local
-	}
-	now := time.Now().In(location)
-	changed := false
-	for index := range m.state.Inbounds {
-		inbound := &m.state.Inbounds[index]
-		if inbound.TrafficReset == "" || inbound.TrafficReset == "never" {
-			continue
-		}
-		last := now
-		if inbound.LastTrafficReset != "" {
-			if parsed, err := time.Parse(time.RFC3339, inbound.LastTrafficReset); err == nil {
-				last = parsed.In(location)
-			}
-		} else if parsed, err := time.Parse(time.RFC3339, inbound.CreatedAt); err == nil {
-			last = parsed.In(location)
-		}
-		if !trafficResetDue(inbound.TrafficReset, last, now) {
-			continue
-		}
-		inbound.Traffic.Up, inbound.Traffic.Down = 0, 0
-		for clientIndex := range inbound.Clients {
-			inbound.Clients[clientIndex].Traffic.Up, inbound.Clients[clientIndex].Traffic.Down = 0, 0
-		}
-		inbound.LastTrafficReset = now.Format(time.RFC3339)
-		m.addLogLocked(fmt.Sprintf("Inbound %s 已执行 %s 周期流量重置", inbound.Name, inbound.TrafficReset))
-		changed = true
-	}
-	if changed {
-		_ = m.saveLocked()
-	}
-}
-
-func trafficResetDue(period string, last, now time.Time) bool {
-	switch period {
-	case "hourly":
-		return now.Sub(last) >= time.Hour
-	case "daily":
-		return now.YearDay() != last.YearDay() || now.Year() != last.Year()
-	case "weekly":
-		nowYear, nowWeek := now.ISOWeek()
-		lastYear, lastWeek := last.ISOWeek()
-		return nowYear != lastYear || nowWeek != lastWeek
-	case "monthly":
-		return now.Year() != last.Year() || now.Month() != last.Month()
-	default:
-		return false
-	}
-}
-
 func (m *CoreManager) enforceClientLimits() {
 	m.mu.Lock()
 	now := time.Now().UnixMilli()
 	newlyDepleted := false
 	activeKeys := map[string]bool{}
 	for _, inbound := range m.state.Inbounds {
+		// An inbound over its own quota or past its expiry loses its listener,
+		// which also needs a new configuration.
+		if inboundDepleted(inbound, now) {
+			activeKeys[inbound.ID] = true
+			if inbound.Enabled && !m.enforcedClients[inbound.ID] {
+				m.enforcedClients[inbound.ID] = true
+				newlyDepleted = true
+				m.addLogLocked(fmt.Sprintf("Inbound %s 已到期或耗尽，正在停止它的监听", inbound.Name))
+			}
+		}
 		for _, client := range inbound.Clients {
 			key := inbound.ID + ":" + client.ID
 			if clientDepleted(client, now) {
@@ -499,6 +452,9 @@ func (m *CoreManager) saveClient(inboundID string, client Client) error {
 	if client.CreatedAt == "" {
 		client.CreatedAt = time.Now().Format(time.RFC3339)
 	}
+	if err := validateClientSchedule(client); err != nil {
+		return err
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for inboundIndex := range m.state.Inbounds {
@@ -532,7 +488,9 @@ func (m *CoreManager) saveClient(inboundID string, client Client) error {
 		for clientIndex := range inbound.Clients {
 			if inbound.Clients[clientIndex].ID == client.ID {
 				client.Traffic = inbound.Clients[clientIndex].Traffic
+				carryClientSchedule(inbound.Clients[clientIndex], &client, time.Now())
 				client.LastOnline = inbound.Clients[clientIndex].LastOnline
+				client.FirstOnline = inbound.Clients[clientIndex].FirstOnline
 				replaced := append([]Client(nil), inbound.Clients...)
 				replaced[clientIndex] = client
 				if err := validateClientIdentities(Inbound{Type: inbound.Type, Clients: replaced}); err != nil {

@@ -91,6 +91,7 @@ func clearSyncCounters(inbound *Inbound) {
 		c := &inbound.Clients[i]
 		c.Traffic = TrafficStats{}
 		c.CreatedAt, c.FirstOnline, c.LastOnline = "", "", ""
+		c.LastTrafficReset, c.RenewCount = "", 0
 	}
 }
 func inboundSyncRevision(inbound Inbound) string {

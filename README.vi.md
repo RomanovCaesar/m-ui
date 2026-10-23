@@ -32,7 +32,7 @@ Tài liệu đầy đủ có tại [m-ui Wiki](https://github.com/RomanovCaesar/
 **Inbound và client**
 * Các listener `mixed`, `socks`, `http`, `shadowsocks`, `snell`, `vmess`, `vless`, `trojan`, `hysteria2`, `tuic`, `anytls`, `mieru`, `sudoku`, `shadowquic`, `trusttunnel` và `hysteria2-realm`
 * Cài đặt TLS, Reality, ShadowTLS, RestTLS, TLSMirror, JLS, Trojan SS, XHTTP, mKCP, Mekya và che giấu lưu lượng
-* Thông tin xác thực, hạn mức lưu lượng, thời hạn, lịch đặt lại và trạng thái trực tuyến cho từng client; có cả giới hạn ở cấp inbound
+* Thông tin xác thực, hạn mức lưu lượng, thời hạn, lịch đặt lại, tự động gia hạn và trạng thái trực tuyến cho từng client; có cả giới hạn ở cấp inbound
 * Liên kết chia sẻ, mã QR, nhập inbound từ YAML listener của Mihomo, đặt lại lưu lượng hàng loạt
 
 **Đăng ký**

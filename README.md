@@ -32,7 +32,7 @@ For complete documentation, visit the [m-ui Wiki](https://github.com/RomanovCaes
 **Inbounds and clients**
 * `mixed`, `socks`, `http`, `shadowsocks`, `snell`, `vmess`, `vless`, `trojan`, `hysteria2`, `tuic`, `anytls`, `mieru`, `sudoku`, `shadowquic`, `trusttunnel`, and `hysteria2-realm` listeners
 * TLS, Reality, ShadowTLS, RestTLS, TLSMirror, JLS, Trojan SS, XHTTP, mKCP, Mekya, and obfuscation settings
-* Per-client credentials, traffic quotas, expiry, reset schedules, and online state; inbound-level limits too
+* Per-client credentials, traffic quotas, expiry, traffic reset schedules, auto-renewal on expiry, and online state; inbound-level limits too
 * Share links, QR codes, inbound import from Mihomo listener YAML, and bulk traffic reset
 
 **Subscriptions**

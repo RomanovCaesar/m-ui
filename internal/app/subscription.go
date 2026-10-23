@@ -718,7 +718,7 @@ func subscriptionLinks(snapshot subscriptionSnapshot, server string) []subscript
 	nodes := make([]subscriptionNode, 0, len(snapshot.Clients))
 	now := time.Now().UnixMilli()
 	for _, item := range snapshot.Clients {
-		if !item.Inbound.Enabled || clientDepleted(item.Client, now) {
+		if inboundDepleted(item.Inbound, now) || clientDepleted(item.Client, now) {
 			continue
 		}
 		itemServer := server
@@ -866,7 +866,7 @@ func subscriptionProxies(snapshot subscriptionSnapshot, server string) []map[str
 	usedNames := map[string]int{}
 	now := time.Now().UnixMilli()
 	for _, item := range snapshot.Clients {
-		if !item.Inbound.Enabled || clientDepleted(item.Client, now) {
+		if inboundDepleted(item.Inbound, now) || clientDepleted(item.Client, now) {
 			continue
 		}
 		itemServer := server

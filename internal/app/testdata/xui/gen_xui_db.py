@@ -25,7 +25,7 @@ def reality_stream():
         "target": "www.apple.com:443", "serverNames": ["www.apple.com"], "privateKey": PRIVATE, "shortIds": ["ab"]}})
 
 def base_tables(db, v3):
-    extra = ", `node_id` integer, `disable_flow` numeric DEFAULT false, `origin_node_guid` text" if v3 else ""
+    extra = ", `node_id` integer, `traffic_reset_day` integer DEFAULT 1, `disable_flow` numeric DEFAULT false, `origin_node_guid` text" if v3 else ""
     db.execute("CREATE TABLE `inbounds` (`id` integer PRIMARY KEY AUTOINCREMENT,`user_id` integer,`up` integer,`down` integer,`total` integer,"
                "`all_time` integer DEFAULT 0,`remark` text,`enable` numeric,`expiry_time` integer,`traffic_reset` text DEFAULT \"never\","
                "`last_traffic_reset_time` integer DEFAULT 0,`listen` text,`port` integer,`protocol` text,`settings` text,`stream_settings` text,"
@@ -43,7 +43,7 @@ def make_v2(path):
         {"id": "11111111-1111-4111-8111-111111111111", "flow": "xtls-rprx-vision", "email": "vip@main", "limitIp": 2,
          "totalGB": 107374182400, "expiryTime": 1893456000000, "enable": True, "subId": "abcdefgh12345678", "comment": "paid until 2030"},
         {"id": "22222222-2222-4222-8222-222222222222", "flow": "", "email": "trial@main",
-         "totalGB": 0, "expiryTime": -604800000, "enable": True, "subId": "trialsub00000001", "comment": ""},
+         "totalGB": 0, "expiryTime": -604800000, "enable": True, "subId": "trialsub00000001", "comment": "", "reset": 30},
         {"id": "33333333-3333-4333-8333-333333333333", "flow": "", "email": "banned@main",
          "totalGB": 0, "expiryTime": 0, "enable": False, "subId": "", "comment": "disabled"},
     ]
@@ -63,7 +63,7 @@ def make_v3(path):
     base_tables(db, True)
     db.execute("CREATE TABLE `clients` (`id` integer PRIMARY KEY AUTOINCREMENT,`email` text NOT NULL,`sub_id` text,`uuid` text,`password` text,`auth` text,"
                "`flow` text,`security` text,`reverse` text,`limit_ip` integer,`total_gb` integer,`expiry_time` integer,`enable` numeric DEFAULT true,"
-               "`tg_id` integer,`group_name` text DEFAULT '',`comment` text,`reset` integer DEFAULT 0,`traffic_reset` text DEFAULT 'never',`created_at` integer,`updated_at` integer)")
+               "`tg_id` integer,`group_name` text DEFAULT '',`comment` text,`reset` integer DEFAULT 0,`traffic_reset` text DEFAULT 'never',`traffic_reset_day` integer DEFAULT 1,`reset_day` integer DEFAULT 0,`reset_weekday` integer DEFAULT 0,`reset_max` integer DEFAULT 0,`created_at` integer,`updated_at` integer)")
     db.execute("CREATE TABLE `client_inbounds` (`client_id` integer,`inbound_id` integer,`flow_override` text,`created_at` integer,PRIMARY KEY (`client_id`,`inbound_id`))")
     # In 3.x the settings JSON may still list clients, with stale limits; the clients table wins.
     stale = [{"id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "email": "anna", "totalGB": 1, "expiryTime": 1, "enable": True}]
@@ -96,9 +96,12 @@ def make_v3(path):
     db.execute("INSERT INTO inbound_fallbacks(master_id,child_id,path,dest,xver) VALUES (1,7,'/child','127.0.0.1:20001',0)")
     db.execute("INSERT INTO clients(email,sub_id,uuid,flow,limit_ip,total_gb,expiry_time,enable,comment) VALUES ('anna','annasub000000001','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','',0,214748364800,1950000000000,1,'from clients table')")
     db.execute("INSERT INTO clients(email,sub_id,uuid,flow,limit_ip,total_gb,expiry_time,enable,comment) VALUES ('ben','bensub0000000001','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','',0,0,0,0,'only in clients table')")
-    db.execute("UPDATE clients SET traffic_reset='monthly' WHERE email='ben'")
+    db.execute("UPDATE clients SET traffic_reset='monthly', traffic_reset_day=15 WHERE email='ben'")
+    db.execute("UPDATE clients SET reset_day=1, reset_max=12 WHERE email='anna'")
+    db.execute("ALTER TABLE client_traffics ADD COLUMN reset_count integer DEFAULT 0")
+    db.execute("UPDATE inbounds SET traffic_reset='monthly', traffic_reset_day=20 WHERE tag='in-443-tcp'")
     db.execute("INSERT INTO client_inbounds(client_id,inbound_id,flow_override) VALUES (1,1,'xtls-rprx-vision'),(2,1,'')")
-    db.execute("INSERT INTO client_traffics(inbound_id,enable,email,up,down,all_time,expiry_time,total) VALUES (1,1,'anna',100,200,300,0,0)")
+    db.execute("INSERT INTO client_traffics(inbound_id,enable,email,up,down,all_time,expiry_time,total,reset_count) VALUES (1,1,'anna',100,200,300,0,0,3)")
     db.commit(); db.execute("VACUUM"); db.close()
 
 for name, maker in (("xui_v2.db", make_v2), ("xui_v3.db", make_v3)):

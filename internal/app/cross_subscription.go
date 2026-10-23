@@ -442,7 +442,7 @@ func crossSubscriptionLinks(snapshot subscriptionSnapshot, server string) []subs
 	nodes := make([]subscriptionNode, 0, len(items))
 	now := time.Now().UnixMilli()
 	for _, item := range items {
-		if !item.Inbound.Enabled || clientDepleted(item.Client, now) {
+		if inboundDepleted(item.Inbound, now) || clientDepleted(item.Client, now) {
 			continue
 		}
 		itemServer := server

@@ -59,7 +59,7 @@ func singboxNodeOutbounds(snapshot subscriptionSnapshot, server string) ([]any, 
 	usedTags := map[string]int{}
 	now := time.Now().UnixMilli()
 	for _, item := range snapshot.Clients {
-		if !item.Inbound.Enabled || clientDepleted(item.Client, now) {
+		if inboundDepleted(item.Inbound, now) || clientDepleted(item.Client, now) {
 			continue
 		}
 		itemServer := server

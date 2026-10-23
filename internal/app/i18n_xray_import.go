@@ -1,0 +1,40 @@
+package app
+
+// Server messages of the Xray / 3x-ui import and of logical (AND) routing rules.
+// Messages with parameters put them after ": ", so only the part before it is
+// registered. The conversion log itself is written in English.
+//
+// Order: en, zh-TW, ja, ru, fa, vi, es, tr, uk, pt-BR.
+var xrayImportMessages = map[string][10]string{
+	"导入内容为空": {"Nothing to import", "匯入內容為空", "インポートする内容がありません", "Нечего импортировать", "محتوایی برای وارد کردن وجود ندارد", "Không có gì để nhập", "No hay nada que importar", "İçe aktarılacak bir şey yok", "Нічого імпортувати", "Nada para importar"},
+	"无法识别的导入内容，请上传 Xray 的 config.json 或 3x-ui 的 x-ui.db": {
+		"Unrecognized content: upload Xray's config.json or 3x-ui's x-ui.db", "無法識別的匯入內容，請上傳 Xray 的 config.json 或 3x-ui 的 x-ui.db",
+		"内容を認識できません。Xray の config.json か 3x-ui の x-ui.db をアップロードしてください", "Не удалось распознать содержимое: загрузите config.json от Xray или x-ui.db от 3x-ui",
+		"محتوا شناسایی نشد: config.json مربوط به Xray یا x-ui.db مربوط به 3x-ui را بارگذاری کنید", "Không nhận dạng được nội dung: hãy tải lên config.json của Xray hoặc x-ui.db của 3x-ui",
+		"Contenido no reconocido: sube el config.json de Xray o el x-ui.db de 3x-ui", "İçerik tanınamadı: Xray'in config.json dosyasını veya 3x-ui'nin x-ui.db dosyasını yükleyin",
+		"Не вдалося розпізнати вміст: завантажте config.json від Xray або x-ui.db від 3x-ui", "Conteúdo não reconhecido: envie o config.json do Xray ou o x-ui.db do 3x-ui"},
+	"没有找到可导入的 inbounds、outbounds 或 routing 规则": {"No inbounds, outbounds or routing rules found", "沒有找到可匯入的 inbounds、outbounds 或 routing 規則", "インポートできる inbounds、outbounds、routing ルールが見つかりません", "Не найдено inbounds, outbounds или правил routing", "هیچ inbounds، outbounds یا قانون routing یافت نشد", "Không tìm thấy inbounds, outbounds hay quy tắc routing nào", "No se encontraron inbounds, outbounds ni reglas de routing", "İçe aktarılacak inbounds, outbounds veya routing kuralı bulunamadı", "Не знайдено inbounds, outbounds або правил routing", "Nenhum inbound, outbound ou regra de routing encontrado"},
+	"无法读取 x-ui.db": {"Cannot read x-ui.db", "無法讀取 x-ui.db", "x-ui.db を読み取れません", "Не удалось прочитать x-ui.db", "خواندن x-ui.db ممکن نیست", "Không đọc được x-ui.db", "No se puede leer x-ui.db", "x-ui.db okunamıyor", "Не вдалося прочитати x-ui.db", "Não foi possível ler o x-ui.db"},
+	"这个数据库里没有 inbounds 表，不是 3x-ui 的 x-ui.db": {"This database has no inbounds table; it is not a 3x-ui x-ui.db", "這個資料庫裡沒有 inbounds 表，不是 3x-ui 的 x-ui.db", "このデータベースには inbounds テーブルがありません。3x-ui の x-ui.db ではありません", "В этой базе нет таблицы inbounds — это не x-ui.db от 3x-ui", "این پایگاه داده جدول inbounds ندارد و x-ui.db مربوط به 3x-ui نیست", "Cơ sở dữ liệu này không có bảng inbounds, không phải x-ui.db của 3x-ui", "Esta base de datos no tiene la tabla inbounds; no es un x-ui.db de 3x-ui", "Bu veritabanında inbounds tablosu yok; 3x-ui x-ui.db dosyası değil", "У цій базі немає таблиці inbounds — це не x-ui.db від 3x-ui", "Este banco de dados não tem a tabela inbounds; não é um x-ui.db do 3x-ui"},
+	"导入文件过大或无法读取":                            {"The import file is too large or cannot be read", "匯入檔案過大或無法讀取", "インポートファイルが大きすぎるか読み取れません", "Файл импорта слишком большой или не читается", "فایل ورودی خیلی بزرگ است یا خوانده نمی‌شود", "Tệp nhập quá lớn hoặc không đọc được", "El archivo de importación es demasiado grande o no se puede leer", "İçe aktarma dosyası çok büyük veya okunamıyor", "Файл імпорту завеликий або не читається", "O arquivo de importação é grande demais ou não pode ser lido"},
+	"导入的出站无法保存":                              {"The imported outbounds could not be saved", "匯入的出站無法儲存", "インポートしたアウトバウンドを保存できません", "Не удалось сохранить импортированные исходящие", "خروجی‌های واردشده ذخیره نشدند", "Không lưu được outbound đã nhập", "No se pudieron guardar las salidas importadas", "İçe aktarılan çıkışlar kaydedilemedi", "Не вдалося зберегти імпортовані вихідні", "Não foi possível salvar as saídas importadas"},
+	"没有可以导入的内容，详情见转换日志":                      {"Nothing could be imported; see the conversion log", "沒有可以匯入的內容，詳情見轉換日誌", "インポートできる内容がありません。変換ログを確認してください", "Ничего не удалось импортировать — смотрите журнал преобразования", "چیزی وارد نشد؛ گزارش تبدیل را ببینید", "Không nhập được gì; xem nhật ký chuyển đổi", "No se pudo importar nada; consulta el registro de conversión", "Hiçbir şey içe aktarılamadı; dönüştürme günlüğüne bakın", "Нічого не вдалося імпортувати — дивіться журнал перетворення", "Nada pôde ser importado; veja o log de conversão"},
+
+	"逻辑规则嵌套过深":                           {"Logical rule is nested too deeply", "邏輯規則巢狀過深", "論理ルールの入れ子が深すぎます", "Логическое правило вложено слишком глубоко", "قانون منطقی بیش از حد تودرتو است", "Quy tắc logic lồng quá sâu", "La regla lógica está anidada demasiado", "Mantıksal kural çok derin iç içe", "Логічне правило вкладене надто глибоко", "A regra lógica está aninhada demais"},
+	"逻辑规则至少需要一个条件":                       {"A logical rule needs at least one condition", "邏輯規則至少需要一個條件", "論理ルールには少なくとも 1 つの条件が必要です", "Логическому правилу нужно хотя бы одно условие", "قانون منطقی دست‌کم به یک شرط نیاز دارد", "Quy tắc logic cần ít nhất một điều kiện", "Una regla lógica necesita al menos una condición", "Mantıksal kural en az bir koşul gerektirir", "Логічному правилу потрібна хоча б одна умова", "Uma regra lógica precisa de pelo menos uma condição"},
+	"逻辑规则的条件格式无效":                        {"Invalid condition in the logical rule", "邏輯規則的條件格式無效", "論理ルールの条件の形式が無効です", "Неверное условие в логическом правиле", "شرط قانون منطقی نامعتبر است", "Điều kiện trong quy tắc logic không hợp lệ", "Condición no válida en la regla lógica", "Mantıksal kuraldaki koşul geçersiz", "Неправильна умова в логічному правилі", "Condição inválida na regra lógica"},
+	"逻辑规则里不能使用 MATCH":                    {"MATCH cannot be used inside a logical rule", "邏輯規則裡不能使用 MATCH", "論理ルールでは MATCH を使用できません", "MATCH нельзя использовать внутри логического правила", "MATCH را نمی‌توان در قانون منطقی به کار برد", "Không thể dùng MATCH trong quy tắc logic", "MATCH no se puede usar dentro de una regla lógica", "MATCH mantıksal kural içinde kullanılamaz", "MATCH не можна використовувати в логічному правилі", "MATCH não pode ser usado dentro de uma regra lógica"},
+	"逻辑规则里的类型不受支持":                       {"Unsupported type in the logical rule", "邏輯規則裡的類型不受支援", "論理ルール内の種類はサポートされていません", "Неподдерживаемый тип в логическом правиле", "نوع موجود در قانون منطقی پشتیبانی نمی‌شود", "Loại trong quy tắc logic không được hỗ trợ", "Tipo no compatible en la regla lógica", "Mantıksal kuraldaki tür desteklenmiyor", "Непідтримуваний тип у логічному правилі", "Tipo não suportado na regra lógica"},
+	"逻辑规则的 Payload 必须写成 ((类型,值),(类型,值))": {"A logical rule's payload must look like ((TYPE,value),(TYPE,value))", "邏輯規則的 Payload 必須寫成 ((類型,值),(類型,值))", "論理ルールの Payload は ((種類,値),(種類,値)) の形式で書いてください", "Payload логического правила должен иметь вид ((ТИП,значение),(ТИП,значение))", "Payload قانون منطقی باید به شکل ((نوع,مقدار),(نوع,مقدار)) باشد", "Payload của quy tắc logic phải có dạng ((LOẠI,giá trị),(LOẠI,giá trị))", "El payload de una regla lógica debe tener la forma ((TIPO,valor),(TIPO,valor))", "Mantıksal kuralın payload'ı ((TÜR,değer),(TÜR,değer)) biçiminde olmalı", "Payload логічного правила має мати вигляд ((ТИП,значення),(ТИП,значення))", "O payload de uma regra lógica deve ter o formato ((TIPO,valor),(TIPO,valor))"},
+	"逻辑规则的括号不匹配":                         {"Unbalanced parentheses in the logical rule", "邏輯規則的括號不匹配", "論理ルールの括弧が対応していません", "Несбалансированные скобки в логическом правиле", "پرانتزهای قانون منطقی جفت نیستند", "Dấu ngoặc trong quy tắc logic không khớp", "Paréntesis desequilibrados en la regla lógica", "Mantıksal kuraldaki parantezler eşleşmiyor", "Незбалансовані дужки в логічному правилі", "Parênteses desbalanceados na regra lógica"},
+}
+
+func init() {
+	languages := []string{"zh-TW", "ja", "ru", "fa", "vi", "es", "tr", "uk", "pt-BR"}
+	for source, translations := range xrayImportMessages {
+		messagesEN[source] = translations[0]
+		for i, language := range languages {
+			messagesLocalized[language][source] = translations[i+1]
+		}
+	}
+}

@@ -28,6 +28,7 @@
 * تولید و اعتبارسنجی پیکربندی YAML بومی Mihomo، پیش‌نمایش و دانلود پیکربندی
 * تغییر نسخهٔ Mihomo از انتشارهای رسمی MetaCubeX و به‌روزرسانی GeoIP / GeoSite / MetaDB
 * پشتیبان‌گیری و بازیابی کامل: تنظیمات، ورودی‌ها، هویت Multi-control (اختیاری)، حافظهٔ میان‌پنلی، الگوهای اشتراک و دستگاه‌های کلاینت Multi-control
+* **مهاجرت یک‌کلیکی از 3x-ui:** فایل `x-ui.db` (نسخهٔ v2.9.3 تا v3.10.2) یا `config.json` مربوط به Xray را وارد کنید؛ ورودی‌ها، کلاینت‌ها با محدودیت، تاریخ انقضا و ترافیک، خروجی‌ها، متعادل‌کننده‌ها و قوانین مسیریابی کنار محتوای فعلی پنل اضافه می‌شوند و هر چیزی که Mihomo پشتیبانی نمی‌کند در گزارش تبدیل قابل دانلود فهرست می‌شود
 * رابط کاربری به زبان‌های انگلیسی، چینی ساده‌شده، چینی سنتی، ژاپنی، روسی، فارسی، ویتنامی، اسپانیایی، ترکی، اوکراینی و پرتغالی برزیل
 
 **ورودی‌ها و کلاینت‌ها**
@@ -45,7 +46,7 @@
 **تنظیمات Mihomo**
 * Basics: حالت مسیریابی، نسخهٔ IP برای اتصال مستقیم، IPv6، TCP همزمان، آمار، لاگ‌ها و مسیریابی پایه
 * خروجی‌ها (از جمله Snell، WireGuard و OpenVPN) و گروه‌های سیاست، با فرم، YAML بومی و تبدیل لینک
-* قوانین مسیریابی که از بالا به پایین بررسی می‌شوند
+* قوانین مسیریابی که از بالا به پایین بررسی می‌شوند، از جمله قوانین `AND`
 * خروجی‌های Cloudflare WARP و خروجی IP خانگی VPNGate بر اساس کشور و اپراتور
 
 **Multi-control**
@@ -125,6 +126,7 @@ m-ui --lang <code>    menu language, e.g. m-ui --lang fa
 ویکی به زبان‌های انگلیسی و چینی ساده‌شده است:
 
 * [Installation](https://github.com/RomanovCaesar/m-ui/wiki/Installation)، [Panel Configuration](https://github.com/RomanovCaesar/m-ui/wiki/Configuration)
+* [Migrating from 3x-ui](https://github.com/RomanovCaesar/m-ui/wiki/Migrating-from-3x-ui)
 * [Inbounds and Clients](https://github.com/RomanovCaesar/m-ui/wiki/Inbounds)، [Mihomo Settings](https://github.com/RomanovCaesar/m-ui/wiki/Mihomo-Settings)
 * [Subscriptions](https://github.com/RomanovCaesar/m-ui/wiki/Subscriptions)، [Subscription Templates](https://github.com/RomanovCaesar/m-ui/wiki/Subscription-Templates)
 * [Multi-control](https://github.com/RomanovCaesar/m-ui/wiki/Multi-control)، [Cloudflare WARP](https://github.com/RomanovCaesar/m-ui/wiki/Cloudflare-WARP)، [VPNGate](https://github.com/RomanovCaesar/m-ui/wiki/VPNGate)

@@ -1,0 +1,20 @@
+/* 从 Xray / 3x-ui 导入的弹窗 */
+.ximport-panel { width: min(620px, calc(100vw - 32px)); }
+.ximport-form { display: grid; gap: 14px; }
+.ximport-intro { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.ximport-file { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ximport-file-name { min-width: 0; overflow: hidden; color: var(--muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.ximport-file-name.chosen { color: var(--text); font-weight: 500; }
+.ximport-paste { width: 100%; min-height: 120px; resize: vertical; font: 12px/1.5 var(--font-mono, ui-monospace, monospace); }
+.ximport-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.ximport-result { display: grid; gap: 14px; }
+.ximport-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.ximport-stat { display: grid; justify-items: center; gap: 2px; padding: 12px 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); text-align: center; }
+.ximport-stat strong { font-size: 22px; font-weight: 600; line-height: 1.2; }
+.ximport-stat span { color: var(--muted); font-size: 12px; }
+.ximport-stat small { color: var(--orange, #ff9500); font-size: 11px; }
+.ximport-section-title { margin: 0; font-size: 13px; font-weight: 600; }
+.ximport-warnings { margin: 0; padding: 10px 12px 10px 28px; max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); font-size: 12px; line-height: 1.6; word-break: break-word; }
+.ximport-hint { margin: 0; color: var(--muted); font-size: 12px; }
+.ximport-failure { padding: 10px 12px; border-radius: 12px; color: var(--red, #ff3b30); background: color-mix(in srgb, var(--red, #ff3b30) 10%, transparent); font-size: 13px; }
+@media (max-width: 560px) { .ximport-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="static/inbound-sync.css">
   <link rel="stylesheet" href="static/cross-subscriptions.css">
   <link rel="stylesheet" href="static/sub-templates.css">
+  <link rel="stylesheet" href="static/xray-import.css">
   <style>
     /* ===== m-ui Apple SwiftUI / Apple Design System 面板样式表 =====
        基于 Apple Human Interface Guidelines 与 SwiftUI 设计哲学：
@@ -690,6 +691,7 @@
     .overview-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; padding: 0; border-top: 1px solid var(--line); }
     .overview-action { height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 8px; border: 0; border-right: 1px solid var(--line); border-radius: 0; color: var(--muted); background: transparent; box-shadow: none; font-size: 13.5px; font-weight: 500; transition: all .2s var(--ease); }
     .overview-action:last-child { border-right: 0; }
+    .overview-actions.overview-actions-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .overview-action:hover { color: var(--teal); background: var(--surface-2); }
     .overview-action .sf-symbol, .overview-action svg { width: 16px; height: 16px; font-size: 16px; }
     .status-inline { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; }
@@ -1026,7 +1028,7 @@
 
             <div class="overview-grid">
               <article class="overview-card"><header class="overview-card-header"><span>Mihomo</span><span class="status-inline" id="overview-core-status"><i></i><span>Stopped</span></span></header><div class="overview-card-body overview-actions"><button class="overview-action" id="overview-core-toggle"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-poweroff"></use></svg><span>Start</span></button><button class="overview-action" id="overview-core-restart"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-reload"></use></svg><span>Restart</span></button><button class="overview-action" id="overview-version"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-tool"></use></svg><span id="overview-core-version">Unknown</span></button></div></article>
-              <article class="overview-card"><header class="overview-card-header"><span>Manage</span></header><div class="overview-card-body overview-actions"><button class="overview-action" id="overview-logs"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-file-text"></use></svg><span>Logs</span></button><button class="overview-action" id="overview-config"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-code"></use></svg><span>Config</span></button><button class="overview-action" id="overview-backup"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-hdd"></use></svg><span>Backup</span></button></div></article>
+              <article class="overview-card"><header class="overview-card-header"><span>Manage</span></header><div class="overview-card-body overview-actions overview-actions-4"><button class="overview-action" id="overview-logs"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-file-text"></use></svg><span>Logs</span></button><button class="overview-action" id="overview-config"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-code"></use></svg><span>Config</span></button><button class="overview-action" id="overview-backup"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-hdd"></use></svg><span>Backup</span></button><button class="overview-action" id="overview-import"><svg class="sf-symbol" aria-hidden="true"><use href="#sf-import"></use></svg><span data-i18n="ximport.button">Import</span></button></div></article>
 
               <article class="overview-card"><header class="overview-card-header"><span>m-ui</span></header><div class="overview-card-body"><div class="overview-tags"><a class="tiny-tag" id="overview-panel-version" rel="noopener" target="_blank" href="https://github.com/RomanovCaesar/m-ui/releases">v0.1.0</a><a class="tiny-tag" rel="noopener" target="_blank" href="https://t.me/MihomoUI">@MihomoUI</a><a class="tiny-tag purple" rel="noopener" target="_blank" href="https://github.com/RomanovCaesar/m-ui/wiki" data-i18n="dash.documentation">Documentation</a></div></div></article>
               <article class="overview-card"><header class="overview-card-header"><span>Uptime</span></header><div class="overview-card-body"><div class="overview-tags"><span class="tiny-tag" id="core-uptime">Mihomo: 0s</span><span class="tiny-tag" id="os-uptime">OS: 0s</span></div></div></article>
@@ -1696,5 +1698,6 @@
   <script src="static/inbound-sync.js"></script>
   <script src="static/cross-subscriptions.js"></script>
   <script src="static/sub-templates.js"></script>
+  <script src="static/xray-import.js"></script>
 </body>
 </html>

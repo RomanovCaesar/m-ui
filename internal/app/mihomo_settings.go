@@ -22,7 +22,7 @@ var (
 		"IP-CIDR", "IP-CIDR6", "IP-SUFFIX", "IP-ASN", "GEOIP", "SRC-GEOIP", "SRC-IP-ASN", "SRC-IP-CIDR", "SRC-IP-SUFFIX",
 		"DST-PORT", "SRC-PORT", "IN-PORT", "IN-TYPE", "IN-USER", "IN-NAME", "REMATCH-NAME",
 		"PROCESS-PATH", "PROCESS-PATH-WILDCARD", "PROCESS-PATH-REGEX", "PROCESS-NAME", "PROCESS-NAME-WILDCARD", "PROCESS-NAME-REGEX",
-		"UID", "NETWORK", "DSCP", "MATCH",
+		"UID", "NETWORK", "DSCP", "AND", "MATCH",
 	}
 	mihomoBuiltins = []string{"DIRECT", "REJECT", "REJECT-DROP", "PASS", "PASS-RULE", "COMPATIBLE", "GLOBAL"}
 )
@@ -776,11 +776,17 @@ func validateMihomoRulePayload(rule MihomoRoutingRule) error {
 	if rule.Payload == "" {
 		return fmt.Errorf("%s 需要 Payload", rule.Type)
 	}
+	if rule.Type == "AND" {
+		if rule.NoResolve {
+			return fmt.Errorf("no-resolve 只适用于目标 IP 类规则")
+		}
+		return validateMihomoLogicalPayload(rule.Payload, 0)
+	}
 	noResolveTypes := []string{"GEOIP", "IP-ASN", "IP-CIDR", "IP-CIDR6", "IP-SUFFIX"}
 	if rule.NoResolve && !containsString(noResolveTypes, rule.Type) {
 		return fmt.Errorf("no-resolve 只适用于目标 IP 类规则")
 	}
-	if !containsString([]string{"DOMAIN-REGEX", "PROCESS-NAME-REGEX", "PROCESS-PATH-REGEX"}, rule.Type) && strings.Contains(rule.Payload, ",") {
+	if !containsString([]string{"DOMAIN-REGEX", "PROCESS-NAME-REGEX", "PROCESS-PATH-REGEX", "AND"}, rule.Type) && strings.Contains(rule.Payload, ",") {
 		return fmt.Errorf("Payload 不能包含逗号")
 	}
 	switch rule.Type {
@@ -808,7 +814,98 @@ func validateMihomoRulePayload(rule MihomoRoutingRule) error {
 	return nil
 }
 
+// validateMihomoLogicalPayload checks the payload of an AND rule in Mihomo's own
+// syntax, "((TYPE,value),(TYPE,value),...)". Sub-conditions may themselves be AND,
+// OR or NOT, as Mihomo allows. Each leaf is validated like a standalone rule.
+func validateMihomoLogicalPayload(payload string, depth int) error {
+	if depth > 8 {
+		return fmt.Errorf("逻辑规则嵌套过深")
+	}
+	items, err := splitMihomoLogicalPayload(payload)
+	if err != nil {
+		return err
+	}
+	if len(items) == 0 {
+		return fmt.Errorf("逻辑规则至少需要一个条件")
+	}
+	for _, item := range items {
+		comma := strings.IndexByte(item, ',')
+		if comma <= 0 {
+			return fmt.Errorf("逻辑规则的条件格式无效: %s", item)
+		}
+		kind, value := strings.ToUpper(strings.TrimSpace(item[:comma])), strings.TrimSpace(item[comma+1:])
+		switch kind {
+		case "AND", "OR", "NOT":
+			if err := validateMihomoLogicalPayload(value, depth+1); err != nil {
+				return err
+			}
+			continue
+		case "MATCH":
+			return fmt.Errorf("逻辑规则里不能使用 MATCH")
+		}
+		if !containsString(mihomoRuleTypes, kind) {
+			return fmt.Errorf("逻辑规则里的类型不受支持: %s", kind)
+		}
+		leaf := MihomoRoutingRule{Type: kind, Payload: value}
+		if strings.HasSuffix(strings.ToLower(value), ",no-resolve") {
+			leaf.Payload, leaf.NoResolve = strings.TrimSpace(value[:len(value)-len(",no-resolve")]), true
+		}
+		if err := validateMihomoRulePayload(leaf); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// splitMihomoLogicalPayload turns "((A,b),(C,d))" into ["A,b", "C,d"].
+func splitMihomoLogicalPayload(payload string) ([]string, error) {
+	payload = strings.TrimSpace(payload)
+	if len(payload) < 2 || payload[0] != '(' || payload[len(payload)-1] != ')' {
+		return nil, fmt.Errorf("逻辑规则的 Payload 必须写成 ((类型,值),(类型,值))")
+	}
+	inner := payload[1 : len(payload)-1]
+	var items []string
+	depth, start := 0, -1
+	for index := 0; index < len(inner); index++ {
+		switch inner[index] {
+		case '(':
+			if depth == 0 {
+				start = index + 1
+			}
+			depth++
+		case ')':
+			depth--
+			if depth < 0 {
+				return nil, fmt.Errorf("逻辑规则的括号不匹配")
+			}
+			if depth == 0 {
+				items = append(items, strings.TrimSpace(inner[start:index]))
+			}
+		case ',':
+		default:
+			if depth == 0 && inner[index] != ' ' {
+				return nil, fmt.Errorf("逻辑规则的 Payload 必须写成 ((类型,值),(类型,值))")
+			}
+		}
+	}
+	if depth != 0 {
+		return nil, fmt.Errorf("逻辑规则的括号不匹配")
+	}
+	return items, nil
+}
+
+// validateMihomoPortRange accepts what Mihomo's port rules parse: one port, a
+// range, or several of them joined by "/" (for example 53/443/1000-2000).
 func validateMihomoPortRange(value string) error {
+	for _, segment := range strings.Split(value, "/") {
+		if err := validateMihomoPortSegment(segment); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateMihomoPortSegment(value string) error {
 	parts := strings.Split(value, "-")
 	if len(parts) < 1 || len(parts) > 2 {
 		return fmt.Errorf("端口必须是单个端口或 start-end")

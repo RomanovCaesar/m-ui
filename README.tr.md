@@ -26,6 +26,7 @@ Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasınd
 * Mihomo'nun yerel YAML yapılandırmasını oluşturma ve doğrulama, yapılandırmayı önizleme ve indirme
 * MetaCubeX'in resmi sürümlerinden Mihomo sürümü değiştirme, GeoIP / GeoSite / MetaDB güncelleme
 * Tam yedekleme ve geri yükleme: ayarlar, girişler, Multi-control kimliği (isteğe bağlı), paneller arası önbellek, abonelik şablonları ve Multi-control istemci cihazları
+* **3x-ui'den tek tıkla geçiş:** `x-ui.db` (v2.9.3–v3.10.2) veya Xray `config.json` dosyasını içe aktarın; girişler, limit, bitiş tarihi ve trafiğiyle istemciler, çıkışlar, dengeleyiciler ve yönlendirme kuralları panelde zaten olanların yanına eklenir; Mihomo'nun yapamadığı her şey indirilebilir dönüştürme günlüğünde listelenir
 * İngilizce, Basitleştirilmiş Çince, Geleneksel Çince, Japonca, Rusça, Farsça, Vietnamca, İspanyolca, Türkçe, Ukraynaca ve Brezilya Portekizcesi arayüz
 
 **Girişler ve istemciler**
@@ -43,7 +44,7 @@ Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasınd
 **Mihomo Ayarları**
 * Basics: yönlendirme modu, doğrudan bağlantılar için IP sürümü, IPv6, eşzamanlı TCP, istatistikler, günlükler ve temel yönlendirme
 * Çıkışlar (Snell, WireGuard ve OpenVPN dahil) ve politika grupları; form, yerel YAML ve bağlantı dönüştürme ile
-* Yukarıdan aşağıya değerlendirilen yönlendirme kuralları
+* Yukarıdan aşağıya değerlendirilen yönlendirme kuralları, `AND` kuralları dahil
 * Cloudflare WARP çıkışları ve ülke ile operatöre göre VPNGate ev interneti çıkışları
 
 **Multi-control**
@@ -119,6 +120,7 @@ Menü, panelle aynı 11 dili destekler ve seçiminizi hatırlar. Yükleyici İng
 Wiki İngilizce ve Basitleştirilmiş Çince olarak sunulur:
 
 * [Installation](https://github.com/RomanovCaesar/m-ui/wiki/Installation), [Panel Configuration](https://github.com/RomanovCaesar/m-ui/wiki/Configuration)
+* [Migrating from 3x-ui](https://github.com/RomanovCaesar/m-ui/wiki/Migrating-from-3x-ui)
 * [Inbounds and Clients](https://github.com/RomanovCaesar/m-ui/wiki/Inbounds), [Mihomo Settings](https://github.com/RomanovCaesar/m-ui/wiki/Mihomo-Settings)
 * [Subscriptions](https://github.com/RomanovCaesar/m-ui/wiki/Subscriptions), [Subscription Templates](https://github.com/RomanovCaesar/m-ui/wiki/Subscription-Templates)
 * [Multi-control](https://github.com/RomanovCaesar/m-ui/wiki/Multi-control), [Cloudflare WARP](https://github.com/RomanovCaesar/m-ui/wiki/Cloudflare-WARP), [VPNGate](https://github.com/RomanovCaesar/m-ui/wiki/VPNGate)

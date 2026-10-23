@@ -1,7 +1,7 @@
 (() => {
   const proxyTypes=[['direct','Direct'],['ss','Shadowsocks'],['snell','Snell'],['socks5','SOCKS5'],['http','HTTP / HTTPS'],['vmess','VMess'],['vless','VLESS'],['trojan','Trojan'],['hysteria2','Hysteria2'],['tuic','TUIC'],['wireguard','WireGuard'],['openvpn','OpenVPN']];
   const groupTypes=[['select','Select'],['url-test','URL Test'],['fallback','Fallback'],['load-balance','Load Balance']];
-  const ruleTypes=['DOMAIN','DOMAIN-SUFFIX','DOMAIN-KEYWORD','DOMAIN-WILDCARD','DOMAIN-REGEX','GEOSITE','IP-CIDR','IP-CIDR6','IP-SUFFIX','IP-ASN','GEOIP','SRC-GEOIP','SRC-IP-ASN','SRC-IP-CIDR','SRC-IP-SUFFIX','DST-PORT','SRC-PORT','IN-PORT','IN-TYPE','IN-USER','IN-NAME','REMATCH-NAME','PROCESS-PATH','PROCESS-PATH-WILDCARD','PROCESS-PATH-REGEX','PROCESS-NAME','PROCESS-NAME-WILDCARD','PROCESS-NAME-REGEX','UID','NETWORK','DSCP','MATCH'];
+  const ruleTypes=['DOMAIN','DOMAIN-SUFFIX','DOMAIN-KEYWORD','DOMAIN-WILDCARD','DOMAIN-REGEX','GEOSITE','IP-CIDR','IP-CIDR6','IP-SUFFIX','IP-ASN','GEOIP','SRC-GEOIP','SRC-IP-ASN','SRC-IP-CIDR','SRC-IP-SUFFIX','DST-PORT','SRC-PORT','IN-PORT','IN-TYPE','IN-USER','IN-NAME','REMATCH-NAME','PROCESS-PATH','PROCESS-PATH-WILDCARD','PROCESS-PATH-REGEX','PROCESS-NAME','PROCESS-NAME-WILDCARD','PROCESS-NAME-REGEX','UID','NETWORK','DSCP','AND','MATCH'];
   const builtins=['DIRECT','REJECT','REJECT-DROP','PASS','PASS-RULE','COMPATIBLE','GLOBAL'];
   const groupBuiltins=['DIRECT','REJECT','REJECT-DROP','COMPATIBLE'];
   const defaultTestURL='https://www.gstatic.com/generate_204';
@@ -339,6 +339,7 @@
   }
 
   function rulePayloadHint(type){
+    if(type==='AND')return muiT('mh.hintAnd');
     if(type.startsWith('DOMAIN'))return muiT(type==='DOMAIN'?'mh.hintDomainFull':'mh.hintDomain');
     if(type==='GEOSITE')return muiT('mh.hintGeosite');
     if(type.includes('CIDR'))return muiT('mh.hintCidr');

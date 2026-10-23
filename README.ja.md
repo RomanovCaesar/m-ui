@@ -26,6 +26,7 @@
 * Mihomo ネイティブ YAML の生成と検証、生成された設定のプレビューとダウンロード
 * MetaCubeX 公式リリースからの Mihomo バージョン切り替え、GeoIP / GeoSite / MetaDB の更新
 * 完全なバックアップと復元：設定、インバウンド、Multi-control の ID（任意で復元）、パネル間キャッシュ、サブスクリプションテンプレート、Multi-control のクライアントデバイス
+* **3x-ui からワンクリックで移行：** `x-ui.db`（v2.9.3–v3.10.2）または Xray の `config.json` をインポートすると、インバウンド、上限・有効期限・通信量付きのクライアント、アウトバウンド、バランサー、ルーティングルールが既存の内容に追加されます。Mihomo で再現できない部分はダウンロードできる変換ログに記録されます
 * 英語、簡体字中国語、繁体字中国語、日本語、ロシア語、ペルシア語、ベトナム語、スペイン語、トルコ語、ウクライナ語、ブラジルポルトガル語の UI
 
 **インバウンドとクライアント**
@@ -43,7 +44,7 @@
 **Mihomo 設定**
 * Basics：ルーティングモード、直接接続の IP バージョン、IPv6、TCP 同時接続、統計、ログ、基本ルーティング
 * アウトバウンド（Snell、WireGuard、OpenVPN を含む）とポリシーグループ。フォーム、ネイティブ YAML、共有リンク変換に対応
-* 上から順に評価されるルーティングルール
+* 上から順に評価されるルーティングルール（`AND` ルールにも対応）
 * Cloudflare WARP アウトバウンドと、国と ISP で選べる VPNGate の家庭用回線出口
 
 **Multi-control**
@@ -119,6 +120,7 @@ m-ui --lang <code>    menu language, e.g. m-ui --lang ja
 Wiki は英語と簡体字中国語で提供しています：
 
 * [Installation](https://github.com/RomanovCaesar/m-ui/wiki/Installation)、[Panel Configuration](https://github.com/RomanovCaesar/m-ui/wiki/Configuration)
+* [Migrating from 3x-ui](https://github.com/RomanovCaesar/m-ui/wiki/Migrating-from-3x-ui)
 * [Inbounds and Clients](https://github.com/RomanovCaesar/m-ui/wiki/Inbounds)、[Mihomo Settings](https://github.com/RomanovCaesar/m-ui/wiki/Mihomo-Settings)
 * [Subscriptions](https://github.com/RomanovCaesar/m-ui/wiki/Subscriptions)、[Subscription Templates](https://github.com/RomanovCaesar/m-ui/wiki/Subscription-Templates)
 * [Multi-control](https://github.com/RomanovCaesar/m-ui/wiki/Multi-control)、[Cloudflare WARP](https://github.com/RomanovCaesar/m-ui/wiki/Cloudflare-WARP)、[VPNGate](https://github.com/RomanovCaesar/m-ui/wiki/VPNGate)

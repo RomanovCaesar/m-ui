@@ -1048,6 +1048,7 @@ func (a *App) panelRoutes(serveSubscriptions bool) http.Handler {
 	mux.HandleFunc("/api/config/download", a.auth(a.handleConfigDownload))
 	mux.HandleFunc("/api/logs/download", a.auth(a.handleLogsDownload))
 	mux.HandleFunc("/api/backup", a.auth(a.handleBackup))
+	mux.HandleFunc("/api/import/xray", a.auth(a.handleXrayImport))
 	handler := a.withPanelPath(mux)
 	if serveSubscriptions {
 		return logging(a.withPeerNetwork(a.withSubscriptions(handler)))

@@ -26,6 +26,7 @@
 * 生成并校验 Mihomo 原生 YAML，可预览和下载原始配置
 * 从 MetaCubeX 官方 Release 切换 Mihomo 版本，更新 GeoIP / GeoSite / MetaDB
 * 完整备份与恢复：设置、Inbound、Multi-control 身份（可选恢复）、跨面板缓存、订阅模版和 Multi-control 客户端设备
+* **从 3x-ui 一键迁移：** 导入 `x-ui.db`（v2.9.3–v3.10.2）或 Xray 的 `config.json`，入站、带限额/到期/流量的客户端、出站、负载均衡和路由规则都会加到面板现有内容旁边；Mihomo 做不到的部分写进可下载的转换日志
 * 界面支持英语、简体中文、繁體中文、日语、俄语、波斯语、越南语、西班牙语、土耳其语、乌克兰语和巴西葡萄牙语
 
 **Inbound 与 Client**
@@ -43,7 +44,7 @@
 **Mihomo 设置**
 * Basics：运行模式、直连 IP 版本、IPv6、TCP 并发、统计、日志和基础分流
 * Outbounds（包括 Snell、WireGuard、OpenVPN）和策略组，支持表单、原生 YAML 和分享链接转换
-* 自上而下匹配的路由规则
+* 自上而下匹配的路由规则，支持 `AND` 组合规则
 * Cloudflare WARP 出站，以及按国家和运营商选择的 VPNGate 家宽出口
 
 **Multi-control**
@@ -117,6 +118,7 @@ m-ui --lang <code>    menu language, e.g. m-ui --lang zh-cn
 ## 文档
 
 * [安装](https://github.com/RomanovCaesar/m-ui/wiki/Installation.zh_CN)、[面板设置](https://github.com/RomanovCaesar/m-ui/wiki/Configuration.zh_CN)
+* [从 3x-ui 迁移](https://github.com/RomanovCaesar/m-ui/wiki/Migrating-from-3x-ui.zh_CN)
 * [Inbounds 与 Clients](https://github.com/RomanovCaesar/m-ui/wiki/Inbounds.zh_CN)、[Mihomo 设置](https://github.com/RomanovCaesar/m-ui/wiki/Mihomo-Settings.zh_CN)
 * [订阅](https://github.com/RomanovCaesar/m-ui/wiki/Subscriptions.zh_CN)、[订阅模版](https://github.com/RomanovCaesar/m-ui/wiki/Subscription-Templates.zh_CN)
 * [Multi-control](https://github.com/RomanovCaesar/m-ui/wiki/Multi-control.zh_CN)、[Cloudflare WARP](https://github.com/RomanovCaesar/m-ui/wiki/Cloudflare-WARP.zh_CN)、[VPNGate](https://github.com/RomanovCaesar/m-ui/wiki/VPNGate.zh_CN)

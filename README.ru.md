@@ -26,6 +26,7 @@
 * Генерация и проверка конфигурации в родном YAML Mihomo, просмотр и скачивание итогового файла
 * Переключение версий Mihomo из официальных релизов MetaCubeX, обновление GeoIP / GeoSite / MetaDB
 * Полное резервное копирование и восстановление: настройки, входы, идентичность Multi-control (по желанию), кэш межпанельных подписок, шаблоны подписок и клиентские устройства Multi-control
+* **Переход с 3x-ui в один клик:** импорт `x-ui.db` (v2.9.3–v3.10.2) или `config.json` от Xray; входы, клиенты с лимитами, сроками и трафиком, исходящие, балансировщики и правила маршрутизации добавляются к тому, что уже есть в панели, а всё, что Mihomo не умеет, перечислено в скачиваемом журнале преобразования
 * Интерфейс на английском, упрощённом и традиционном китайском, японском, русском, персидском, вьетнамском, испанском, турецком, украинском и бразильском португальском
 
 **Входы и клиенты**
@@ -43,7 +44,7 @@
 **Настройки Mihomo**
 * Basics: режим маршрутизации, версия IP для прямых соединений, IPv6, параллельный TCP, статистика, журналы и базовая маршрутизация
 * Исходящие (включая Snell, WireGuard и OpenVPN) и группы политик: форма, родной YAML и преобразование ссылок
-* Правила маршрутизации, проверяемые сверху вниз
+* Правила маршрутизации, проверяемые сверху вниз, включая правила `AND`
 * Исходящие Cloudflare WARP и домашние IP через VPNGate с выбором страны и провайдера
 
 **Multi-control**
@@ -119,6 +120,7 @@ m-ui --lang <code>    menu language, e.g. m-ui --lang ru
 Wiki доступна на английском и упрощённом китайском:
 
 * [Installation](https://github.com/RomanovCaesar/m-ui/wiki/Installation), [Panel Configuration](https://github.com/RomanovCaesar/m-ui/wiki/Configuration)
+* [Migrating from 3x-ui](https://github.com/RomanovCaesar/m-ui/wiki/Migrating-from-3x-ui)
 * [Inbounds and Clients](https://github.com/RomanovCaesar/m-ui/wiki/Inbounds), [Mihomo Settings](https://github.com/RomanovCaesar/m-ui/wiki/Mihomo-Settings)
 * [Subscriptions](https://github.com/RomanovCaesar/m-ui/wiki/Subscriptions), [Subscription Templates](https://github.com/RomanovCaesar/m-ui/wiki/Subscription-Templates)
 * [Multi-control](https://github.com/RomanovCaesar/m-ui/wiki/Multi-control), [Cloudflare WARP](https://github.com/RomanovCaesar/m-ui/wiki/Cloudflare-WARP), [VPNGate](https://github.com/RomanovCaesar/m-ui/wiki/VPNGate)

@@ -635,7 +635,10 @@ type CoreManager struct {
 	coreDownloadSample uint64
 	lastTrafficSave    time.Time
 	lastStateBackup    time.Time
-	enforcedClients    map[string]bool
+	// stateDigest is the SHA-256 of state.json as this process last read or wrote
+	// it, so a save can tell that `m-ui configure` changed the file meanwhile.
+	stateDigest     [sha256.Size]byte
+	enforcedClients map[string]bool
 	// External Traffic Inform 攒下的增量，按 3x-ui 的节奏批量上报。
 	externalTrafficInbounds map[string]externalInboundTraffic
 	externalTrafficClients  map[string]externalClientTraffic
@@ -1591,6 +1594,9 @@ func (m *CoreManager) load() error {
 	defer m.mu.Unlock()
 	path := filepath.Join(m.dataDir, stateFileName)
 	data, err := os.ReadFile(path)
+	if err == nil {
+		m.stateDigest = sha256.Sum256(data)
+	}
 	recovered := false
 	if errors.Is(err, os.ErrNotExist) {
 		if backup, ok := readStateBackup(m.dataDir); ok {
@@ -1751,12 +1757,13 @@ func defaultState() State {
 }
 
 func (m *CoreManager) saveLocked() error {
+	path := filepath.Join(m.dataDir, stateFileName)
+	m.adoptExternalSettingsLocked(path)
 	m.state.UpdatedAt = time.Now().Format(time.RFC3339)
 	data, err := json.MarshalIndent(m.state, "", "  ")
 	if err != nil {
 		return err
 	}
-	path := filepath.Join(m.dataDir, stateFileName)
 	// Refresh the backup copy from the last good file before replacing it, at most
 	// every stateBackupInterval: state is saved every few seconds with traffic.
 	if now := time.Now(); m.lastStateBackup.IsZero() || now.Sub(m.lastStateBackup) >= stateBackupInterval {
@@ -1767,7 +1774,34 @@ func (m *CoreManager) saveLocked() error {
 		}
 		m.lastStateBackup = now
 	}
-	return writeFileDurable(path, data, 0600)
+	if err := writeFileDurable(path, data, 0600); err != nil {
+		return err
+	}
+	m.stateDigest = sha256.Sum256(data)
+	return nil
+}
+
+// adoptExternalSettingsLocked keeps the settings that `m-ui configure` (the
+// management script, the installer, a certificate renewal) wrote to state.json
+// while this panel was running. The panel saves every few seconds and when it
+// stops, so it used to write its old settings straight back: a new port, path,
+// password or certificate never took effect. Only Settings are taken over;
+// configure changes nothing else, and traffic counters in memory are newer.
+func (m *CoreManager) adoptExternalSettingsLocked(path string) {
+	if m.stateDigest == ([sha256.Size]byte{}) {
+		return
+	}
+	current, err := os.ReadFile(path)
+	if err != nil || sha256.Sum256(current) == m.stateDigest || !validStateJSON(current) {
+		return
+	}
+	var external State
+	if err := json.Unmarshal(current, &external); err != nil || external.Settings.PanelListen == "" {
+		return
+	}
+	m.state.Settings = external.Settings
+	m.stateDigest = sha256.Sum256(current)
+	log.Printf("state: %s was changed outside the panel; using its settings", stateFileName)
 }
 
 const (

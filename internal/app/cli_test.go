@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -123,5 +124,62 @@ func TestConfigureCLIStoresTLSCertificatePaths(t *testing.T) {
 	}
 	if m.state.Settings.PanelCertFile != certPath || m.state.Settings.PanelKeyFile != keyPath || m.state.Settings.PanelDomain != "panel.example.com" {
 		t.Fatalf("TLS settings not stored: %+v", m.state.Settings)
+	}
+}
+
+// The management script runs `m-ui configure` while the panel is running. The
+// panel saves every few seconds and when it stops, and used to write its old
+// settings back over the new ones.
+func TestRunningPanelKeepsSettingsWrittenByConfigure(t *testing.T) {
+	dir := t.TempDir()
+	if err := runConfigureCLI([]string{"--data-dir", dir, "--port", "34567", "--path", "OldPath12345678", "--username", "OldUser", "--password", "OldPassword123"}); err != nil {
+		t.Fatal(err)
+	}
+	panel := newStateTestManager(dir)
+	if err := panel.load(); err != nil {
+		t.Fatal(err)
+	}
+	panel.state.Inbounds = []Inbound{{ID: "in", Name: "in", Type: "socks", Port: 1080, Enabled: true, Traffic: TrafficStats{Up: 42}}}
+	if err := panel.saveLocked(); err != nil {
+		t.Fatal(err)
+	}
+
+	server := httptest.NewTLSServer(http.NotFoundHandler())
+	defer server.Close()
+	certPath, keyPath := filepath.Join(dir, "fullchain.pem"), filepath.Join(dir, "privkey.pem")
+	keyBytes, err := x509.MarshalPKCS8PrivateKey(server.TLS.Certificates[0].PrivateKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(certPath, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: server.TLS.Certificates[0].Certificate[0]}), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(keyPath, pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyBytes}), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := runConfigureCLI([]string{"--data-dir", dir, "--port", "2005", "--path", "O5Ei8SY1m4X7dDm", "--username", "caesar311", "--password", "NewPassword456", "--cert", certPath, "--key", keyPath, "--domain", "panel.example.com"}); err != nil {
+		t.Fatal(err)
+	}
+	// The panel counts more traffic and saves (periodically, or on stop).
+	panel.state.Inbounds[0].Traffic.Up = 99
+	if err := panel.saveLocked(); err != nil {
+		t.Fatal(err)
+	}
+
+	reloaded := newStateTestManager(dir)
+	if err := reloaded.load(); err != nil {
+		t.Fatal(err)
+	}
+	settings := reloaded.state.Settings
+	if !strings.HasSuffix(settings.PanelListen, ":2005") || settings.PanelPath != "/O5Ei8SY1m4X7dDm/" || settings.Username != "caesar311" || !verifyPassword(settings.Password, "NewPassword456") ||
+		settings.PanelCertFile != certPath || settings.PanelKeyFile != keyPath || settings.PanelDomain != "panel.example.com" {
+		t.Fatalf("the running panel overwrote the configured settings: %+v", settings)
+	}
+	if len(reloaded.state.Inbounds) != 1 || reloaded.state.Inbounds[0].Traffic.Up != 99 {
+		t.Fatalf("the panel's own data must still be saved: %+v", reloaded.state.Inbounds)
+	}
+	// The running panel uses the new settings at once (the login checks them).
+	if panel.state.Settings.Username != "caesar311" || !verifyPassword(panel.state.Settings.Password, "NewPassword456") {
+		t.Fatal("the running panel did not take over the new settings")
 	}
 }

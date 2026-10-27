@@ -34,6 +34,18 @@ logs() { if has_systemd; then journalctl -u m-ui -e --no-pager -n 200; else tail
 enable() { require_root; if has_systemd; then systemctl enable m-ui; else rc-update add m-ui default; fi; }
 disable() { require_root; if has_systemd; then systemctl disable m-ui; else rc-update del m-ui default; fi; }
 settings() { "$BIN" settings --data-dir "$DATA_DIR"; }
+
+# run_configure stops the panel while `m-ui configure` rewrites state.json and
+# starts it again afterwards. A running panel saves state.json every few seconds
+# and when it stops, and versions before v0.3.1 wrote their old settings back,
+# so a new port, path, password or certificate never took effect.
+run_configure() {
+    local result=0
+    service_do stop >/dev/null 2>&1 || true
+    "$BIN" configure --data-dir "$DATA_DIR" "$@" || result=$?
+    service_do start
+    return "$result"
+}
 version() { "$BIN" version; }
 
 random_alnum() {
@@ -173,9 +185,7 @@ ssl_set_paths() {
     if [[ $# -lt 3 ]]; then read -rp "$(t p_cert_domain)" domain; fi
     [[ -s "$cert" && -r "$cert" ]] || die "$(t cert_bad)"
     [[ -s "$key" && -r "$key" ]] || die "$(t key_bad)"
-    local args=(configure --data-dir "$DATA_DIR" --cert "$cert" --key "$key" --domain "$domain")
-    "$BIN" "${args[@]}" >/dev/null
-    restart
+    run_configure --cert "$cert" --key "$key" --domain "$domain" >/dev/null
     info "$(t tls_applied)"
 }
 
@@ -274,8 +284,7 @@ set_port() {
     local port="${1:-}"
     if [[ -z "$port" ]]; then read -rp "$(t p_port)" port; fi
     [[ "$port" =~ ^[0-9]+$ ]] || die "$(t port_invalid)"
-    "$BIN" configure --data-dir "$DATA_DIR" --port "$port"
-    restart
+    run_configure --port "$port"
 }
 
 clear_logs() {
@@ -298,14 +307,13 @@ configure() {
     read -rp "$(t p_keep_path)" path
     read -rp "$(t p_keep_user)" username
     read -rsp "$(t p_keep_pass)" password; echo
-    args=(configure --data-dir "$DATA_DIR")
+    args=()
     [[ -n "$port" ]] && args+=(--port "$port")
     [[ -n "$path" ]] && args+=(--path "$path")
     [[ -n "$username" ]] && args+=(--username "$username")
-    if [[ -n "$password" ]]; then printf '%s' "$password" | "$BIN" "${args[@]}" --password-stdin
-    else "$BIN" "${args[@]}"
+    if [[ -n "$password" ]]; then printf '%s' "$password" | run_configure ${args[@]+"${args[@]}"} --password-stdin
+    else run_configure ${args[@]+"${args[@]}"}
     fi
-    restart
 }
 
 reset_credentials() {
@@ -315,8 +323,7 @@ reset_credentials() {
     [[ -n "$username" ]] || username="$(random_alnum 14)"
     read -rsp "$(t p_new_pass)" password; echo
     [[ -n "$password" ]] || password="$(random_alnum 16)"
-    printf '%s' "$password" | "$BIN" configure --data-dir "$DATA_DIR" --username "$username" --password-stdin >/dev/null
-    restart
+    printf '%s' "$password" | run_configure --username "$username" --password-stdin >/dev/null
     info "$(tf show_user "$username")"
     info "$(tf show_pass "$password")"
 }
@@ -324,8 +331,7 @@ reset_credentials() {
 reset_path() {
     require_root
     local path; path="$(random_alnum 16)"
-    "$BIN" configure --data-dir "$DATA_DIR" --path "$path" >/dev/null
-    restart
+    run_configure --path "$path" >/dev/null
     info "$(tf show_path "/${path}/")"
 }
 

@@ -245,7 +245,13 @@ configure_panel_tls() {
     domain="${3:-}"
     [[ -n "$cert" && -n "$key" ]] || { warn "certificate and private key paths are required"; return 1; }
     args=(configure --data-dir "$DATA_DIR" --cert "$cert" --key "$key" --domain "$domain")
-    "$BIN_PATH" "${args[@]}" >/dev/null || return 1
+    # A running panel saves state.json every few seconds and when it stops; before
+    # v0.3.1 it wrote its old settings back, so configure only while it is stopped.
+    stop_panel_service
+    if ! "$BIN_PATH" "${args[@]}" >/dev/null; then
+        restart_panel_service >/dev/null 2>&1 || true
+        return 1
+    fi
     restart_panel_service || return 1
 }
 
@@ -395,6 +401,22 @@ fetch_release_json() {
     curl -fsSL --retry 3 --connect-timeout 10 "$(github_url "$endpoint")" -o "$output"
 }
 
+# release_tag_without_api finds a release tag without the GitHub API, which
+# allows 60 anonymous requests an hour per IP address and is often exhausted on
+# shared or recycled VPS addresses: github.com redirects /releases/latest to the
+# tag page.
+release_tag_without_api() {
+    local repo="$1" version="$2" location
+    if [[ "$version" != "latest" ]]; then
+        [[ "$version" == v* ]] || version="v${version}"
+        printf '%s' "$version"; return
+    fi
+    location="$(curl -fsSLI --retry 3 --connect-timeout 10 -o /dev/null -w '%{url_effective}' "$(github_url "https://github.com/${repo}/releases/latest")")" || return 1
+    location="${location%/}"
+    [[ "$location" == */releases/tag/* ]] || return 1
+    printf '%s' "${location##*/}"
+}
+
 release_tag_from_json() {
     sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1" | head -n1
 }
@@ -411,15 +433,20 @@ download_mui() {
         "$destination" version >/dev/null 2>&1 || die "MUI_BINARY_PATH is not a runnable m-ui binary"
         return
     fi
-    local json="${TEMP_DIR}/m-ui-release.json" tag url="" candidate
-    fetch_release_json "$REPO" "$VERSION" "$json" || die "could not fetch m-ui release information from GitHub"
-    tag="$(release_tag_from_json "$json")"; [[ -n "$tag" ]] || die "GitHub release did not contain a tag"
+    local json="${TEMP_DIR}/m-ui-release.json" tag="" url="" candidate
     local asset="m-ui-linux-${ARCH}.tar.gz"
-    while IFS= read -r candidate; do
-        local base="${candidate##*/}"
-        [[ "$base" == "$asset" ]] && { url="$candidate"; break; }
-    done < <(asset_urls_from_json "$json")
-    [[ -n "$url" ]] || die "release ${tag} has no m-ui Linux asset for ${ARCH}; expected ${asset}"
+    if fetch_release_json "$REPO" "$VERSION" "$json"; then
+        tag="$(release_tag_from_json "$json")"; [[ -n "$tag" ]] || die "GitHub release did not contain a tag"
+        while IFS= read -r candidate; do
+            local base="${candidate##*/}"
+            [[ "$base" == "$asset" ]] && { url="$candidate"; break; }
+        done < <(asset_urls_from_json "$json")
+        [[ -n "$url" ]] || die "release ${tag} has no m-ui Linux asset for ${ARCH}; expected ${asset}"
+    else
+        warn "the GitHub API did not answer (often its hourly limit for this IP address); looking the release up on github.com instead"
+        tag="$(release_tag_without_api "$REPO" "$VERSION")" || die "could not fetch m-ui release information from GitHub; check the network or set MUI_GITHUB_PROXY"
+        url="https://github.com/${REPO}/releases/download/${tag}/${asset}"
+    fi
     info "Downloading m-ui ${tag} for ${ARCH}..."
     local archive="${TEMP_DIR}/${asset}" unpack="${TEMP_DIR}/m-ui-unpack" source=""
     curl -fL --retry 3 --connect-timeout 10 "$(github_url "$url")" -o "$archive" || die "m-ui download failed"
@@ -438,7 +465,12 @@ download_mihomo() {
     local destination="$1" json="${TEMP_DIR}/mihomo-release.json" url="" candidate pattern
     [[ -x "$CORE_PATH" && $UPDATE_MIHOMO -eq 0 ]] && { info "Keeping existing Mihomo core"; return; }
     [[ $SKIP_MIHOMO -eq 1 ]] && { warn "Skipping Mihomo installation"; return; }
-    fetch_release_json "$MIHOMO_REPO" "$MIHOMO_VERSION" "$json" || die "could not fetch Mihomo release information"
+    local tag=""
+    if ! fetch_release_json "$MIHOMO_REPO" "$MIHOMO_VERSION" "$json"; then
+        warn "the GitHub API did not answer for Mihomo; looking the release up on github.com instead"
+        tag="$(release_tag_without_api "$MIHOMO_REPO" "$MIHOMO_VERSION")" || die "could not fetch Mihomo release information; check the network or set MUI_GITHUB_PROXY"
+        : > "$json"
+    fi
     case "$ARCH" in
         amd64) pattern='/mihomo-linux-amd64-compatible-v[^/]+\.gz$' ;;
         arm64) pattern='/mihomo-linux-arm64-v[^/]+\.gz$' ;;
@@ -449,6 +481,12 @@ download_mihomo() {
         s390x) pattern='/mihomo-linux-s390x-v[^/]+\.gz$' ;;
     esac
     while IFS= read -r candidate; do [[ "$candidate" =~ $pattern ]] && { url="$candidate"; break; }; done < <(asset_urls_from_json "$json")
+    if [[ -z "$url" && -n "$tag" ]]; then
+        # Without the API listing, build the asset name the way Mihomo publishes it.
+        local name="mihomo-linux-${ARCH}-${tag}.gz"
+        [[ "$ARCH" == amd64 ]] && name="mihomo-linux-amd64-compatible-${tag}.gz"
+        url="https://github.com/${MIHOMO_REPO}/releases/download/${tag}/${name}"
+    fi
     [[ -n "$url" ]] || die "Mihomo has no compatible Linux asset for ${ARCH}; use --skip-mihomo and install it manually"
     info "Downloading Mihomo for ${ARCH}..."
     curl -fL --retry 3 --connect-timeout 10 "$(github_url "$url")" | gzip -dc > "$destination"
@@ -634,10 +672,14 @@ if ! init_system="$(install_service)"; then
     die "service installation failed; the previous binaries were restored when available"
 fi
 
+# A failed certificate must not end the run here: on a new install the generated
+# password is only printed below, and the panel already works over HTTP.
+tls_failed=0
+ssl_requested="$SSL_MODE"
 if [[ $new_install -eq 1 || -n "$SSL_MODE" ]]; then
     if ! configure_tls; then
-        if [[ -n "$SSL_MODE" ]]; then die "TLS certificate setup failed"; fi
-        warn "TLS setup was not completed; configure it later with: m-ui ssl"
+        tls_failed=1
+        warn "TLS certificate setup failed; the panel runs over HTTP for now. Try again later with: m-ui ssl"
     fi
 fi
 
@@ -658,7 +700,9 @@ echo
 info "m-ui installation completed (${init_system})"
 echo -e "${green}Access URL:${plain} ${access_scheme}://${access_host}:${current_port}${current_path}"
 echo -e "${green}Username:${plain}   ${current_user}"
-if [[ $new_install -eq 1 || $PASSWORD_SET -eq 1 ]]; then echo -e "${green}Password:${plain}   ${PASSWORD}"; fi
+if [[ $new_install -eq 1 || $PASSWORD_SET -eq 1 ]]; then echo -e "${green}Password:${plain}   ${PASSWORD}"
+else echo -e "${green}Password:${plain}   unchanged (forgot it? run: m-ui reset-credentials)"
+fi
 echo -e "${yellow}Save these credentials now. Configure HTTPS in Panel Settings before exposing the panel publicly.${plain}"
 if [[ -n "$BACKUP_PATH" ]]; then
     echo
@@ -670,3 +714,6 @@ echo
 echo "Management commands:"
 echo "  m-ui start | stop | restart | status | logs | settings | configure"
 echo "  m-ui update | update-menu | ssl | reset-credentials | reset-path | uninstall"
+# A TLS mode given on the command line is part of what was asked for; report it
+# after the credentials have been shown.
+if [[ $tls_failed -eq 1 && -n "$ssl_requested" ]]; then exit 1; fi

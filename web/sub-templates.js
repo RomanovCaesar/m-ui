@@ -95,14 +95,14 @@
   const findName = id => (view?.templates || []).find(item => item.id === id)?.name || '';
 
   const rename = async id => {
-    const name = prompt(muiT('subtpl.renamePrompt'), findName(id));
+    const name = await muiPrompt(muiT('subtpl.renamePrompt'), findName(id));
     if (name === null || !name.trim()) return;
     try { view = await request('/api/sub-templates/' + encodeURIComponent(id), {method: 'PUT', body: JSON.stringify({name: name.trim()})}); render(); }
     catch (error) { toast(error.message, true); }
   };
 
   const remove = async id => {
-    if (!confirm(muiT('subtpl.confirmDelete', {name: findName(id)}))) return;
+    if (!await muiConfirm(muiT('subtpl.confirmDelete', {name: findName(id)}), {danger: true})) return;
     try { view = await request('/api/sub-templates/' + encodeURIComponent(id), {method: 'DELETE'}); render(); toast(muiT('subtpl.deleted')); }
     catch (error) { toast(error.message, true); }
   };

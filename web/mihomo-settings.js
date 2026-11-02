@@ -93,11 +93,11 @@
     if(currentWarpOutbound()?.name===name&&(draft.basics.warpDomains||[]).length)result.push('Basics / WARP Routing');
     return result;
   }
-  function deleteOutbound(id){
+  async function deleteOutbound(id){
     const item=draft.outbounds.find(candidate=>candidate.id===id);if(!item)return;
     const dependencies=outboundDependencies(item.name);
     if(dependencies.length){toast(muiT('mh.cannotDelete',{deps:dependencies.join(muiT('common.listSep')),name:item.name}),true);return;}
-    if(!confirm(muiT('mh.confirmDeleteOutbound',{name:item.name})))return;
+    if(!await muiConfirm(muiT('mh.confirmDeleteOutbound',{name:item.name}),{danger:true}))return;
     draft.outbounds=draft.outbounds.filter(candidate=>candidate.id!==id);markDirty();
   }
 
@@ -126,10 +126,10 @@
     if(index<0||next<0||next>=draft.routingRules.length||draft.routingRules[index].type==='MATCH'||draft.routingRules[next].type==='MATCH')return;
     [draft.routingRules[index],draft.routingRules[next]]=[draft.routingRules[next],draft.routingRules[index]];markDirty();
   }
-  function deleteRule(id){
+  async function deleteRule(id){
     const rule=draft.routingRules.find(item=>item.id===id);if(!rule)return;
     if(rule.type==='MATCH'){toast(muiT('mh.matchUndeletable'),true);return;}
-    if(!confirm(muiT('mh.confirmDeleteRule',{type:rule.type})))return;
+    if(!await muiConfirm(muiT('mh.confirmDeleteRule',{type:rule.type}),{danger:true}))return;
     draft.routingRules=draft.routingRules.filter(item=>item.id!==id);markDirty();
   }
 
@@ -411,8 +411,8 @@
       field.onkeydown=event=>{if(event.key==='Enter'||event.key===','){event.preventDefault();commitBasicsTags(field);}};
       field.onblur=()=>commitBasicsTags(field);
     }
-    $('#basics-reset').onclick=()=>{
-      if(!confirm(muiT('mh.confirmResetBasics')))return;
+    $('#basics-reset').onclick=async()=>{
+      if(!await muiConfirm(muiT('mh.confirmResetBasics'),{danger:true}))return;
       draft.basics=defaultBasics();for(const field of $$('[data-basics-list]'))field.value='';fillBasicsForm();markDirty();
     };
   }
@@ -610,12 +610,12 @@
   async function reconnectVPNGate(slot){
     if(vpngateBusy)return;vpngateBusy=true;showVPNGateError('');try{vpngateData=await api('/api/mihomo/vpngate/reconnect',{method:'POST',body:JSON.stringify({slot})});renderVPNGateModal();scheduleVPNGatePoll(1000);}catch(error){showVPNGateError(error.message);}finally{vpngateBusy=false;renderVPNGateModal();}
   }
-	function stageVPNGateUninstall(id){
+	async function stageVPNGateUninstall(id){
 	  const item=draft.outbounds.find(candidate=>candidate.id===id&&candidate.vpngate);if(!item)return;
 	  const dependencies=outboundDependencies(item.name);
 	  for(const inbound of app.state?.state?.inbounds||[])if(inbound.proxy===item.name)dependencies.push('Inbound '+inbound.name);
 	  if(dependencies.length){const message=muiT('mh.cannotDelete',{deps:dependencies.join(muiT('common.listSep')),name:item.name});showVPNGateError(message);toast(message,true);return;}
-	  if(!confirm(muiT('mh.vpngateConfirmUninstall',{name:item.name})))return;
+	  if(!await muiConfirm(muiT('mh.vpngateConfirmUninstall',{name:item.name}),{danger:true}))return;
 	  draft.outbounds=draft.outbounds.filter(candidate=>candidate.id!==id);vpngateEditingId='';markDirty();
 	  clearTimeout(vpngateTimer);closeModal($('#vpngate-modal'));toast(muiT('mh.vpngateUninstallDrafted'));
 	}
@@ -687,7 +687,7 @@
       for(const inbound of app.state?.state?.inbounds||[])if(inbound.proxy===existing.name)dependencies.push('Inbound '+inbound.name);
       if(dependencies.length){showWarpError(muiT('mh.warpRemoveRefs',{deps:dependencies.join(muiT('common.listSep'))}));return;}
     }
-    if(!confirm(muiT('mh.confirmDeleteWarp')))return;
+    if(!await muiConfirm(muiT('mh.confirmDeleteWarp'),{danger:true}))return;
     warpBusy=true;showWarpError('');syncWarpButtons();
     try{
       warpData=await api('/api/mihomo/warp',{method:'DELETE'});

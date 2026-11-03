@@ -1,0 +1,518 @@
+/* m-ui shadcn theme (default).
+ *
+ * The look of shadcn/ui (https://ui.shadcn.com, new-york style, zinc palette):
+ * flat neutral surfaces with 1px borders, small radii, almost no shadows, a
+ * near-black primary button and a 2px focus ring. Every rule is scoped to
+ * html[data-ui-theme="shadcn"]; the server leaves out the Liquid Glass styles
+ * and scripts for this theme, so this file restyles the shared base
+ * (liquid-glass.css and the styles in index.html) only. */
+
+html[data-ui-theme="shadcn"] {
+  --sc-bg: #ffffff;
+  --sc-sidebar: #fafafa;
+  --sc-card: #ffffff;
+  --sc-muted: #f4f4f5;
+  --sc-accent: #f4f4f5;
+  --sc-border: #e4e4e7;
+  --sc-input: #e4e4e7;
+  --sc-ring: #a1a1aa;
+  --sc-fg: #09090b;
+  --sc-muted-fg: #71717a;
+  --sc-primary: #18181b;
+  --sc-primary-fg: #fafafa;
+  --sc-destructive: #dc2626;
+  --sc-destructive-fg: #ffffff;
+}
+html[data-ui-theme="shadcn"] body:is(.dark, html.dark *) {
+  --sc-bg: #09090b;
+  --sc-sidebar: #0c0c0e;
+  --sc-card: #09090b;
+  --sc-muted: #27272a;
+  --sc-accent: #27272a;
+  --sc-border: #27272a;
+  --sc-input: #27272a;
+  --sc-ring: #52525b;
+  --sc-fg: #fafafa;
+  --sc-muted-fg: #a1a1aa;
+  --sc-primary: #fafafa;
+  --sc-primary-fg: #18181b;
+  --sc-destructive: #b91c1c;
+  --sc-destructive-fg: #fafafa;
+}
+html[data-ui-theme="shadcn"][data-theme="ultra-dark"] body:is(.dark, html.dark *) {
+  --sc-bg: #000000;
+  --sc-sidebar: #050505;
+  --sc-card: #000000;
+  --sc-muted: #18181b;
+  --sc-accent: #18181b;
+  --sc-border: #1f1f23;
+  --sc-input: #27272a;
+}
+
+/* ===== Shared tokens mapped to shadcn ===== */
+html[data-ui-theme="shadcn"] body {
+  --bg: var(--sc-bg);
+  --surface: var(--sc-card);
+  --surface-2: var(--sc-muted);
+  --surface-3: var(--sc-accent);
+  --surface-4: var(--sc-border);
+  --surface-glass: var(--sc-card);
+  --surface-glass-heavy: var(--sc-card);
+  --surface-modal: var(--sc-card);
+  --line: var(--sc-border);
+  --stroke: var(--sc-border);
+  --stroke-2: var(--sc-input);
+  --text: var(--sc-fg);
+  --text-strong: var(--sc-fg);
+  --muted: var(--sc-muted-fg);
+  --muted-2: var(--sc-muted-fg);
+  --accent: var(--sc-primary);
+  --teal: var(--sc-primary);
+  --teal-2: var(--sc-primary);
+  --teal-3: var(--sc-primary);
+  --teal-soft: var(--sc-accent);
+  --danger: var(--sc-destructive);
+  --danger-hover: var(--sc-destructive);
+  --red: #dc2626;
+  --green: #16a34a;
+  --orange: #ea580c;
+  --blue: #2563eb;
+  --indigo: #4f46e5;
+  --purple: #9333ea;
+  --pink: #db2777;
+  --mint: #0d9488;
+  --cyan: #0891b2;
+  --glass-bg: var(--sc-card);
+  --glass-border: var(--sc-border);
+  --glass-blur: none;
+  --glass-caustic: 0 0 #0000;
+  --glass-specular: none;
+  --table-hover: color-mix(in srgb, var(--sc-muted) 50%, transparent);
+  --table-ring: var(--sc-border);
+  --row-selected: var(--sc-muted);
+  --select-bg: var(--sc-card);
+  --select-hover: var(--sc-accent);
+  --select-item-hover: var(--sc-accent);
+  --select-item-selected: var(--sc-accent);
+  --select-item-color: var(--sc-fg);
+  --tag-bg: var(--sc-muted); --tag-border: transparent; --tag-color: var(--sc-fg);
+  --tag-green-bg: #f0fdf4; --tag-green-border: #bbf7d0; --tag-green-color: #15803d;
+  --tag-red-bg: #fef2f2; --tag-red-border: #fecaca; --tag-red-color: #b91c1c;
+  --tag-orange-bg: #fff7ed; --tag-orange-border: #fed7aa; --tag-orange-color: #c2410c;
+  --tag-blue-bg: #eff6ff; --tag-blue-border: #bfdbfe; --tag-blue-color: #1d4ed8;
+  --tag-purple-bg: #faf5ff; --tag-purple-border: #e9d5ff; --tag-purple-color: #7e22ce;
+  --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-hover: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-pop: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-modal: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-btn: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-btn-primary: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --tooltip: var(--sc-primary);
+  --back-top: var(--sc-primary);
+  --back-top-hover: var(--sc-primary);
+  --scrollbar: var(--sc-border); --scrollbar-hover: var(--sc-ring);
+  --scrollbar-webkit: var(--sc-border); --scrollbar-webkit-hover: var(--sc-ring);
+  --gauge-trail: var(--sc-muted);
+  --sider-trigger-bg: var(--sc-card); --sider-trigger-color: var(--sc-muted-fg);
+  --code-bg: var(--sc-muted); --code-color: var(--sc-fg);
+  --login-wave: var(--sc-muted);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --ctl: 36px; --ctl-sm: 32px; --ctl-lg: 40px;
+  --font: "Geist Variable", "Geist", "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Vazirmatn", "Tahoma", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-modal: cubic-bezier(0.4, 0, 0.2, 1);
+}
+html[data-ui-theme="shadcn"] body:is(.dark, html.dark *) {
+  --tag-green-bg: rgb(22 163 74 / 0.15); --tag-green-border: rgb(22 163 74 / 0.3); --tag-green-color: #4ade80;
+  --tag-red-bg: rgb(220 38 38 / 0.15); --tag-red-border: rgb(220 38 38 / 0.3); --tag-red-color: #f87171;
+  --tag-orange-bg: rgb(234 88 12 / 0.15); --tag-orange-border: rgb(234 88 12 / 0.3); --tag-orange-color: #fb923c;
+  --tag-blue-bg: rgb(37 99 235 / 0.15); --tag-blue-border: rgb(37 99 235 / 0.3); --tag-blue-color: #60a5fa;
+  --tag-purple-bg: rgb(147 51 234 / 0.15); --tag-purple-border: rgb(147 51 234 / 0.3); --tag-purple-color: #c084fc;
+  --red: #ef4444; --green: #22c55e; --orange: #f97316; --blue: #3b82f6; --purple: #a855f7;
+  --shadow: 0 0 #0000; --shadow-hover: 0 0 #0000; --shadow-btn: 0 0 #0000; --shadow-btn-primary: 0 0 #0000;
+  --shadow-pop: 0 4px 12px rgb(0 0 0 / 0.5); --shadow-modal: 0 16px 40px rgb(0 0 0 / 0.6);
+}
+
+/* ===== Base ===== */
+html[data-ui-theme="shadcn"] [hidden] { display: none !important; }
+html[data-ui-theme="shadcn"] body {
+  background: var(--sc-bg);
+  color: var(--sc-fg);
+  font-family: var(--font);
+  letter-spacing: 0;
+  font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1;
+}
+/* No glass anywhere: shadcn surfaces are opaque. */
+html[data-ui-theme="shadcn"] body *,
+html[data-ui-theme="shadcn"] body *::before,
+html[data-ui-theme="shadcn"] body *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-ui-theme="shadcn"] :is(.ambient-backdrop, .aurora-orb, .mac-traffic-lights) { display: none !important; }
+html[data-ui-theme="shadcn"] :is(.glass-surface, .glass-card, .swift-card, .glass-button, .swift-btn)::before { display: none !important; }
+html[data-ui-theme="shadcn"] ::selection { background: color-mix(in srgb, var(--sc-primary) 18%, transparent); }
+html[data-ui-theme="shadcn"] :focus-visible { outline: 2px solid var(--sc-ring); outline-offset: 2px; }
+
+/* ===== Buttons ===== */
+html[data-ui-theme="shadcn"] body :is(.primary-btn, .mihomo-primary, .login-button, #add-inbound, .glass-button.primary, .swift-btn.primary) {
+  background: var(--sc-primary) !important;
+  color: var(--sc-primary-fg) !important;
+  border: 1px solid var(--sc-primary) !important;
+  box-shadow: var(--shadow-btn) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 500;
+  filter: none !important;
+  transform: none !important;
+}
+html[data-ui-theme="shadcn"] body :is(.primary-btn, .mihomo-primary, .login-button, #add-inbound):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sc-primary) 90%, var(--sc-bg)) !important;
+}
+html[data-ui-theme="shadcn"] body :is(.danger-btn, .glass-button.danger, .swift-btn.danger) {
+  background: var(--sc-destructive) !important;
+  color: var(--sc-destructive-fg) !important;
+  border: 1px solid var(--sc-destructive) !important;
+  box-shadow: var(--shadow-btn) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 500;
+  filter: none !important;
+  transform: none !important;
+}
+html[data-ui-theme="shadcn"] body .danger-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--sc-destructive) 90%, var(--sc-bg)) !important; }
+html[data-ui-theme="shadcn"] body :is(.outline-btn, .small-btn, .glass-button:not(.primary, .danger), .swift-btn:not(.primary, .danger), .inbound-pill:not(#add-inbound), .overview-action, .mihomo-pill, .circle-action) {
+  background: var(--sc-bg) !important;
+  color: var(--sc-fg) !important;
+  border: 1px solid var(--sc-input) !important;
+  box-shadow: var(--shadow-btn) !important;
+  border-radius: var(--radius) !important;
+  font-weight: 500;
+  transform: none !important;
+}
+html[data-ui-theme="shadcn"] body :is(.outline-btn, .small-btn, .inbound-pill:not(#add-inbound), .overview-action, .mihomo-pill, .circle-action):hover:not(:disabled) {
+  background: var(--sc-accent) !important;
+}
+html[data-ui-theme="shadcn"] body :is(.icon-btn, .modal-close, .mihomo-icon, .input-tool, .sider-trigger, .back-top, .top-actions button) {
+  border-radius: var(--radius) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+html[data-ui-theme="shadcn"] body :is(.icon-btn, .modal-close, .mihomo-icon, .input-tool):hover:not(:disabled) {
+  background: var(--sc-accent) !important;
+  color: var(--sc-fg) !important;
+}
+html[data-ui-theme="shadcn"] body .mihomo-icon.danger { color: var(--sc-destructive) !important; }
+html[data-ui-theme="shadcn"] body button:disabled { opacity: 0.5 !important; }
+
+/* ===== Layout: sidebar, top bar, cards ===== */
+html[data-ui-theme="shadcn"] body .sidebar {
+  background: var(--sc-sidebar) !important;
+  border: 0 !important;
+  border-right: 1px solid var(--sc-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="shadcn"] body .nav button,
+html[data-ui-theme="shadcn"] body .nav a {
+  border-radius: var(--radius) !important;
+  color: var(--sc-fg) !important;
+  font-weight: 500;
+}
+html[data-ui-theme="shadcn"] body .nav :is(button, a):hover { background: var(--sc-accent) !important; }
+html[data-ui-theme="shadcn"] body .nav :is(button, a).active {
+  background: var(--sc-accent) !important;
+  color: var(--sc-fg) !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="shadcn"] body .topbar {
+  background: color-mix(in srgb, var(--sc-bg) 92%, transparent) !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--sc-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="shadcn"] body :is(.card, .overview-card, .gauges-card, .inbounds-card, .mihomo-card, .stats-strip, .table-card, .setting-section, .basics-section, .subtpl-sections, #settings-form, .basics-sections, .glass-surface, .glass-card, .swift-card) {
+  background: var(--sc-card) !important;
+  border-color: var(--sc-border) !important;
+  box-shadow: var(--shadow) !important;
+}
+html[data-ui-theme="shadcn"] body :is(.overview-card, .gauges-card, .inbounds-card, .mihomo-card, .stats-strip, .table-card, .card) {
+  border: 1px solid var(--sc-border) !important;
+  border-radius: var(--radius-xl) !important;
+}
+
+/* ===== Forms ===== */
+html[data-ui-theme="shadcn"] body :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select, .swift-picker-selection, .mui-combobox-val) {
+  background: transparent !important;
+  color: var(--sc-fg) !important;
+  border: 1px solid var(--sc-input) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-btn) !important;
+}
+html[data-ui-theme="shadcn"] body:is(.dark, html.dark *) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select, .swift-picker-selection) {
+  background: color-mix(in srgb, var(--sc-input) 30%, transparent) !important;
+}
+html[data-ui-theme="shadcn"] body :is(input, textarea, select):focus,
+html[data-ui-theme="shadcn"] body .swift-picker-selection:focus-visible {
+  outline: none !important;
+  border-color: var(--sc-ring) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc-ring) 50%, transparent) !important;
+}
+html[data-ui-theme="shadcn"] body :is(input, textarea)::placeholder { color: var(--sc-muted-fg) !important; }
+html[data-ui-theme="shadcn"] body .swift-picker-menu,
+html[data-ui-theme="shadcn"] body :is(.general-menu, .inbound-menu, .inbound-popover, .auto-refresh-menu, .username-suggestion-menu, .theme-options) {
+  background: var(--sc-card) !important;
+  border: 1px solid var(--sc-border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-pop) !important;
+}
+
+/* Switch: shadcn's 32x18 track with a 14px thumb */
+html[data-ui-theme="shadcn"] body .switch span {
+  background: var(--sc-input) !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="shadcn"] body .switch input:checked + span { background: var(--sc-primary) !important; }
+html[data-ui-theme="shadcn"] body .switch span::after {
+  background: var(--sc-bg) !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15) !important;
+}
+html[data-ui-theme="shadcn"] body:is(.dark, html.dark *) .switch input:checked + span::after { background: var(--sc-primary-fg) !important; }
+
+/* ===== Segmented controls (tabs) ===== */
+html[data-ui-theme="shadcn"] body :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar) {
+  background: var(--sc-muted) !important;
+  border: 0 !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: none !important;
+  padding: 3px !important;
+}
+html[data-ui-theme="shadcn"] body :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar, #security-extra-toggles) > button {
+  border-radius: calc(var(--radius-lg) - 2px) !important;
+  color: var(--sc-muted-fg) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-weight: 500;
+}
+html[data-ui-theme="shadcn"] body :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar, #security-extra-toggles) > button.active {
+  background: var(--sc-bg) !important;
+  color: var(--sc-fg) !important;
+  box-shadow: var(--shadow-btn) !important;
+}
+html[data-ui-theme="shadcn"] body:is(.dark, html.dark *) :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar, #security-extra-toggles) > button.active {
+  background: var(--sc-input) !important;
+}
+html[data-ui-theme="shadcn"] body .ink-bar { display: none !important; }
+
+/* ===== Tables ===== */
+html[data-ui-theme="shadcn"] body table th {
+  color: var(--sc-muted-fg) !important;
+  font-weight: 500;
+  background: transparent !important;
+}
+html[data-ui-theme="shadcn"] body table :is(th, td) { border-color: var(--sc-border) !important; }
+html[data-ui-theme="shadcn"] body table tbody tr:hover { background: var(--table-hover) !important; }
+
+/* ===== Tags (badges) ===== */
+html[data-ui-theme="shadcn"] body :is(.tag, .tiny-tag, .mihomo-tag, .subtpl-badge, .protocol-pill, .sidebar-app-badge) {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500;
+  box-shadow: none !important;
+}
+
+/* ===== Dialogs, drawer, toast ===== */
+html[data-ui-theme="shadcn"] body :is(.modal-backdrop, .drawer-backdrop, .drawer-mask) { background: rgb(0 0 0 / 0.5) !important; }
+html[data-ui-theme="shadcn"] body .modal-panel {
+  background: var(--sc-card) !important;
+  border: 1px solid var(--sc-border) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-modal) !important;
+  animation: sc-zoom-in .15s var(--ease) !important;
+}
+html[data-ui-theme="shadcn"] body .modal-titlebar { border-bottom-color: var(--sc-border) !important; font-weight: 600; }
+html[data-ui-theme="shadcn"] body .modal-footer { border-top-color: var(--sc-border) !important; }
+html[data-ui-theme="shadcn"] body .drawer {
+  background: var(--sc-card) !important;
+  border-left: 1px solid var(--sc-border) !important;
+  box-shadow: var(--shadow-modal) !important;
+}
+html[data-ui-theme="shadcn"] body :is(.toast, .dynamic-island-toast, .swift-toast) {
+  background: var(--sc-card) !important;
+  color: var(--sc-fg) !important;
+  border: 1px solid var(--sc-border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-pop) !important;
+}
+@keyframes sc-zoom-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
+
+/* ===== Code and logs ===== */
+html[data-ui-theme="shadcn"] body :is(pre, code, .log-box, .share-url-list, .subtpl-code) {
+  font-family: var(--font-mono) !important;
+}
+
+/* ===== Layout the Liquid Glass layer used to provide ===== */
+html[data-ui-theme="shadcn"] body .topbar {
+  display: flex !important;
+  height: 56px;
+  padding: 0 24px;
+  position: sticky; top: 0; z-index: 50;
+}
+html[data-ui-theme="shadcn"] body :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs) {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  max-width: 100%;
+  gap: 2px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+}
+html[data-ui-theme="shadcn"] body :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs)::-webkit-scrollbar { display: none; }
+html[data-ui-theme="shadcn"] body :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs) > button {
+  flex: none !important;
+  height: 30px !important;
+  padding: 0 12px !important;
+  border: 0 !important;
+  white-space: nowrap;
+}
+html[data-ui-theme="shadcn"] body .inbounds-filterbar:not(.status-mode) .inbound-status-tabs { display: none !important; }
+
+html[data-ui-theme="shadcn"] body .content { min-width: 0; }
+html[data-ui-theme="shadcn"] body :is(.mihomo-settings-page, .inbounds-workspace) { grid-template-columns: minmax(0, 1fr); }
+html[data-ui-theme="shadcn"] body :is(.mihomo-card, .inbounds-card, .stats-strip) { min-width: 0; }
+html[data-ui-theme="shadcn"] body .inbounds-table-wrap { overflow-x: auto; }
+/* Statistics: one card, metrics divided by hairlines */
+html[data-ui-theme="shadcn"] body .stats-strip .metric {
+  background: transparent !important;
+  border: 0 !important;
+  border-right: 1px solid var(--sc-border) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="shadcn"] body .stats-strip .metric:last-child { border-right: 0 !important; }
+html[data-ui-theme="shadcn"] body .metric-label { color: var(--sc-muted-fg) !important; font-weight: 500; }
+html[data-ui-theme="shadcn"] body .metric-value { font-weight: 600; letter-spacing: -0.01em; }
+
+/* The checkbox switches of the inbound drawer and the client dialog */
+html[data-ui-theme="shadcn"] body :is(.drawer, #client-modal) .check input[type="checkbox"] {
+  width: 32px !important; min-width: 32px !important; height: 18px !important; min-height: 18px !important;
+  background: var(--sc-input) !important;
+  border: 1px solid transparent !important;
+}
+html[data-ui-theme="shadcn"] body :is(.drawer, #client-modal) .check input[type="checkbox"]::after {
+  top: 1px !important; left: 1px !important; width: 14px !important; height: 14px !important;
+  background: var(--sc-bg) !important;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.15) !important;
+}
+html[data-ui-theme="shadcn"] body :is(.drawer, #client-modal) .check input[type="checkbox"]:checked { background: var(--sc-primary) !important; }
+html[data-ui-theme="shadcn"] body :is(.drawer, #client-modal) .check input[type="checkbox"]:checked::after { transform: translateX(14px) !important; }
+html[data-ui-theme="shadcn"] body:is(.dark, html.dark *) :is(.drawer, #client-modal) .check input[type="checkbox"]:checked::after { background: var(--sc-primary-fg) !important; }
+/* Plain checkboxes: 16px, square, primary when checked */
+html[data-ui-theme="shadcn"] body .check-box span { border-radius: 4px !important; border-color: var(--sc-primary) !important; }
+html[data-ui-theme="shadcn"] body .check-box input:checked + span { background: var(--sc-primary) !important; }
+
+/* ===== Fix pass 1 ===== */
+/* Dialog footers share the dialog background; the close button is a ghost icon. */
+html[data-ui-theme="shadcn"] body .modal-footer { background: transparent !important; }
+html[data-ui-theme="shadcn"] body .modal-close {
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--sc-muted-fg) !important;
+  opacity: 1;
+}
+html[data-ui-theme="shadcn"] body .modal-close:hover { color: var(--sc-fg) !important; background: var(--sc-accent) !important; }
+/* Confirm and prompt dialogs look like AlertDialog: no dividers. */
+html[data-ui-theme="shadcn"] body .mui-dialog .modal-titlebar { border-bottom: 0 !important; padding-bottom: 4px !important; font-size: 18px; }
+html[data-ui-theme="shadcn"] body .mui-dialog .modal-content { padding-top: 0 !important; }
+html[data-ui-theme="shadcn"] body .mui-dialog .mui-dialog-message { color: var(--sc-muted-fg) !important; }
+html[data-ui-theme="shadcn"] body .mui-dialog .modal-footer { border-top: 0 !important; padding-top: 8px !important; }
+
+/* Every switch is the 32x18 shadcn switch. */
+html[data-ui-theme="shadcn"] body .switch span { min-width: 32px !important; width: 32px !important; height: 18px !important; }
+html[data-ui-theme="shadcn"] body .switch span::after { width: 14px !important; height: 14px !important; top: 1px !important; left: 1px !important; }
+html[data-ui-theme="shadcn"] body .switch input:checked + span::after { transform: translateX(14px) !important; }
+
+/* Tab lists marked with aria-selected */
+html[data-ui-theme="shadcn"] body :is(.mihomo-editor-tabs, [role="tablist"]) > button[aria-selected="true"] {
+  background: var(--sc-bg) !important;
+  color: var(--sc-fg) !important;
+  box-shadow: var(--shadow-btn) !important;
+}
+html[data-ui-theme="shadcn"] body:is(.dark, html.dark *) :is(.mihomo-editor-tabs, [role="tablist"]) > button[aria-selected="true"] { background: var(--sc-input) !important; }
+
+/* Toggle groups (remark model tokens) */
+html[data-ui-theme="shadcn"] body .remark-tokens button {
+  background: transparent !important;
+  color: var(--sc-fg) !important;
+  border: 1px solid var(--sc-input) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-btn) !important;
+}
+html[data-ui-theme="shadcn"] body .remark-tokens button.active { background: var(--sc-accent) !important; }
+
+/* Dashboard: gauges without glow, the action row as separate outline buttons */
+html[data-ui-theme="shadcn"] body .gauge-bar { filter: none !important; }
+html[data-ui-theme="shadcn"] body .gauge-value { letter-spacing: -0.02em; font-weight: 600; }
+html[data-ui-theme="shadcn"] body .overview-actions { gap: 8px; padding: 12px 16px 16px !important; border-top: 0 !important; }
+html[data-ui-theme="shadcn"] body .overview-card-header { border-bottom-color: var(--sc-border) !important; }
+
+/* Badges: rounded-md */
+html[data-ui-theme="shadcn"] body :is(.tag, .tiny-tag) { border-radius: 6px !important; padding: 0 8px !important; font-size: 12px; }
+
+/* ===== Login page ===== */
+html[data-ui-theme="shadcn"] body {
+  --page-bg: var(--sc-bg);
+  --card-bg: var(--sc-card);
+  --card-border: var(--sc-border);
+  --card-stroke: var(--sc-border);
+  --input-bg: transparent;
+  --input-bg-focus: transparent;
+  --primary: var(--sc-primary);
+  --primary-hover: color-mix(in srgb, var(--sc-primary) 90%, var(--sc-bg));
+  --primary-active: var(--sc-primary);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --switch-off: var(--sc-input);
+  --checkbox-bg: var(--sc-bg);
+}
+html[data-ui-theme="shadcn"] body .login-card {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow) !important;
+  padding: 2rem 2rem 1.75rem !important;
+}
+html[data-ui-theme="shadcn"] body .brand-icon { filter: none !important; width: 48px !important; height: 48px !important; }
+html[data-ui-theme="shadcn"] body .headline { font-size: 20px !important; font-weight: 600; letter-spacing: -0.01em; }
+html[data-ui-theme="shadcn"] body .input-wrap .sf-symbol { color: var(--sc-muted-fg) !important; }
+html[data-ui-theme="shadcn"] body .login-button { height: 40px !important; border-radius: var(--radius) !important; font-size: 14px !important; font-weight: 500 !important; }
+html[data-ui-theme="shadcn"] body .settings-button { background: transparent !important; border-color: var(--sc-border) !important; border-radius: var(--radius) !important; }
+html[data-ui-theme="shadcn"] body .settings-menu { border-radius: var(--radius) !important; box-shadow: var(--shadow-pop) !important; }
+
+/* ===== Fix pass 2 ===== */
+html[data-ui-theme="shadcn"] body .topbar { height: 56px !important; min-height: 56px; }
+html[data-ui-theme="shadcn"] body .drawer-foot { background: transparent !important; border-top: 1px solid var(--sc-border) !important; }
+html[data-ui-theme="shadcn"] body .overview-actions .overview-action { height: 36px !important; }
+@media (max-width: 768px) {
+  html[data-ui-theme="shadcn"] body .topbar { padding: 0 12px 0 56px !important; }
+  html[data-ui-theme="shadcn"] body .drawer-handle {
+    position: absolute; top: 10px; right: -52px;
+    width: 36px; height: 36px;
+    border: 1px solid var(--sc-input) !important; border-radius: var(--radius) !important;
+    background: var(--sc-bg) !important; color: var(--sc-fg) !important; box-shadow: var(--shadow-btn) !important;
+  }
+  html[data-ui-theme="shadcn"] body .sidebar.open .drawer-handle { right: 10px; }
+  html[data-ui-theme="shadcn"] body .stats-strip .metric { border-right: 0 !important; padding: 4px 0 !important; }
+}
+html[data-ui-theme="shadcn"] body :is(.primary-btn, .mihomo-primary):disabled { background: var(--sc-primary) !important; color: var(--sc-primary-fg) !important; border-color: var(--sc-primary) !important; }
+html[data-ui-theme="shadcn"] body .modal-titlebar > div { display: flex; align-items: center; gap: 6px; }
+html[data-ui-theme="shadcn"] body a:is(.outline-btn, .primary-btn) { display: inline-flex; align-items: center; gap: 6px; text-decoration: none !important; }
+html[data-ui-theme="shadcn"] body .inbound-form-section.inbound-clients { background: transparent !important; border-color: var(--sc-border) !important; border-radius: var(--radius-lg, 10px) !important; }
+html[data-ui-theme="shadcn"] body .inbound-form-section.inbound-clients > summary { background: transparent !important; }
+html[data-ui-theme="shadcn"] body .inbound-form-section.inbound-clients > .inbound-form-content { background: transparent !important; border-top-color: var(--sc-border) !important; }
+/* The login card's moving glass highlight belongs to Liquid Glass. */
+html[data-ui-theme="shadcn"] body .login-card::after { display: none !important; }
+/* Icons inside filled buttons take the button's text color (the base forces white, which vanishes on light fills). */
+html[data-ui-theme="shadcn"] body :is(.primary-btn, .mihomo-primary, .danger-btn, #add-inbound, .login-button) .sf-symbol { color: inherit !important; }

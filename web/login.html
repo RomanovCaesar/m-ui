@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-default-language="zh-CN">
+<html lang="zh-CN" data-default-language="zh-CN" data-ui-theme="shadcn">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -370,13 +370,14 @@
       .settings-menu { right: 16px; }
     }
   </style>
-  <link rel="stylesheet" href="static/liquid-optics.css">
-  <link rel="stylesheet" href="static/liquid-toggle.css">
-  <link rel="stylesheet" href="static/liquid-glass-gl.css">
-  <link rel="stylesheet" href="static/liquid-button.css">
-  <link rel="stylesheet" href="static/liquid-sheet.css">
-  <script defer src="static/liquid-toggle.js"></script>
-  <script defer src="static/liquid-button.js"></script>
+  <link rel="stylesheet" href="static/liquid-optics.css" data-ui-only="liquid">
+  <link rel="stylesheet" href="static/liquid-toggle.css" data-ui-only="liquid">
+  <link rel="stylesheet" href="static/liquid-glass-gl.css" data-ui-only="liquid">
+  <link rel="stylesheet" href="static/liquid-button.css" data-ui-only="liquid">
+  <link rel="stylesheet" href="static/liquid-sheet.css" data-ui-only="liquid">
+  <script defer src="static/liquid-toggle.js" data-ui-only="liquid"></script>
+  <script defer src="static/liquid-button.js" data-ui-only="liquid"></script>
+<link rel="stylesheet" href="static/fonts.css" data-ui-only="shadcn"><link rel="stylesheet" href="static/fonts.css" data-ui-only="md3"><link rel="stylesheet" href="static/theme-shadcn.css" data-ui-only="shadcn"><link rel="stylesheet" href="static/theme-md3.css" data-ui-only="md3">
 </head>
 <body>
   <div class="ambient-backdrop" aria-hidden="true">
@@ -436,9 +437,9 @@
       <div class="error" id="error" role="alert"></div>
     </form>
   </main>
-  <script src="static/sf-symbols.js"></script>
-  <script src="static/liquid-optics.js"></script>
-  <script src="static/liquid-glass-gl.js"></script>
+  <script src="static/icons-lucide.js" data-ui-only="shadcn"></script><script src="static/icons-material.js" data-ui-only="md3"></script><script src="static/sf-symbols.js"></script>
+  <script src="static/liquid-optics.js" data-ui-only="liquid"></script>
+  <script src="static/liquid-glass-gl.js" data-ui-only="liquid"></script>
   <script src="static/swiftui-components.js"></script>
   <script>
     const root = document.documentElement;

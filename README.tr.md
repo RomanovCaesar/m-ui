@@ -12,7 +12,7 @@
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
 [![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
-[Mihomo](https://github.com/MetaCubeX/mihomo) çekirdeğini kullanan bir sunucu yönetim paneli. İş akışı 3x-ui'ye, arayüzü Apple'ın Liquid Glass tasarımına, yapılandırma modeli ise Mihomo'nun yerel YAML biçimine dayanır. Panel 11 dilde kullanılabilir.
+[Mihomo](https://github.com/MetaCubeX/mihomo) çekirdeğini kullanan bir sunucu yönetim paneli. İş akışı 3x-ui'ye, arayüzü üç temaya (varsayılan shadcn, Material Design 3 ve Apple'ın Liquid Glass tasarımı), yapılandırma modeli ise Mihomo'nun yerel YAML biçimine dayanır. Panel 11 dilde kullanılabilir.
 
 > [!IMPORTANT]
 > Bu projeyi yalnızca sahibi olduğunuz veya yönetme yetkiniz bulunan sunucu ve ağlarda kullanın. Yerel yasalara, sağlayıcı koşullarına ve eriştiğiniz hizmetlerin politikalarına uyun.
@@ -149,6 +149,7 @@ Windows ve Linux amd64 ikili dosyalarını ya da tüm sürüm arşivlerini derle
 * [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui): arayüz yoğunluğu ve iş akışı
 * [Sub-Store](https://github.com/sub-store-org/Sub-Store): istemci abonelik biçimleri için başvuru davranışı
 * [liquid-glass-webgl](https://github.com/martin65536/liquid-glass-webgl): Liquid Glass denetimleri (Apache-2.0, bkz. [`NOTICE`](NOTICE))
+* [Lucide](https://lucide.dev) ve [Material Symbols](https://github.com/google/material-design-icons) simgeleri, [Geist](https://github.com/vercel/geist-font) ve [Roboto](https://github.com/googlefonts/roboto-classic) yazı tipleri: shadcn ve Material Design 3 temaları (ISC, Apache-2.0 ve OFL-1.1, bkz. [`NOTICE`](NOTICE))
 
 ## Lisans
 

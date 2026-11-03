@@ -25,3 +25,31 @@ render inside individual DOM controls.
 That project is itself a web port of AndroidLiquidGlass by Kyant
 (https://github.com/Kyant0/AndroidLiquidGlass).
 ------------------------------------------------------------------------
+Geist (font of the shadcn theme)
+https://github.com/vercel/geist-font
+Copyright 2024 The Geist Project Authors
+Licensed under the SIL Open Font License, Version 1.1
+(web/fonts/LICENSE-Geist.txt). The variable woff2 subsets in web/fonts come
+from @fontsource-variable/geist 5.3.0.
+------------------------------------------------------------------------
+Roboto (font of the Material Design 3 theme)
+https://github.com/googlefonts/roboto-classic
+Copyright 2011 The Roboto Project Authors
+Licensed under the SIL Open Font License, Version 1.1
+(web/fonts/LICENSE-Roboto.txt). The variable woff2 subsets in web/fonts come
+from @fontsource-variable/roboto 5.3.0.
+------------------------------------------------------------------------
+Lucide (icons of the shadcn theme)
+https://lucide.dev
+Copyright (c) Lucide Icons and Contributors
+Licensed under the ISC License (web/licenses/LICENSE-Lucide.txt).
+web/icons-lucide.js holds icons converted from lucide-react 1.14.0.
+------------------------------------------------------------------------
+Material Symbols (icons of the Material Design 3 theme)
+https://github.com/google/material-design-icons
+Copyright Google LLC
+Licensed under the Apache License, Version 2.0
+(web/licenses/LICENSE-MaterialSymbols.txt). web/icons-material.js holds
+Material Symbols Outlined (weight 400) icons from @material-symbols/svg-400
+0.48.2.
+------------------------------------------------------------------------

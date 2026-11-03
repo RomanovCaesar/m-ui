@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//go:embed *.html *.js *.css media/*
+//go:embed *.html *.js *.css media/* fonts/*
 var embedded embed.FS
 
 // Files preserves the historical "web/<name>" lookup contract used by the

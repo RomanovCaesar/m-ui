@@ -14,7 +14,7 @@
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
 [![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
-یک پنل مدیریت سرور بر پایهٔ هستهٔ [Mihomo](https://github.com/MetaCubeX/mihomo). روند کار آن از 3x-ui، رابط کاربری آن از طراحی Liquid Glass اپل و مدل پیکربندی آن از YAML بومی Mihomo پیروی می‌کند. پنل به ۱۱ زبان در دسترس است.
+یک پنل مدیریت سرور بر پایهٔ هستهٔ [Mihomo](https://github.com/MetaCubeX/mihomo). روند کار آن از 3x-ui، رابط کاربری آن در سه پوسته (پیش‌فرض shadcn، Material Design 3 و Liquid Glass اپل) ارائه می‌شود و و مدل پیکربندی آن از YAML بومی Mihomo پیروی می‌کند. پنل به ۱۱ زبان در دسترس است.
 
 > [!IMPORTANT]
 > این پروژه را فقط روی سرورها و شبکه‌هایی به کار ببرید که مالک آن‌ها هستید یا اجازهٔ مدیریتشان را دارید. قوانین محلی، شرایط ارائه‌دهندگان و سیاست‌های سرویس‌هایی را که به آن‌ها دسترسی دارید رعایت کنید.
@@ -163,6 +163,7 @@ m-ui --lang <code>    menu language, e.g. m-ui --lang fa
 * [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui): تراکم اطلاعات و روند کار رابط کاربری
 * [Sub-Store](https://github.com/sub-store-org/Sub-Store): رفتار مرجع برای قالب‌های اشتراک کلاینت‌ها
 * [liquid-glass-webgl](https://github.com/martin65536/liquid-glass-webgl): کنترل‌های Liquid Glass (Apache-2.0، نگاه کنید به [`NOTICE`](NOTICE))
+* آیکون‌های [Lucide](https://lucide.dev) و [Material Symbols](https://github.com/google/material-design-icons)، فونت‌های [Geist](https://github.com/vercel/geist-font) و [Roboto](https://github.com/googlefonts/roboto-classic): پوسته‌های shadcn و Material Design 3 (ISC، Apache-2.0 و OFL-1.1، نگاه کنید به [`NOTICE`](NOTICE))
 
 ## مجوز
 

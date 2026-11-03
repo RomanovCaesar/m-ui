@@ -12,7 +12,7 @@
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
 [![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
-一个以 [Mihomo](https://github.com/MetaCubeX/mihomo) 为内核的服务端管理面板。操作流程参考 3x-ui，界面采用 Apple 液态玻璃（Liquid Glass）设计，配置模型使用 Mihomo 原生 YAML。面板支持 11 种语言。
+一个以 [Mihomo](https://github.com/MetaCubeX/mihomo) 为内核的服务端管理面板。操作流程参考 3x-ui，界面提供 shadcn（默认）、Material Design 3 和 Apple 液态玻璃（Liquid Glass）三种主题，配置模型使用 Mihomo 原生 YAML。面板支持 11 种语言。
 
 > [!IMPORTANT]
 > 本项目只应用于您拥有或获授权管理的服务器和网络。请遵守所在地法律、上游服务商条款以及您所访问服务的使用政策。
@@ -147,6 +147,7 @@ m-ui --lang <code>    menu language, e.g. m-ui --lang zh-cn
 * [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui)：界面信息密度与操作流程
 * [Sub-Store](https://github.com/sub-store-org/Sub-Store)：客户端订阅格式的参考实现
 * [liquid-glass-webgl](https://github.com/martin65536/liquid-glass-webgl)：液态玻璃控件（Apache-2.0，见 [`NOTICE`](NOTICE)）
+* [Lucide](https://lucide.dev) 与 [Material Symbols](https://github.com/google/material-design-icons) 图标、[Geist](https://github.com/vercel/geist-font) 与 [Roboto](https://github.com/googlefonts/roboto-classic) 字体：shadcn 和 Material Design 3 主题（ISC、Apache-2.0、OFL-1.1，见 [`NOTICE`](NOTICE)）
 
 ## 许可证
 

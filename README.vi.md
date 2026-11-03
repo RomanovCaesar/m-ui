@@ -12,7 +12,7 @@
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
 [![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
-Bảng điều khiển quản lý máy chủ dùng [Mihomo](https://github.com/MetaCubeX/mihomo) làm lõi. Cách thao tác theo 3x-ui, giao diện theo phong cách Liquid Glass của Apple, còn mô hình cấu hình là YAML gốc của Mihomo. Bảng điều khiển hỗ trợ 11 ngôn ngữ.
+Bảng điều khiển quản lý máy chủ dùng [Mihomo](https://github.com/MetaCubeX/mihomo) làm lõi. Cách thao tác theo 3x-ui, giao diện có ba chủ đề (mặc định là shadcn, Material Design 3 và Liquid Glass của Apple), còn mô hình cấu hình là YAML gốc của Mihomo. Bảng điều khiển hỗ trợ 11 ngôn ngữ.
 
 > [!IMPORTANT]
 > Chỉ sử dụng dự án này trên máy chủ và mạng mà bạn sở hữu hoặc được phép quản trị. Hãy tuân thủ luật pháp sở tại, điều khoản của nhà cung cấp và chính sách của các dịch vụ bạn truy cập.
@@ -149,6 +149,7 @@ Kiểm tra bằng `go test ./...` và `go vet ./...`. Phiên bản được chè
 * [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui): mật độ thông tin và cách thao tác của giao diện
 * [Sub-Store](https://github.com/sub-store-org/Sub-Store): hành vi tham chiếu cho các định dạng đăng ký
 * [liquid-glass-webgl](https://github.com/martin65536/liquid-glass-webgl): các điều khiển Liquid Glass (Apache-2.0, xem [`NOTICE`](NOTICE))
+* Biểu tượng [Lucide](https://lucide.dev) và [Material Symbols](https://github.com/google/material-design-icons), phông chữ [Geist](https://github.com/vercel/geist-font) và [Roboto](https://github.com/googlefonts/roboto-classic): chủ đề shadcn và Material Design 3 (ISC, Apache-2.0 và OFL-1.1, xem [`NOTICE`](NOTICE))
 
 ## Giấy phép
 

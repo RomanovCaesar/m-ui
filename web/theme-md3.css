@@ -1,0 +1,671 @@
+/* m-ui Material Design 3 theme.
+ *
+ * The look of Material Design 3 (https://m3.material.io) with the baseline
+ * color scheme: tonal surface containers instead of borders, pill-shaped
+ * buttons, 4px outlined text fields, 12px cards, 28px dialogs, M3 switches,
+ * segmented buttons and tabs, and an inverse-surface snackbar. Every rule is
+ * scoped to html[data-ui-theme="md3"]; the server leaves out the Liquid Glass
+ * styles and scripts for this theme, so this file restyles the shared base
+ * (liquid-glass.css and the styles in index.html) only. */
+
+html[data-ui-theme="md3"] {
+  --m3-primary: #6750a4;
+  --m3-on-primary: #ffffff;
+  --m3-primary-container: #eaddff;
+  --m3-on-primary-container: #21005d;
+  --m3-secondary-container: #e8def8;
+  --m3-on-secondary-container: #1d192b;
+  --m3-tertiary: #7d5260;
+  --m3-error: #b3261e;
+  --m3-on-error: #ffffff;
+  --m3-error-container: #f9dedc;
+  --m3-on-error-container: #410e0b;
+  --m3-surface: #fef7ff;
+  --m3-surface-lowest: #ffffff;
+  --m3-surface-low: #f7f2fa;
+  --m3-surface-container: #f3edf7;
+  --m3-surface-high: #ece6f0;
+  --m3-surface-highest: #e6e0e9;
+  --m3-on-surface: #1d1b20;
+  --m3-on-surface-variant: #49454f;
+  --m3-outline: #79747e;
+  --m3-outline-variant: #cac4d0;
+  --m3-inverse-surface: #322f35;
+  --m3-inverse-on-surface: #f5eff7;
+  --m3-inverse-primary: #d0bcff;
+  --m3-shadow-rgb: 0 0 0;
+}
+html[data-ui-theme="md3"] body:is(.dark, html.dark *) {
+  --m3-primary: #d0bcff;
+  --m3-on-primary: #381e72;
+  --m3-primary-container: #4f378b;
+  --m3-on-primary-container: #eaddff;
+  --m3-secondary-container: #4a4458;
+  --m3-on-secondary-container: #e8def8;
+  --m3-tertiary: #efb8c8;
+  --m3-error: #f2b8b5;
+  --m3-on-error: #601410;
+  --m3-error-container: #8c1d18;
+  --m3-on-error-container: #f9dedc;
+  --m3-surface: #141218;
+  --m3-surface-lowest: #0f0d13;
+  --m3-surface-low: #1d1b20;
+  --m3-surface-container: #211f26;
+  --m3-surface-high: #2b2930;
+  --m3-surface-highest: #36343b;
+  --m3-on-surface: #e6e0e9;
+  --m3-on-surface-variant: #cac4d0;
+  --m3-outline: #938f99;
+  --m3-outline-variant: #49454f;
+  --m3-inverse-surface: #e6e0e9;
+  --m3-inverse-on-surface: #322f35;
+  --m3-inverse-primary: #6750a4;
+}
+html[data-ui-theme="md3"][data-theme="ultra-dark"] body:is(.dark, html.dark *) {
+  --m3-surface: #000000;
+  --m3-surface-lowest: #000000;
+  --m3-surface-low: #0e0d10;
+  --m3-surface-container: #131216;
+  --m3-surface-high: #1c1a20;
+  --m3-surface-highest: #26242a;
+}
+
+/* ===== Shared tokens mapped to Material 3 ===== */
+html[data-ui-theme="md3"] body {
+  --bg: var(--m3-surface);
+  --surface: var(--m3-surface-low);
+  --surface-2: var(--m3-surface-container);
+  --surface-3: var(--m3-surface-high);
+  --surface-4: var(--m3-surface-highest);
+  --surface-glass: var(--m3-surface-low);
+  --surface-glass-heavy: var(--m3-surface-container);
+  --surface-modal: var(--m3-surface-high);
+  --line: var(--m3-outline-variant);
+  --stroke: var(--m3-outline-variant);
+  --stroke-2: var(--m3-outline);
+  --text: var(--m3-on-surface);
+  --text-strong: var(--m3-on-surface);
+  --muted: var(--m3-on-surface-variant);
+  --muted-2: var(--m3-on-surface-variant);
+  --accent: var(--m3-primary);
+  --teal: var(--m3-primary);
+  --teal-2: var(--m3-primary);
+  --teal-3: var(--m3-primary);
+  --teal-soft: var(--m3-secondary-container);
+  --danger: var(--m3-error);
+  --danger-hover: var(--m3-error);
+  --red: #b3261e;
+  --green: #2e7d32;
+  --orange: #e65100;
+  --blue: #1565c0;
+  --indigo: #3949ab;
+  --purple: #6750a4;
+  --pink: #ad1457;
+  --mint: #00796b;
+  --cyan: #00838f;
+  --glass-bg: var(--m3-surface-low);
+  --glass-border: transparent;
+  --glass-blur: none;
+  --glass-caustic: 0 0 #0000;
+  --glass-specular: none;
+  --table-hover: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+  --table-ring: var(--m3-outline-variant);
+  --row-selected: var(--m3-secondary-container);
+  --select-bg: var(--m3-surface-container);
+  --select-hover: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+  --select-item-hover: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
+  --select-item-selected: var(--m3-secondary-container);
+  --select-item-color: var(--m3-on-surface);
+  --tag-bg: var(--m3-surface-high); --tag-border: var(--m3-outline-variant); --tag-color: var(--m3-on-surface-variant);
+  --tag-green-bg: #e8f5e9; --tag-green-border: #a5d6a7; --tag-green-color: #1b5e20;
+  --tag-red-bg: var(--m3-error-container); --tag-red-border: #f2b8b5; --tag-red-color: var(--m3-on-error-container);
+  --tag-orange-bg: #fff3e0; --tag-orange-border: #ffcc80; --tag-orange-color: #bf360c;
+  --tag-blue-bg: #e3f2fd; --tag-blue-border: #90caf9; --tag-blue-color: #0d47a1;
+  --tag-purple-bg: var(--m3-primary-container); --tag-purple-border: #cfbcff; --tag-purple-color: var(--m3-on-primary-container);
+  --m3-elev-1: 0 1px 2px 0 rgb(var(--m3-shadow-rgb) / 0.3), 0 1px 3px 1px rgb(var(--m3-shadow-rgb) / 0.15);
+  --m3-elev-2: 0 1px 2px 0 rgb(var(--m3-shadow-rgb) / 0.3), 0 2px 6px 2px rgb(var(--m3-shadow-rgb) / 0.15);
+  --m3-elev-3: 0 1px 3px 0 rgb(var(--m3-shadow-rgb) / 0.3), 0 4px 8px 3px rgb(var(--m3-shadow-rgb) / 0.15);
+  --shadow: var(--m3-elev-1);
+  --shadow-hover: var(--m3-elev-2);
+  --shadow-pop: var(--m3-elev-2);
+  --shadow-modal: var(--m3-elev-3);
+  --shadow-btn: none;
+  --shadow-btn-primary: none;
+  --tooltip: var(--m3-inverse-surface);
+  --back-top: var(--m3-primary-container);
+  --back-top-hover: var(--m3-primary-container);
+  --scrollbar: var(--m3-outline-variant); --scrollbar-hover: var(--m3-outline);
+  --scrollbar-webkit: var(--m3-outline-variant); --scrollbar-webkit-hover: var(--m3-outline);
+  --gauge-trail: var(--m3-surface-highest);
+  --sider-trigger-bg: var(--m3-surface-low); --sider-trigger-color: var(--m3-on-surface-variant);
+  --code-bg: var(--m3-surface-container); --code-color: var(--m3-on-surface);
+  --login-wave: var(--m3-surface-container);
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 28px;
+  --ctl: 40px; --ctl-sm: 32px; --ctl-lg: 48px;
+  --font: "Roboto Variable", "Roboto", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Vazirmatn", "Tahoma", sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-modal: cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+html[data-ui-theme="md3"] body:is(.dark, html.dark *) {
+  --tag-green-bg: rgb(129 199 132 / 0.16); --tag-green-border: rgb(129 199 132 / 0.35); --tag-green-color: #a5d6a7;
+  --tag-red-bg: rgb(242 184 181 / 0.16); --tag-red-border: rgb(242 184 181 / 0.35); --tag-red-color: #f2b8b5;
+  --tag-orange-bg: rgb(255 183 77 / 0.16); --tag-orange-border: rgb(255 183 77 / 0.35); --tag-orange-color: #ffcc80;
+  --tag-blue-bg: rgb(144 202 249 / 0.16); --tag-blue-border: rgb(144 202 249 / 0.35); --tag-blue-color: #90caf9;
+  --tag-purple-bg: rgb(208 188 255 / 0.16); --tag-purple-border: rgb(208 188 255 / 0.35); --tag-purple-color: #d0bcff;
+  --red: #f2b8b5; --green: #81c784; --orange: #ffb74d; --blue: #90caf9; --purple: #d0bcff; --mint: #80cbc4;
+}
+
+/* ===== Base ===== */
+html[data-ui-theme="md3"] [hidden] { display: none !important; }
+html[data-ui-theme="md3"] body {
+  background: var(--m3-surface);
+  color: var(--m3-on-surface);
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+  font-feature-settings: "tnum" 1;
+}
+/* Material surfaces are opaque. */
+html[data-ui-theme="md3"] body *,
+html[data-ui-theme="md3"] body *::before,
+html[data-ui-theme="md3"] body *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html[data-ui-theme="md3"] :is(.ambient-backdrop, .aurora-orb, .mac-traffic-lights) { display: none !important; }
+html[data-ui-theme="md3"] :is(.glass-surface, .glass-card, .swift-card, .glass-button, .swift-btn)::before { display: none !important; }
+html[data-ui-theme="md3"] ::selection { background: color-mix(in srgb, var(--m3-primary) 28%, transparent); }
+html[data-ui-theme="md3"] :focus-visible { outline: 3px solid var(--m3-primary); outline-offset: 2px; }
+
+/* ===== Buttons: filled, tonal, outlined, text, icon ===== */
+html[data-ui-theme="md3"] body :is(.primary-btn, .mihomo-primary, .login-button, .glass-button.primary, .swift-btn.primary) {
+  background: var(--m3-primary) !important;
+  color: var(--m3-on-primary) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  padding-inline: 24px !important;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  filter: none !important;
+  transform: none !important;
+}
+html[data-ui-theme="md3"] body :is(.primary-btn, .mihomo-primary, .login-button):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--m3-primary) 92%, var(--m3-on-primary)) !important;
+  box-shadow: var(--m3-elev-1) !important;
+}
+/* "Add inbound" is the screen's main action: a FAB-like tonal button. */
+html[data-ui-theme="md3"] body #add-inbound {
+  background: var(--m3-primary-container) !important;
+  color: var(--m3-on-primary-container) !important;
+  border: 0 !important;
+  border-radius: 16px !important;
+  box-shadow: var(--m3-elev-1) !important;
+  padding-inline: 16px 20px !important;
+  font-weight: 500;
+  transform: none !important;
+}
+html[data-ui-theme="md3"] body #add-inbound:hover { box-shadow: var(--m3-elev-2) !important; background: color-mix(in srgb, var(--m3-primary-container) 92%, var(--m3-on-primary-container)) !important; }
+html[data-ui-theme="md3"] body :is(.danger-btn, .glass-button.danger, .swift-btn.danger) {
+  background: var(--m3-error) !important;
+  color: var(--m3-on-error) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  padding-inline: 24px !important;
+  font-weight: 500;
+  filter: none !important;
+  transform: none !important;
+}
+html[data-ui-theme="md3"] body .danger-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--m3-error) 92%, var(--m3-on-error)) !important; box-shadow: var(--m3-elev-1) !important; }
+html[data-ui-theme="md3"] body :is(.outline-btn, .small-btn, .glass-button:not(.primary, .danger), .swift-btn:not(.primary, .danger), .inbound-pill:not(#add-inbound), .mihomo-pill) {
+  background: transparent !important;
+  color: var(--m3-primary) !important;
+  border: 1px solid var(--m3-outline) !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  font-weight: 500;
+  transform: none !important;
+}
+html[data-ui-theme="md3"] body :is(.outline-btn, .small-btn, .inbound-pill:not(#add-inbound), .mihomo-pill):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--m3-primary) 8%, transparent) !important;
+}
+/* Tonal buttons: dashboard actions and round tool buttons */
+html[data-ui-theme="md3"] body :is(.overview-action, .circle-action) {
+  background: var(--m3-secondary-container) !important;
+  color: var(--m3-on-secondary-container) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 999px !important;
+  font-weight: 500;
+  transform: none !important;
+}
+html[data-ui-theme="md3"] body :is(.overview-action, .circle-action):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--m3-secondary-container) 92%, var(--m3-on-secondary-container)) !important;
+  box-shadow: var(--m3-elev-1) !important;
+}
+html[data-ui-theme="md3"] body :is(.icon-btn, .modal-close, .mihomo-icon, .input-tool, .sider-trigger, .back-top, .top-actions button) {
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+html[data-ui-theme="md3"] body :is(.icon-btn, .modal-close, .mihomo-icon, .input-tool) {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--m3-on-surface-variant) !important;
+}
+html[data-ui-theme="md3"] body :is(.icon-btn, .modal-close, .mihomo-icon, .input-tool):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--m3-on-surface-variant) 8%, transparent) !important;
+}
+html[data-ui-theme="md3"] body .mihomo-icon.danger { color: var(--m3-error) !important; }
+html[data-ui-theme="md3"] body button:disabled { opacity: 0.38 !important; }
+html[data-ui-theme="md3"] body :is(.primary-btn, .mihomo-primary):disabled {
+  background: color-mix(in srgb, var(--m3-on-surface) 12%, transparent) !important;
+  color: var(--m3-on-surface) !important;
+  opacity: 0.6 !important;
+}
+html[data-ui-theme="md3"] body a:is(.outline-btn, .primary-btn) { display: inline-flex; align-items: center; gap: 8px; text-decoration: none !important; }
+
+/* ===== Layout: navigation drawer, top app bar, cards ===== */
+html[data-ui-theme="md3"] body .sidebar {
+  background: var(--m3-surface-low) !important;
+  border: 0 !important;
+  border-radius: 0 16px 16px 0 !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body .nav button,
+html[data-ui-theme="md3"] body .nav a,
+html[data-ui-theme="md3"] body .theme-trigger {
+  border-radius: 999px !important;
+  color: var(--m3-on-surface-variant) !important;
+  font-weight: 500;
+}
+html[data-ui-theme="md3"] body :is(.nav button, .nav a, .theme-trigger):hover { background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent) !important; }
+html[data-ui-theme="md3"] body .nav :is(button, a).active {
+  background: var(--m3-secondary-container) !important;
+  color: var(--m3-on-secondary-container) !important;
+  box-shadow: none !important;
+  font-weight: 600;
+}
+html[data-ui-theme="md3"] body .topbar {
+  background: var(--m3-surface) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body :is(.card, .overview-card, .gauges-card, .inbounds-card, .mihomo-card, .stats-strip, .table-card, .setting-section, .basics-section, .subtpl-sections, #settings-form, .basics-sections, .glass-surface, .glass-card, .swift-card) {
+  background: var(--m3-surface-low) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body :is(.overview-card, .gauges-card, .inbounds-card, .mihomo-card, .stats-strip, .table-card, .card) {
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: var(--m3-elev-1) !important;
+}
+html[data-ui-theme="md3"] body:is(.dark, html.dark *) :is(.overview-card, .gauges-card, .inbounds-card, .mihomo-card, .stats-strip, .table-card, .card) { box-shadow: none !important; }
+/* Sections inside a card are filled cards one tone up. */
+html[data-ui-theme="md3"] body :is(.setting-section, .basics-section, .subtpl-section, .mihomo-section) {
+  background: var(--m3-surface-container) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body .security-banner {
+  background: var(--m3-error-container) !important;
+  color: var(--m3-on-error-container) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body .security-banner strong { color: var(--m3-on-error-container) !important; }
+
+/* ===== Forms: outlined text fields ===== */
+html[data-ui-theme="md3"] body :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"]), textarea, select, .swift-picker-selection, .mui-combobox-val) {
+  background: transparent !important;
+  color: var(--m3-on-surface) !important;
+  border: 1px solid var(--m3-outline) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body :is(input, textarea, select):hover:not(:focus, :disabled) { border-color: var(--m3-on-surface) !important; }
+html[data-ui-theme="md3"] body :is(input, textarea, select):focus,
+html[data-ui-theme="md3"] body .swift-picker-selection:focus-visible {
+  outline: none !important;
+  border-color: var(--m3-primary) !important;
+  box-shadow: inset 0 0 0 1px var(--m3-primary) !important;
+}
+html[data-ui-theme="md3"] body :is(input, textarea)::placeholder { color: var(--m3-on-surface-variant) !important; opacity: 0.8; }
+html[data-ui-theme="md3"] body .swift-picker-menu,
+html[data-ui-theme="md3"] body :is(.general-menu, .inbound-menu, .inbound-popover, .auto-refresh-menu, .username-suggestion-menu, .theme-options) {
+  background: var(--m3-surface-container) !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: var(--m3-elev-2) !important;
+}
+html[data-ui-theme="md3"] body :is(.general-menu, .inbound-menu, .inbound-popover, .swift-picker-menu) :is(button, [role="option"], li):hover {
+  background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent) !important;
+}
+
+/* Switch: the M3 52x32 track; the thumb grows from 16px to 24px when on. */
+html[data-ui-theme="md3"] body .switch span {
+  min-width: 52px !important; width: 52px !important; height: 32px !important;
+  border-radius: 16px !important;
+  background: var(--m3-surface-highest) !important;
+  box-shadow: inset 0 0 0 2px var(--m3-outline) !important;
+}
+html[data-ui-theme="md3"] body .switch span::after {
+  width: 16px !important; height: 16px !important;
+  top: 8px !important; left: 8px !important; right: auto !important;
+  border-radius: 50% !important;
+  background: var(--m3-outline) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: left .2s var(--ease), top .2s var(--ease), width .2s var(--ease), height .2s var(--ease), background .2s var(--ease) !important;
+}
+html[data-ui-theme="md3"] body .switch input:checked + span { background: var(--m3-primary) !important; box-shadow: none !important; }
+html[data-ui-theme="md3"] body .switch input:checked + span::after {
+  width: 24px !important; height: 24px !important;
+  top: 4px !important; left: 24px !important;
+  background: var(--m3-on-primary) !important;
+}
+html[data-ui-theme="md3"] body .switch.switch-sm span { min-width: 40px !important; width: 40px !important; height: 24px !important; border-radius: 12px !important; }
+html[data-ui-theme="md3"] body .switch.switch-sm span::after { width: 12px !important; height: 12px !important; top: 6px !important; left: 6px !important; }
+html[data-ui-theme="md3"] body .switch.switch-sm input:checked + span::after { width: 18px !important; height: 18px !important; top: 3px !important; left: 19px !important; }
+html[data-ui-theme="md3"] body .switch:active input:not(:disabled) + span::after { width: 28px !important; height: 28px !important; top: 2px !important; }
+html[data-ui-theme="md3"] body .switch:active input:not(:disabled, :checked) + span::after { left: 2px !important; }
+html[data-ui-theme="md3"] body .switch:active input:checked:not(:disabled) + span::after { left: 22px !important; }
+
+/* The checkbox switches of the inbound drawer and the client dialog */
+html[data-ui-theme="md3"] body :is(.drawer, #client-modal) .check input[type="checkbox"] {
+  width: 52px !important; min-width: 52px !important; height: 32px !important; min-height: 32px !important;
+  border-radius: 16px !important;
+  background: var(--m3-surface-highest) !important;
+  border: 2px solid var(--m3-outline) !important;
+}
+html[data-ui-theme="md3"] body :is(.drawer, #client-modal) .check input[type="checkbox"]::after {
+  top: 6px !important; left: 6px !important; width: 16px !important; height: 16px !important;
+  border-radius: 50% !important;
+  background: var(--m3-outline) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: left .2s var(--ease), top .2s var(--ease), width .2s var(--ease), height .2s var(--ease) !important;
+}
+html[data-ui-theme="md3"] body :is(.drawer, #client-modal) .check input[type="checkbox"]:checked { background: var(--m3-primary) !important; border-color: var(--m3-primary) !important; }
+html[data-ui-theme="md3"] body :is(.drawer, #client-modal) .check input[type="checkbox"]:checked::after {
+  top: 2px !important; left: 22px !important; width: 24px !important; height: 24px !important;
+  background: var(--m3-on-primary) !important;
+  transform: none !important;
+}
+/* Plain checkboxes: 18px with a 2px radius */
+html[data-ui-theme="md3"] body .check-box span { border-radius: 2px !important; border: 2px solid var(--m3-on-surface-variant) !important; }
+html[data-ui-theme="md3"] body .check-box input:checked + span { background: var(--m3-primary) !important; border-color: var(--m3-primary) !important; color: var(--m3-on-primary) !important; }
+
+/* ===== Tabs and segmented buttons ===== */
+/* Page-level tab bars are M3 primary tabs: text with a 3px indicator. */
+html[data-ui-theme="md3"] body :is(.settings-tabbar, .mihomo-tabs) {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch;
+  max-width: 100%;
+  gap: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--m3-surface-highest) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+}
+html[data-ui-theme="md3"] body :is(.settings-tabbar, .mihomo-tabs) > button {
+  position: relative;
+  flex: none !important;
+  height: 48px !important;
+  padding: 0 20px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--m3-on-surface-variant) !important;
+  box-shadow: none !important;
+  font-weight: 500;
+  white-space: nowrap;
+}
+html[data-ui-theme="md3"] body :is(.settings-tabbar, .mihomo-tabs) > button:hover { background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent) !important; }
+html[data-ui-theme="md3"] body :is(.settings-tabbar, .mihomo-tabs) > :is(button.active, button[aria-selected="true"]) { color: var(--m3-primary) !important; background: transparent !important; }
+html[data-ui-theme="md3"] body :is(.settings-tabbar, .mihomo-tabs) > :is(button.active, button[aria-selected="true"])::after {
+  content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px;
+  border-radius: 3px 3px 0 0; background: var(--m3-primary);
+}
+/* Smaller choices are outlined segmented buttons. */
+html[data-ui-theme="md3"] body :is(.inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar) {
+  display: inline-flex !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch;
+  max-width: 100%;
+  gap: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 1px solid var(--m3-outline) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none;
+}
+html[data-ui-theme="md3"] body :is(.inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar, #security-extra-toggles) > button {
+  flex: none !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  border: 0 !important;
+  border-left: 1px solid var(--m3-outline) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--m3-on-surface) !important;
+  box-shadow: none !important;
+  font-weight: 500;
+  white-space: nowrap;
+}
+/* Buttons the page adds later sit in #security-extra-toggles (display: contents), so dividers go on the left. */
+html[data-ui-theme="md3"] body :is(.inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar) > button:first-child { border-left: 0 !important; }
+html[data-ui-theme="md3"] body :is(.inbound-status-tabs, .mihomo-editor-tabs, .segmented, .liquid-tabbar, #security-extra-toggles) > :is(button.active, button[aria-selected="true"]) {
+  background: var(--m3-secondary-container) !important;
+  color: var(--m3-on-secondary-container) !important;
+}
+html[data-ui-theme="md3"] body :is(.settings-tabbar, .mihomo-tabs, .inbound-status-tabs, .mihomo-editor-tabs)::-webkit-scrollbar { display: none; }
+html[data-ui-theme="md3"] body .ink-bar { display: none !important; }
+html[data-ui-theme="md3"] body .inbounds-filterbar:not(.status-mode) .inbound-status-tabs { display: none !important; }
+/* Toggle groups (remark model tokens) */
+html[data-ui-theme="md3"] body .remark-tokens button {
+  background: transparent !important;
+  color: var(--m3-on-surface) !important;
+  border: 1px solid var(--m3-outline) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body .remark-tokens button.active {
+  background: var(--m3-secondary-container) !important;
+  color: var(--m3-on-secondary-container) !important;
+  border-color: transparent !important;
+}
+
+/* ===== Tables ===== */
+html[data-ui-theme="md3"] body table th {
+  color: var(--m3-on-surface-variant) !important;
+  font-weight: 500;
+  background: transparent !important;
+}
+html[data-ui-theme="md3"] body table :is(th, td) { border-color: var(--m3-outline-variant) !important; }
+html[data-ui-theme="md3"] body table tbody tr:hover { background: var(--table-hover) !important; }
+html[data-ui-theme="md3"] body .inbounds-table-wrap { border-color: var(--m3-outline-variant) !important; border-radius: 12px !important; }
+
+/* ===== Chips ===== */
+html[data-ui-theme="md3"] body :is(.tag, .tiny-tag, .mihomo-tag, .subtpl-badge, .protocol-pill, .sidebar-app-badge) {
+  border-radius: 8px !important;
+  font-weight: 500;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body :is(.tag, .tiny-tag) { padding: 0 8px !important; font-size: 12px; }
+
+/* ===== Dialogs, drawer, snackbar ===== */
+html[data-ui-theme="md3"] body :is(.modal-backdrop, .drawer-backdrop, .drawer-mask) { background: rgb(0 0 0 / 0.32) !important; }
+html[data-ui-theme="md3"] body .modal-panel {
+  background: var(--m3-surface-high) !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  box-shadow: var(--m3-elev-3) !important;
+  animation: m3-dialog-in .35s var(--ease-modal) !important;
+}
+html[data-ui-theme="md3"] body .modal-titlebar {
+  border-bottom: 0 !important;
+  padding: 24px 24px 12px !important;
+  font-size: 22px !important;
+  font-weight: 400 !important;
+  line-height: 28px;
+}
+html[data-ui-theme="md3"] body .modal-titlebar > div { display: flex; align-items: center; gap: 4px; }
+html[data-ui-theme="md3"] body .modal-content { padding-inline: 24px !important; }
+html[data-ui-theme="md3"] body .modal-footer {
+  background: transparent !important;
+  border-top: 0 !important;
+  padding: 16px 24px 24px !important;
+  gap: 8px;
+}
+html[data-ui-theme="md3"] body .mui-dialog .mui-dialog-message { color: var(--m3-on-surface-variant) !important; }
+/* Secondary actions of dialogs are text buttons. */
+html[data-ui-theme="md3"] body :is(.modal-footer, .drawer-foot) .outline-btn {
+  border-color: transparent !important;
+  padding-inline: 12px !important;
+}
+html[data-ui-theme="md3"] body .drawer {
+  background: var(--m3-surface-low) !important;
+  border: 0 !important;
+  box-shadow: var(--m3-elev-3) !important;
+}
+html[data-ui-theme="md3"] body .drawer-head { border-bottom: 0 !important; padding: 20px 24px 8px !important; }
+html[data-ui-theme="md3"] body .drawer-head h1 { font-size: 22px !important; font-weight: 400 !important; }
+html[data-ui-theme="md3"] body .drawer-foot { background: transparent !important; border-top: 1px solid var(--m3-outline-variant) !important; padding: 16px 24px !important; }
+html[data-ui-theme="md3"] body .inbound-form-section.inbound-clients { background: var(--m3-surface-container) !important; border: 0 !important; border-radius: 12px !important; }
+html[data-ui-theme="md3"] body .inbound-form-section.inbound-clients > summary { background: transparent !important; }
+html[data-ui-theme="md3"] body .inbound-form-section.inbound-clients > .inbound-form-content { background: transparent !important; border-top-color: var(--m3-outline-variant) !important; }
+html[data-ui-theme="md3"] body :is(.toast, .dynamic-island-toast, .swift-toast) {
+  background: var(--m3-inverse-surface) !important;
+  color: var(--m3-inverse-on-surface) !important;
+  border: 0 !important;
+  border-radius: 4px !important;
+  box-shadow: var(--m3-elev-3) !important;
+}
+html[data-ui-theme="md3"] body :is(.toast, .dynamic-island-toast, .swift-toast) * { color: inherit !important; }
+@keyframes m3-dialog-in { from { opacity: 0; transform: translateY(-12px) scale(.98); } to { opacity: 1; transform: none; } }
+
+/* ===== Code and logs ===== */
+html[data-ui-theme="md3"] body :is(pre, code, .log-box, .share-url-list, .subtpl-code) { font-family: var(--font-mono) !important; }
+html[data-ui-theme="md3"] body :is(.log-box, .modal-log, .modal-config, .config-test-error) {
+  background: var(--m3-surface-container) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+}
+
+/* ===== Layout the Liquid Glass layer used to provide ===== */
+html[data-ui-theme="md3"] body .topbar {
+  display: flex !important;
+  height: 64px !important;
+  min-height: 64px;
+  padding: 0 24px;
+  position: sticky; top: 0; z-index: 50;
+}
+html[data-ui-theme="md3"] body .content { min-width: 0; }
+html[data-ui-theme="md3"] body :is(.mihomo-settings-page, .inbounds-workspace) { grid-template-columns: minmax(0, 1fr); }
+html[data-ui-theme="md3"] body :is(.mihomo-card, .inbounds-card, .stats-strip) { min-width: 0; }
+html[data-ui-theme="md3"] body .inbounds-table-wrap { overflow-x: auto; }
+/* Statistics: one card, metrics divided by dividers */
+html[data-ui-theme="md3"] body .stats-strip .metric {
+  background: transparent !important;
+  border: 0 !important;
+  border-right: 1px solid var(--m3-outline-variant) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body .stats-strip .metric:last-child { border-right: 0 !important; }
+html[data-ui-theme="md3"] body .metric-label { color: var(--m3-on-surface-variant) !important; font-weight: 500; }
+html[data-ui-theme="md3"] body .metric-value { font-weight: 500; }
+
+/* Dashboard */
+html[data-ui-theme="md3"] body .gauge-bar { filter: none !important; }
+html[data-ui-theme="md3"] body .gauge-value { font-weight: 400; }
+html[data-ui-theme="md3"] body .overview-actions { gap: 8px; padding: 8px 16px 16px !important; border-top: 0 !important; }
+html[data-ui-theme="md3"] body .overview-actions .overview-action { height: 40px !important; }
+html[data-ui-theme="md3"] body .overview-card-header { border-bottom: 0 !important; }
+html[data-ui-theme="md3"] body :is(.overview-card-header, .card-title, .page-head h2) { font-weight: 500; }
+
+@media (max-width: 768px) {
+  html[data-ui-theme="md3"] body .topbar { padding: 0 12px 0 60px !important; }
+  html[data-ui-theme="md3"] body .drawer-handle {
+    position: absolute; top: 12px; right: -56px;
+    width: 40px; height: 40px;
+    border: 0 !important; border-radius: 50% !important;
+    background: transparent !important; color: var(--m3-on-surface-variant) !important; box-shadow: none !important;
+  }
+  html[data-ui-theme="md3"] body .sidebar.open .drawer-handle { right: 10px; }
+  html[data-ui-theme="md3"] body .stats-strip .metric { border-right: 0 !important; padding: 4px 0 !important; }
+}
+
+/* ===== Login page ===== */
+html[data-ui-theme="md3"] body {
+  --page-bg: var(--m3-surface);
+  --card-bg: var(--m3-surface-low);
+  --card-border: transparent;
+  --card-stroke: transparent;
+  --input-bg: transparent;
+  --input-bg-focus: transparent;
+  --primary: var(--m3-primary);
+  --primary-hover: color-mix(in srgb, var(--m3-primary) 92%, var(--m3-on-primary));
+  --primary-active: var(--m3-primary);
+  --shadow-card: var(--m3-elev-1);
+  --switch-off: var(--m3-surface-highest);
+  --checkbox-bg: transparent;
+}
+html[data-ui-theme="md3"] body .login-card {
+  border: 0 !important;
+  border-radius: 28px !important;
+  box-shadow: var(--m3-elev-1) !important;
+  padding: 2rem 2rem 1.75rem !important;
+}
+html[data-ui-theme="md3"] body .brand-icon { filter: none !important; width: 48px !important; height: 48px !important; }
+html[data-ui-theme="md3"] body .headline { font-size: 24px !important; font-weight: 400 !important; }
+html[data-ui-theme="md3"] body .input-wrap .sf-symbol { color: var(--m3-on-surface-variant) !important; }
+html[data-ui-theme="md3"] body .login-button { height: 40px !important; font-size: 14px !important; font-weight: 500 !important; }
+html[data-ui-theme="md3"] body .settings-button { background: transparent !important; border: 0 !important; border-radius: 50% !important; }
+html[data-ui-theme="md3"] body .settings-menu { border: 0 !important; border-radius: 4px !important; background: var(--m3-surface-container) !important; box-shadow: var(--m3-elev-2) !important; }
+
+/* ===== Fix pass 1 ===== */
+html[data-ui-theme="md3"] body details:is(.setting-section, .basics-section) {
+  background: var(--m3-surface-container) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  margin-bottom: 12px;
+}
+html[data-ui-theme="md3"] body .setting-section-body { background: transparent !important; border-top-color: var(--m3-outline-variant) !important; }
+html[data-ui-theme="md3"] body :is(.settings-actionbar, .mihomo-actionbar, .subtpl-actionbar) {
+  background: var(--m3-surface-low) !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+html[data-ui-theme="md3"] body :is(.modal-footer, .drawer-foot) :is(.outline-btn, #cancel-drawer) { border-color: transparent !important; background: transparent !important; }
+/* Panes of the settings page wrap their sections in a bordered form. */
+html[data-ui-theme="md3"] body .settings-pane > form { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html[data-ui-theme="md3"] body .settings-pane details:is(.setting-section, .basics-section) { background: var(--m3-surface-container) !important; }
+/* The login card's moving glass highlight belongs to Liquid Glass. */
+html[data-ui-theme="md3"] body .login-card::after { display: none !important; }
+/* Icons inside filled buttons take the button's text color (the base forces white, which vanishes on light fills). */
+html[data-ui-theme="md3"] body :is(.primary-btn, .mihomo-primary, .danger-btn, #add-inbound, .login-button) .sf-symbol { color: inherit !important; }
+/* Segmented buttons share the full width of their row, as in M3. */
+html[data-ui-theme="md3"] body :is(.segmented, #security-extra-toggles) > button { flex: 1 1 auto !important; }

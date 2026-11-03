@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="light" data-default-language="{{.DefaultLanguage}}">
+<html lang="en" data-theme="light" data-default-language="{{.DefaultLanguage}}" data-ui-theme="{{.UITheme}}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -447,6 +447,7 @@
       .node{padding:12px 14px}
     }
   </style>
+  {{if eq .UITheme "liquid"}}
   <link rel="stylesheet" href="{{.ToggleStyleURL}}">
   <link rel="stylesheet" href="{{.ButtonStyleURL}}">
   <style>
@@ -461,6 +462,10 @@
   </style>
   <script defer src="{{.ToggleScriptURL}}"></script>
   <script defer src="{{.ButtonScriptURL}}"></script>
+  {{else}}
+  <link rel="stylesheet" href="{{.AssetBase}}fonts.css">
+  <link rel="stylesheet" href="{{.AssetBase}}subscription-themes.css">
+  {{end}}
 </head>
 <body>
   <main class="card">

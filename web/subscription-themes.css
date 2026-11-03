@@ -1,0 +1,273 @@
+/* Subscription page looks for the shadcn and Material Design 3 themes.
+ *
+ * subscription.html styles itself through CSS variables; this file redefines
+ * them for the theme chosen in the panel settings (html[data-ui-theme]) and
+ * flattens the frosted-glass parts. The Liquid Glass theme does not load it. */
+
+/* ===== shadcn (zinc) ===== */
+html[data-ui-theme="shadcn"] {
+  --page: #ffffff;
+  --card: #ffffff;
+  --card-border: #e4e4e7;
+  --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --surface: #ffffff;
+  --surface-hover: #f4f4f5;
+  --surface-strong: #ffffff;
+  --surface-subtle: #f4f4f5;
+  --text: #09090b;
+  --text-strong: #09090b;
+  --muted: #71717a;
+  --muted-2: #a1a1aa;
+  --line: #e4e4e7;
+  --line-strong: #e4e4e7;
+  --primary: #18181b;
+  --primary-hover: #27272a;
+  --primary-soft: #f4f4f5;
+  --primary-soft-hover: #e4e4e7;
+  --green: #16a34a;
+  --green-soft: #f0fdf4;
+  --purple: #18181b;
+  --purple-soft: #f4f4f5;
+  --purple-line: #e4e4e7;
+  --shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --card-hover-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  --menu-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-pop: var(--menu-shadow);
+  --stroke: #e4e4e7;
+  --teal: #18181b;
+  --teal-3: #27272a;
+  --teal-soft: #f4f4f5;
+  --select-bg: #ffffff;
+  --select-hover: #f4f4f5;
+  --select-item-hover: #f4f4f5;
+  --select-item-selected: #f4f4f5;
+  --select-item-color: #09090b;
+  --switch-off: #e4e4e7;
+  --checkbox-bg: #ffffff;
+  --checkbox-border: #18181b;
+  --node-bg: #ffffff;
+  --node-border: #e4e4e7;
+  --node-color: #09090b;
+  --node-hover-bg: #fafafa;
+  --node-hover-border: #a1a1aa;
+  --msg-bg: #ffffff;
+  --msg-color: #09090b;
+  --msg-border: #e4e4e7;
+  --font: "Geist Variable", "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+}
+html[data-ui-theme="shadcn"][data-theme="dark"] {
+  --page: #09090b;
+  --card: #09090b;
+  --card-border: #27272a;
+  --card-shadow: none;
+  --surface: #09090b;
+  --surface-hover: #18181b;
+  --surface-strong: #09090b;
+  --surface-subtle: #18181b;
+  --text: #fafafa;
+  --text-strong: #fafafa;
+  --muted: #a1a1aa;
+  --line: #27272a;
+  --line-strong: #27272a;
+  --primary: #fafafa;
+  --primary-hover: #e4e4e7;
+  --primary-soft: #27272a;
+  --primary-soft-hover: #3f3f46;
+  --green: #4ade80;
+  --green-soft: rgb(22 163 74 / 0.15);
+  --purple: #fafafa;
+  --purple-soft: #27272a;
+  --purple-line: #3f3f46;
+  --menu-shadow: 0 4px 12px rgb(0 0 0 / 0.5);
+  --stroke: #27272a;
+  --teal: #fafafa;
+  --teal-soft: #27272a;
+  --select-bg: #09090b;
+  --select-hover: #27272a;
+  --select-item-hover: #27272a;
+  --select-item-selected: #27272a;
+  --select-item-color: #fafafa;
+  --switch-off: #27272a;
+  --checkbox-bg: #09090b;
+  --checkbox-border: #fafafa;
+  --node-bg: #09090b;
+  --node-border: #27272a;
+  --node-color: #fafafa;
+  --node-hover-bg: #18181b;
+  --node-hover-border: #52525b;
+  --msg-bg: #09090b;
+  --msg-color: #fafafa;
+  --msg-border: #27272a;
+  --qr-plate: #ffffff;
+}
+html[data-ui-theme="shadcn"][data-theme="dark"][data-ultra-dark="true"] {
+  --page: #000000;
+  --card: #000000;
+  --surface: #000000;
+  --surface-strong: #000000;
+  --node-bg: #000000;
+  --card-border: #1f1f23;
+  --line: #1f1f23;
+}
+html[data-ui-theme="shadcn"] .theme-switch span { width: 32px; height: 18px; }
+html[data-ui-theme="shadcn"] .theme-switch { width: 32px; min-width: 32px; height: 18px; }
+html[data-ui-theme="shadcn"] .theme-switch span::after { top: 2px; left: 2px; width: 14px; height: 14px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.15); }
+html[data-ui-theme="shadcn"] .theme-switch input:checked + span { background: var(--primary); }
+html[data-ui-theme="shadcn"] .theme-switch input:checked + span::after { transform: translateX(14px); }
+html[data-ui-theme="shadcn"][data-theme="dark"] .theme-switch input:checked + span::after { background: #18181b; }
+html[data-ui-theme="shadcn"] .ultra-check span { border-radius: 4px; }
+html[data-ui-theme="shadcn"][data-theme="dark"] .ultra-check span::after { border-color: #18181b; }
+html[data-ui-theme="shadcn"] .client-btn[aria-expanded="true"] { color: var(--page); }
+html[data-ui-theme="shadcn"] .client-btn:hover:not([aria-expanded="true"]) { color: var(--text-strong); background: var(--surface-hover); border-color: var(--line); }
+html[data-ui-theme="shadcn"] .url:hover { color: var(--text-strong); border-color: var(--muted-2); }
+html[data-ui-theme="shadcn"] .client-item:hover,
+html[data-ui-theme="shadcn"] .client-item:focus-visible { color: var(--text-strong); }
+html[data-ui-theme="shadcn"] :is(.code-card:hover, .node:hover, .client-btn:hover) { transform: none; }
+
+/* ===== Material Design 3 (baseline) ===== */
+html[data-ui-theme="md3"] {
+  --page: #fef7ff;
+  --card: #f7f2fa;
+  --card-border: transparent;
+  --card-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);
+  --surface: #f3edf7;
+  --surface-hover: #ece6f0;
+  --surface-strong: #f3edf7;
+  --surface-subtle: #ece6f0;
+  --text: #1d1b20;
+  --text-strong: #1d1b20;
+  --muted: #49454f;
+  --muted-2: #79747e;
+  --line: #cac4d0;
+  --line-strong: #79747e;
+  --primary: #6750a4;
+  --primary-hover: #7965af;
+  --primary-soft: #e8def8;
+  --primary-soft-hover: #ddd2ef;
+  --green: #2e7d32;
+  --green-soft: #e8f5e9;
+  --purple: #21005d;
+  --purple-soft: #eaddff;
+  --purple-line: transparent;
+  --shadow: none;
+  --card-hover-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  --menu-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3), 0 2px 6px 2px rgb(0 0 0 / 0.15);
+  --shadow-pop: var(--menu-shadow);
+  --stroke: #79747e;
+  --teal: #6750a4;
+  --teal-3: #7965af;
+  --teal-soft: #e8def8;
+  --select-bg: #f3edf7;
+  --select-hover: rgb(29 27 32 / 0.08);
+  --select-item-hover: rgb(29 27 32 / 0.08);
+  --select-item-selected: #e8def8;
+  --select-item-color: #1d1b20;
+  --switch-off: #e6e0e9;
+  --checkbox-bg: transparent;
+  --checkbox-border: #49454f;
+  --node-bg: #f3edf7;
+  --node-border: transparent;
+  --node-color: #1d1b20;
+  --node-hover-bg: #ece6f0;
+  --node-hover-border: transparent;
+  --msg-bg: #322f35;
+  --msg-color: #f5eff7;
+  --msg-border: transparent;
+  --font: "Roboto Variable", "Roboto", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 28px;
+}
+html[data-ui-theme="md3"][data-theme="dark"] {
+  --page: #141218;
+  --card: #1d1b20;
+  --card-shadow: none;
+  --surface: #211f26;
+  --surface-hover: #2b2930;
+  --surface-strong: #211f26;
+  --surface-subtle: #2b2930;
+  --text: #e6e0e9;
+  --text-strong: #e6e0e9;
+  --muted: #cac4d0;
+  --muted-2: #938f99;
+  --line: #49454f;
+  --line-strong: #938f99;
+  --primary: #d0bcff;
+  --primary-hover: #dccbff;
+  --primary-soft: #4a4458;
+  --primary-soft-hover: #554e64;
+  --green: #81c784;
+  --green-soft: rgb(129 199 132 / 0.16);
+  --purple: #eaddff;
+  --purple-soft: #4f378b;
+  --stroke: #938f99;
+  --teal: #d0bcff;
+  --teal-soft: #4a4458;
+  --select-bg: #211f26;
+  --select-hover: rgb(230 224 233 / 0.08);
+  --select-item-hover: rgb(230 224 233 / 0.08);
+  --select-item-selected: #4a4458;
+  --select-item-color: #e6e0e9;
+  --switch-off: #36343b;
+  --checkbox-border: #cac4d0;
+  --node-bg: #211f26;
+  --node-color: #e6e0e9;
+  --node-hover-bg: #2b2930;
+  --msg-bg: #e6e0e9;
+  --msg-color: #322f35;
+  --qr-plate: #ffffff;
+}
+html[data-ui-theme="md3"][data-theme="dark"][data-ultra-dark="true"] {
+  --page: #000000;
+  --card: #0e0d10;
+  --surface: #131216;
+  --surface-strong: #131216;
+  --node-bg: #131216;
+}
+html[data-ui-theme="md3"] .head { font-size: 22px; font-weight: 400; letter-spacing: 0; border-bottom: 0; }
+html[data-ui-theme="md3"] :is(.token, .gear) { border: 0; }
+html[data-ui-theme="md3"] .gear { background: transparent; }
+html[data-ui-theme="md3"] .gear:hover { transform: none; background: var(--select-hover); }
+html[data-ui-theme="md3"] .settings-menu { border: 0; border-radius: 4px; }
+html[data-ui-theme="md3"] .client-menu { border: 0; border-radius: 4px; padding: 8px 0; }
+html[data-ui-theme="md3"] .client-item { border-radius: 0; padding: 10px 16px; }
+html[data-ui-theme="md3"] .client-item:hover,
+html[data-ui-theme="md3"] .client-item:focus-visible { background: var(--select-hover); color: var(--text-strong); }
+html[data-ui-theme="md3"] .code-card { border: 0; box-shadow: none; }
+html[data-ui-theme="md3"] :is(.code-card:hover, .node:hover, .client-btn:hover) { transform: none; }
+html[data-ui-theme="md3"] .qr { border: 0; border-radius: 12px; box-shadow: none; }
+html[data-ui-theme="md3"] .url { border: 1px solid var(--line-strong); border-radius: 4px; background: transparent; }
+html[data-ui-theme="md3"] .url:hover { background: var(--select-hover); border-color: var(--text-strong); color: var(--text-strong); }
+/* Client buttons are outlined; the open one is a tonal button. */
+html[data-ui-theme="md3"] .client-btn { height: 40px; padding: 0 24px; border-color: var(--line-strong); background: transparent; color: var(--primary); box-shadow: none; }
+html[data-ui-theme="md3"] .client-btn:hover { background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: var(--line-strong); }
+html[data-ui-theme="md3"] .client-btn[aria-expanded="true"] { background: var(--primary-soft); border-color: transparent; color: var(--text-strong); }
+html[data-ui-theme="md3"] table { border: 0; background: var(--surface); box-shadow: none; border-radius: 12px; }
+html[data-ui-theme="md3"] td:first-child { background: transparent; border-right: 0; }
+html[data-ui-theme="md3"] td { border-bottom-color: var(--line); }
+html[data-ui-theme="md3"] .status { border: 0; border-radius: 8px; }
+html[data-ui-theme="md3"] .node { box-shadow: none; }
+html[data-ui-theme="md3"] .node-title { border: 0; border-radius: 8px; color: var(--purple); background: var(--purple-soft); }
+html[data-ui-theme="md3"] .copy-toast { border-radius: 4px; }
+/* M3 switch: 52x32 track, the thumb grows from 16px to 24px when on. */
+html[data-ui-theme="md3"] .theme-switch { width: 52px; min-width: 52px; height: 32px; }
+html[data-ui-theme="md3"] .theme-switch span { box-shadow: inset 0 0 0 2px var(--line-strong); }
+html[data-ui-theme="md3"] .theme-switch span::after { top: 8px; left: 8px; width: 16px; height: 16px; background: var(--line-strong); box-shadow: none; transition: all .2s cubic-bezier(.2, 0, 0, 1); }
+html[data-ui-theme="md3"] .theme-switch input:checked + span { background: var(--primary); box-shadow: none; }
+html[data-ui-theme="md3"] .theme-switch input:checked + span::after { top: 4px; left: 24px; width: 24px; height: 24px; transform: none; background: var(--page); }
+html[data-ui-theme="md3"] .ultra-check span { border-width: 2px; border-radius: 2px; }
+
+/* ===== Both: opaque surfaces ===== */
+html:is([data-ui-theme="shadcn"], [data-ui-theme="md3"]) :is(.card, .settings-menu, .client-menu, .copy-toast) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+html:is([data-ui-theme="shadcn"], [data-ui-theme="md3"]) .card::before { display: none; }
+html:is([data-ui-theme="shadcn"], [data-ui-theme="md3"]) body { font-family: var(--font); }

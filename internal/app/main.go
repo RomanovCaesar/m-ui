@@ -57,6 +57,7 @@ const (
 	defaultTrafficDiff   = 1
 	defaultTimeLocation  = "Local"
 	defaultLanguage      = "zh-CN"
+	defaultUITheme       = "shadcn"
 	minSessionMaxAge     = 60
 	maxPageSize          = 500
 )
@@ -94,6 +95,8 @@ type Settings struct {
 	ExternalTrafficInformURI    string `json:"externalTrafficInformURI"`
 	TimeLocation                string `json:"timeLocation"`
 	Language                    string `json:"language"`
+	// UITheme 是面板、登录页和订阅页的外观：shadcn（默认）、md3 或 liquid。
+	UITheme string `json:"uiTheme"`
 	// VPNGate 的 ASN 归属查询用。留空时用 IPinfo 免费接口，额度耗尽后退回 ip-api；
 	// 填写后只发给 IPinfo，绝不转发给备用服务。
 	IPInfoToken string `json:"ipinfoToken,omitempty"`
@@ -1124,6 +1127,8 @@ func (a *App) handleStatic(w http.ResponseWriter, r *http.Request) {
 		contentType = "image/webp"
 	} else if strings.HasSuffix(name, ".ico") {
 		contentType = "image/x-icon"
+	} else if strings.HasSuffix(name, ".woff2") {
+		contentType = "font/woff2"
 	}
 	a.serveEmbedded(w, "web/"+name, contentType)
 }
@@ -1156,8 +1161,8 @@ func (a *App) serveLocalizedPage(w http.ResponseWriter, name string) {
 		http.NotFound(w, nil)
 		return
 	}
-	page = []byte(strings.Replace(string(page), `data-default-language="zh-CN"`, `data-default-language="`+a.lang()+`"`, 1))
-	a.writeAsset(w, page, "text/html; charset=utf-8")
+	text := strings.Replace(string(page), `data-default-language="zh-CN"`, `data-default-language="`+a.lang()+`"`, 1)
+	a.writeAsset(w, []byte(themedPage(text, a.uiTheme())), "text/html; charset=utf-8")
 }
 
 func (a *App) serveEmbedded(w http.ResponseWriter, name, contentType string) {
@@ -1701,6 +1706,11 @@ func (m *CoreManager) load() error {
 	}
 	// 面板行为设置是后加的：老 state.json 里这些字段全是零值，而 remarkModel 合法值至少
 	// 是一个分隔符（清空选择也存 "-"），所以空串就是"还没迁移过"的标记。
+	// v0.3.2 起有三套外观，没选过的（包括老安装）都用默认的 shadcn。
+	if theme := normalizeUITheme(m.state.Settings.UITheme); theme != m.state.Settings.UITheme {
+		m.state.Settings.UITheme = theme
+		settingsMigrated = true
+	}
 	if m.state.Settings.RemarkModel == "" {
 		fallback := defaultState().Settings
 		m.state.Settings.RemarkModel = fallback.RemarkModel
@@ -1748,7 +1758,7 @@ func defaultState() State {
 	}
 	password := defaultAdminPasswordHash()
 	return State{
-		Settings:           Settings{Username: "admin", Password: password, CorePath: core, PanelListen: defaultListen, PanelPath: "/", ClashPath: "/clash", APIAddress: defaultCoreAPI, APISecret: newAPISecret(), AllowLAN: true, Mode: "rule", LogLevel: "info", RemarkModel: defaultRemarkModel, SessionMaxAge: defaultSessionMaxAge, PageSize: defaultPageSize, ExpireDiff: defaultExpireDiff, TrafficDiff: defaultTrafficDiff, TimeLocation: defaultTimeLocation, Language: defaultLanguage},
+		Settings:           Settings{Username: "admin", Password: password, CorePath: core, PanelListen: defaultListen, PanelPath: "/", ClashPath: "/clash", APIAddress: defaultCoreAPI, APISecret: newAPISecret(), AllowLAN: true, Mode: "rule", LogLevel: "info", RemarkModel: defaultRemarkModel, SessionMaxAge: defaultSessionMaxAge, PageSize: defaultPageSize, ExpireDiff: defaultExpireDiff, TrafficDiff: defaultTrafficDiff, TimeLocation: defaultTimeLocation, Language: defaultLanguage, UITheme: defaultUITheme},
 		RoutingRules:       defaultMihomoRoutingRules(),
 		SubscriptionTokens: map[string]string{},
 		Inbounds:           []Inbound{},
@@ -1939,6 +1949,13 @@ func (m *CoreManager) updateSettings(input Settings) error {
 	input.TimeLocation = strings.TrimSpace(input.TimeLocation)
 	if input.TimeLocation == "" {
 		input.TimeLocation = defaultTimeLocation
+	}
+	input.UITheme = strings.TrimSpace(input.UITheme)
+	if input.UITheme == "" {
+		input.UITheme = defaultUITheme
+	}
+	if !uiThemes[input.UITheme] {
+		return fmt.Errorf("面板外观主题无效")
 	}
 	if _, err := resolveTimeLocation(input.TimeLocation); err != nil {
 		return fmt.Errorf("时区无效: %w", err)

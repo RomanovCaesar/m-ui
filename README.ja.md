@@ -12,7 +12,7 @@
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
 [![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
-[Mihomo](https://github.com/MetaCubeX/mihomo) をコアとするサーバー管理パネルです。操作の流れは 3x-ui、画面デザインは Apple の Liquid Glass、設定モデルは Mihomo ネイティブの YAML に基づいています。パネルは 11 言語に対応しています。
+[Mihomo](https://github.com/MetaCubeX/mihomo) をコアとするサーバー管理パネルです。操作の流れは 3x-ui、画面デザインは shadcn（既定）、Material Design 3、Apple の Liquid Glass の 3 つのテーマから選べ、設定モデルは Mihomo ネイティブの YAML に基づいています。パネルは 11 言語に対応しています。
 
 > [!IMPORTANT]
 > 本プロジェクトは、ご自身が所有する、または管理を許可されたサーバーとネットワークでのみ使用してください。現地の法律、上流プロバイダーの規約、利用するサービスのポリシーを守ってください。
@@ -149,6 +149,7 @@ Windows と Linux amd64 のバイナリ、またはすべてのリリースア�
 * [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui)：画面の情報密度と操作の流れ
 * [Sub-Store](https://github.com/sub-store-org/Sub-Store)：クライアント向けサブスクリプション形式の参考実装
 * [liquid-glass-webgl](https://github.com/martin65536/liquid-glass-webgl)：Liquid Glass コントロール（Apache-2.0、[`NOTICE`](NOTICE) を参照）
+* [Lucide](https://lucide.dev) と [Material Symbols](https://github.com/google/material-design-icons) のアイコン、[Geist](https://github.com/vercel/geist-font) と [Roboto](https://github.com/googlefonts/roboto-classic) のフォント：shadcn と Material Design 3 テーマ（ISC、Apache-2.0、OFL-1.1、[`NOTICE`](NOTICE) を参照）
 
 ## ライセンス
 

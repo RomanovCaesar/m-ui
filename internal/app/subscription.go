@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -35,6 +36,10 @@ type subscriptionPageData struct {
 	ToggleScriptURL string
 	ButtonStyleURL  string
 	ButtonScriptURL string
+	// AssetBase is the public folder of the shared UI assets; UITheme picks
+	// the look (shadcn, md3 or liquid) like the panel's own pages.
+	AssetBase       string
+	UITheme         string
 	DefaultLanguage string
 	Status          string
 	Downloaded      string
@@ -455,6 +460,10 @@ func (a *App) subscriptionSnapshot(path string) (subscriptionSnapshot, subscript
 	return snapshot, format, len(snapshot.Clients) > 0
 }
 
+// subscriptionFontName keeps the public font route to plain file names, so it
+// can never reach outside web/fonts.
+var subscriptionFontName = regexp.MustCompile(`^[a-z0-9-]+\.woff2$`)
+
 func (a *App) handleSubscriptionRequest(w http.ResponseWriter, r *http.Request) bool {
 	a.manager.mu.Lock()
 	assetPath := subscriptionAssetPublicPath(a.manager.state.Settings)
@@ -466,15 +475,21 @@ func (a *App) handleSubscriptionRequest(w http.ResponseWriter, r *http.Request) 
 	// Only these shared UI assets are public on the dedicated subscription port.
 	assetBase := strings.TrimSuffix(assetPath, "qrious2.min.js")
 	for name, contentType := range map[string]string{
-		"liquid-toggle.css": "text/css; charset=utf-8",
-		"liquid-toggle.js":  "text/javascript; charset=utf-8",
-		"liquid-button.css": "text/css; charset=utf-8",
-		"liquid-button.js":  "text/javascript; charset=utf-8",
+		"liquid-toggle.css":       "text/css; charset=utf-8",
+		"liquid-toggle.js":        "text/javascript; charset=utf-8",
+		"liquid-button.css":       "text/css; charset=utf-8",
+		"liquid-button.js":        "text/javascript; charset=utf-8",
+		"fonts.css":               "text/css; charset=utf-8",
+		"subscription-themes.css": "text/css; charset=utf-8",
 	} {
 		if r.URL.Path == assetBase+name {
 			a.serveEmbedded(w, "web/"+name, contentType)
 			return true
 		}
+	}
+	if font, ok := strings.CutPrefix(r.URL.Path, assetBase+"fonts/"); ok && subscriptionFontName.MatchString(font) {
+		a.serveEmbedded(w, "web/fonts/"+font, "font/woff2")
+		return true
 	}
 	if snapshot, format, ok := a.crossSubscriptionSnapshot(r.URL.Path); ok {
 		server := subscriptionServerHost(r)
@@ -635,6 +650,8 @@ func renderSubscriptionPageAt(w http.ResponseWriter, r *http.Request, snapshot s
 		ToggleScriptURL: strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-toggle.js",
 		ButtonStyleURL:  strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-button.css",
 		ButtonScriptURL: strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js") + "liquid-button.js",
+		AssetBase:       strings.TrimSuffix(subscriptionAssetPublicPath(snapshot.Settings), "qrious2.min.js"),
+		UITheme:         normalizeUITheme(snapshot.Settings.UITheme),
 		DefaultLanguage: settingsLanguage(snapshot.Settings),
 		Status:          status, Downloaded: formatSubscriptionBytes(down), Uploaded: formatSubscriptionBytes(up),
 		Usage: formatSubscriptionBytes(up + down), Total: "∞", LastOnline: lastOnline, Expiry: "No expiry", Nodes: nodes,

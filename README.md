@@ -12,7 +12,7 @@
 [![Downloads](https://img.shields.io/github/downloads/RomanovCaesar/m-ui/total.svg)](https://github.com/RomanovCaesar/m-ui/releases/latest)
 [![License](https://img.shields.io/github/license/RomanovCaesar/m-ui.svg)](https://github.com/RomanovCaesar/m-ui/blob/main/LICENSE)
 
-A server management panel powered by [Mihomo](https://github.com/MetaCubeX/mihomo). Its workflow follows 3x-ui, its interface follows Apple's Liquid Glass design, and its configuration model is Mihomo's native YAML. The panel is available in 11 languages.
+A server management panel powered by [Mihomo](https://github.com/MetaCubeX/mihomo). Its workflow follows 3x-ui, its interface comes in three themes (shadcn by default, Material Design 3 and Apple's Liquid Glass), and its configuration model is Mihomo's native YAML. The panel is available in 11 languages.
 
 > [!IMPORTANT]
 > Use this project only on servers and networks that you own or are authorized to administer. Follow local law, upstream provider terms, and the policies of the services you access.
@@ -147,6 +147,7 @@ Validate with `go test ./...` and `go vet ./...`. The version is injected with `
 * [MHSanaei/3x-ui](https://github.com/MHSanaei/3x-ui): interface density and workflow
 * [Sub-Store](https://github.com/sub-store-org/Sub-Store): reference behavior for client subscription formats
 * [liquid-glass-webgl](https://github.com/martin65536/liquid-glass-webgl): the Liquid Glass controls (Apache-2.0, see [`NOTICE`](NOTICE))
+* [Lucide](https://lucide.dev) and [Material Symbols](https://github.com/google/material-design-icons) icons, [Geist](https://github.com/vercel/geist-font) and [Roboto](https://github.com/googlefonts/roboto-classic) fonts: the shadcn and Material Design 3 themes (ISC, Apache-2.0 and OFL-1.1, see [`NOTICE`](NOTICE))
 
 ## License
 

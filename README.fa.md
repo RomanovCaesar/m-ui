@@ -21,6 +21,10 @@
 
 مستندات کامل در [ویکی m-ui](https://github.com/RomanovCaesar/m-ui/wiki) (به انگلیسی) است. برای اخبار توسعه، [کانال تلگرام](https://t.me/MihomoUI) ما را دنبال کنید.
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="Inboundها و کلاینت‌ها" width="900">
+</p>
+
 ## امکانات
 
 **پنل و Mihomo**
@@ -54,6 +58,15 @@
 * همگام‌سازی رمزگذاری‌شدهٔ ورودی‌ها میان پنل‌های مورد اعتماد
 * تجمیع اشتراک‌ها از چند پنل
 * دستگاه‌های کلاینت: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) فایل شبکه را وارد می‌کند، یک بار با حساب مدیر پنل وارد می‌شود و سپس همهٔ پنل‌ها را می‌بیند و اشتراک هر پنل یا اشتراک ادغام‌شده را از هر پنل در دسترس دریافت می‌کند
+
+## تصاویر
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="نمای کلی"><br><sub>نمای کلی</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="کلاینت: سهمیه، انقضا، بازنشانی ترافیک و تمدید خودکار"><br><sub>کلاینت: سهمیه، انقضا، بازنشانی ترافیک و تمدید خودکار</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="Outboundها و گروه‌های پراکسی"><br><sub>Outboundها و گروه‌های پراکسی</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="قوانین مسیریابی"><br><sub>قوانین مسیریابی</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="درون‌ریزی از Xray / 3x-ui"><br><sub>درون‌ریزی از Xray / 3x-ui</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="پوسته shadcn، تیره"><br><sub>پوسته shadcn، تیره</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="پوسته Material Design 3"><br><sub>پوسته Material Design 3</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="پوسته Liquid Glass"><br><sub>پوسته Liquid Glass</sub></td></tr>
+</table>
 
 ## نصب روی لینوکس
 

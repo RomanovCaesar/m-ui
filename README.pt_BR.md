@@ -19,6 +19,10 @@ Um painel de gerenciamento de servidores baseado no [Mihomo](https://github.com/
 
 A documentação completa está na [Wiki do m-ui](https://github.com/RomanovCaesar/m-ui/wiki) (em inglês). Acompanhe as novidades do desenvolvimento no nosso [canal do Telegram](https://t.me/MihomoUI).
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="Inbounds e clientes" width="900">
+</p>
+
 ## Recursos
 
 **Painel e Mihomo**
@@ -52,6 +56,15 @@ A documentação completa está na [Wiki do m-ui](https://github.com/RomanovCaes
 * Sincronização criptografada de entradas entre painéis confiáveis
 * Agregação de assinaturas entre painéis
 * Dispositivos cliente: o [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) importa o arquivo de rede, entra uma vez com a conta de administrador do painel e então vê todos os painéis e obtém a assinatura de qualquer painel ou a combinada por qualquer painel alcançável
+
+## Capturas de tela
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="Visão geral"><br><sub>Visão geral</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="Cliente: cota, expiração, redefinição de tráfego e renovação automática"><br><sub>Cliente: cota, expiração, redefinição de tráfego e renovação automática</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="Outbounds e grupos de proxy"><br><sub>Outbounds e grupos de proxy</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="Regras de roteamento"><br><sub>Regras de roteamento</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="Importar do Xray / 3x-ui"><br><sub>Importar do Xray / 3x-ui</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="Tema shadcn, escuro"><br><sub>Tema shadcn, escuro</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="Tema Material Design 3"><br><sub>Tema Material Design 3</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="Tema Liquid Glass"><br><sub>Tema Liquid Glass</sub></td></tr>
+</table>
 
 ## Instalação no Linux
 

@@ -19,6 +19,10 @@ Un panel de administración de servidores basado en [Mihomo](https://github.com/
 
 La documentación completa está en la [Wiki de m-ui](https://github.com/RomanovCaesar/m-ui/wiki) (en inglés). Sigue nuestro [canal de Telegram](https://t.me/MihomoUI) para conocer las novedades del desarrollo.
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="Inbounds y clientes" width="900">
+</p>
+
 ## Funciones
 
 **Panel y Mihomo**
@@ -52,6 +56,15 @@ La documentación completa está en la [Wiki de m-ui](https://github.com/Romanov
 * Sincronización cifrada de entradas entre paneles de confianza
 * Agregación de suscripciones entre paneles
 * Dispositivos cliente: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) importa el archivo de red, inicia sesión una vez con la cuenta de administrador del panel y luego ve todos los paneles y obtiene la suscripción de cualquier panel o la combinada a través de cualquier panel alcanzable
+
+## Capturas de pantalla
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="Resumen"><br><sub>Resumen</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="Cliente: cuota, vencimiento, reinicio de tráfico y renovación automática"><br><sub>Cliente: cuota, vencimiento, reinicio de tráfico y renovación automática</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="Outbounds y grupos de proxy"><br><sub>Outbounds y grupos de proxy</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="Reglas de enrutamiento"><br><sub>Reglas de enrutamiento</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="Importar desde Xray / 3x-ui"><br><sub>Importar desde Xray / 3x-ui</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="Tema shadcn, oscuro"><br><sub>Tema shadcn, oscuro</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="Tema Material Design 3"><br><sub>Tema Material Design 3</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="Tema Liquid Glass"><br><sub>Tema Liquid Glass</sub></td></tr>
+</table>
 
 ## Instalación en Linux
 

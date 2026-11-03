@@ -19,6 +19,10 @@
 
 完整文档请参阅 [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki/Home.zh_CN)。也欢迎关注我们的 [Telegram 频道](https://t.me/MihomoUI) 获取开发动态。
 
+<p align="center">
+  <img src="./media/screenshots/inbounds.png" alt="入站与客户端" width="900">
+</p>
+
 ## 功能
 
 **面板与 Mihomo**
@@ -52,6 +56,15 @@
 * 在可信面板之间加密同步 Inbound
 * 跨面板订阅聚合
 * 客户端设备：[Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) 导入插件文件、用面板管理员账号登录一次，即可查看网络里所有面板的在线情况，并通过任意一个能连上的面板拉取各面板订阅或融合订阅
+
+## 截图
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/dashboard.png" alt="仪表盘"><br><sub>仪表盘</sub></td><td width="50%"><img src="./media/screenshots/client-edit.png" alt="客户端：配额、到期、流量重置与自动续期"><br><sub>客户端：配额、到期、流量重置与自动续期</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/outbounds.png" alt="出站与策略组"><br><sub>出站与策略组</sub></td><td width="50%"><img src="./media/screenshots/routing.png" alt="分流规则"><br><sub>分流规则</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/xray-import.png" alt="从 Xray / 3x-ui 导入"><br><sub>从 Xray / 3x-ui 导入</sub></td><td width="50%"><img src="./media/screenshots/theme-shadcn-dark.png" alt="shadcn 主题（暗色）"><br><sub>shadcn 主题（暗色）</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/theme-md3.png" alt="Material Design 3 主题"><br><sub>Material Design 3 主题</sub></td><td width="50%"><img src="./media/screenshots/theme-liquid.png" alt="液态玻璃主题"><br><sub>液态玻璃主题</sub></td></tr>
+</table>
 
 ## Linux 安装
 

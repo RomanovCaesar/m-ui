@@ -19,6 +19,10 @@
 
 詳しいドキュメントは [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki)（英語）をご覧ください。開発情報は [Telegram チャンネル](https://t.me/MihomoUI) でお知らせしています。
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="インバウンドとクライアント" width="900">
+</p>
+
 ## 機能
 
 **パネルと Mihomo**
@@ -52,6 +56,15 @@
 * 信頼したパネル間での暗号化されたインバウンド同期
 * パネル間サブスクリプションの集約
 * クライアント端末：[Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) でネットワークファイルを読み込み、パネル管理者アカウントで一度ログインすれば、全パネルの状態を確認し、接続できる任意のパネル経由で各パネルまたは統合サブスクリプションを取得可能
+
+## スクリーンショット
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="ダッシュボード"><br><sub>ダッシュボード</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="クライアント：容量・有効期限・トラフィックリセット・自動更新"><br><sub>クライアント：容量・有効期限・トラフィックリセット・自動更新</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="アウトバウンドとプロキシグループ"><br><sub>アウトバウンドとプロキシグループ</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="ルーティングルール"><br><sub>ルーティングルール</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="Xray / 3x-ui からのインポート"><br><sub>Xray / 3x-ui からのインポート</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="shadcn テーマ（ダーク）"><br><sub>shadcn テーマ（ダーク）</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="Material Design 3 テーマ"><br><sub>Material Design 3 テーマ</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="Liquid Glass テーマ"><br><sub>Liquid Glass テーマ</sub></td></tr>
+</table>
 
 ## Linux へのインストール
 

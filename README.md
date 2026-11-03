@@ -19,6 +19,10 @@ A server management panel powered by [Mihomo](https://github.com/MetaCubeX/mihom
 
 For complete documentation, visit the [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki). Subscribe to our [Telegram channel](https://t.me/MihomoUI) for development news.
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="Inbounds and clients" width="900">
+</p>
+
 ## Features
 
 **Panel and Mihomo**
@@ -52,6 +56,15 @@ For complete documentation, visit the [m-ui Wiki](https://github.com/RomanovCaes
 * Encrypted inbound synchronization between trusted panels
 * Cross-panel subscription aggregation
 * Client devices: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) imports the network file, signs in once with the panel admin account, and can then see every panel and pull any panel's or the merged subscription through whichever panel it can reach
+
+## Screenshots
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="Overview"><br><sub>Overview</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="Client: quota, expiry, traffic reset and auto-renewal"><br><sub>Client: quota, expiry, traffic reset and auto-renewal</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="Outbounds and proxy groups"><br><sub>Outbounds and proxy groups</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="Routing rules"><br><sub>Routing rules</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="Import from Xray / 3x-ui"><br><sub>Import from Xray / 3x-ui</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="shadcn theme, dark"><br><sub>shadcn theme, dark</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="Material Design 3 theme"><br><sub>Material Design 3 theme</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="Liquid Glass theme"><br><sub>Liquid Glass theme</sub></td></tr>
+</table>
 
 ## Linux installation
 

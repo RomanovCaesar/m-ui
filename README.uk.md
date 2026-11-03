@@ -19,6 +19,10 @@
 
 Повна документація — у [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) (англійською). Новини розробки публікуються в нашому [Telegram-каналі](https://t.me/MihomoUI).
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="Inbound і клієнти" width="900">
+</p>
+
 ## Можливості
 
 **Панель і Mihomo**
@@ -52,6 +56,15 @@
 * Зашифрована синхронізація входів між довіреними панелями
 * Об'єднання підписок із кількох панелей
 * Клієнтські пристрої: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) імпортує файл мережі, один раз входить з обліковим записом адміністратора панелі, а потім бачить усі панелі й отримує підписку будь-якої панелі або об’єднану через будь-яку доступну панель
+
+## Знімки екрана
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="Огляд"><br><sub>Огляд</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="Клієнт: ліміт, термін дії, скидання трафіку й автоподовження"><br><sub>Клієнт: ліміт, термін дії, скидання трафіку й автоподовження</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="Outbound і групи проксі"><br><sub>Outbound і групи проксі</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="Правила маршрутизації"><br><sub>Правила маршрутизації</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="Імпорт з Xray / 3x-ui"><br><sub>Імпорт з Xray / 3x-ui</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="Тема shadcn, темна"><br><sub>Тема shadcn, темна</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="Тема Material Design 3"><br><sub>Тема Material Design 3</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="Тема Liquid Glass"><br><sub>Тема Liquid Glass</sub></td></tr>
+</table>
 
 ## Встановлення в Linux
 

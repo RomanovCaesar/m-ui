@@ -19,6 +19,10 @@ Bảng điều khiển quản lý máy chủ dùng [Mihomo](https://github.com/M
 
 Tài liệu đầy đủ có tại [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) (tiếng Anh). Theo dõi [kênh Telegram](https://t.me/MihomoUI) để nhận tin tức phát triển.
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="Inbound và client" width="900">
+</p>
+
 ## Tính năng
 
 **Bảng điều khiển và Mihomo**
@@ -52,6 +56,15 @@ Tài liệu đầy đủ có tại [m-ui Wiki](https://github.com/RomanovCaesar/
 * Đồng bộ inbound được mã hóa giữa các bảng điều khiển tin cậy
 * Gộp đăng ký từ nhiều bảng điều khiển
 * Thiết bị khách: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) nhập tệp mạng, đăng nhập một lần bằng tài khoản quản trị panel, sau đó xem được mọi panel và lấy subscription của từng panel hoặc subscription hợp nhất qua bất kỳ panel nào kết nối được
+
+## Ảnh chụp màn hình
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="Tổng quan"><br><sub>Tổng quan</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="Client: hạn mức, hết hạn, đặt lại lưu lượng và tự động gia hạn"><br><sub>Client: hạn mức, hết hạn, đặt lại lưu lượng và tự động gia hạn</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="Outbound và nhóm proxy"><br><sub>Outbound và nhóm proxy</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="Quy tắc định tuyến"><br><sub>Quy tắc định tuyến</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="Nhập từ Xray / 3x-ui"><br><sub>Nhập từ Xray / 3x-ui</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="Giao diện shadcn, tối"><br><sub>Giao diện shadcn, tối</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="Giao diện Material Design 3"><br><sub>Giao diện Material Design 3</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="Giao diện Liquid Glass"><br><sub>Giao diện Liquid Glass</sub></td></tr>
+</table>
 
 ## Cài đặt trên Linux
 

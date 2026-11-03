@@ -19,6 +19,10 @@
 
 Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasındadır (İngilizce). Geliştirme haberleri için [Telegram kanalımızı](https://t.me/MihomoUI) takip edin.
 
+<p align="center">
+  <img src="./media/screenshots/en/inbounds.png" alt="Inbound'lar ve istemciler" width="900">
+</p>
+
 ## Özellikler
 
 **Panel ve Mihomo**
@@ -52,6 +56,15 @@ Tüm belgeler [m-ui Wiki](https://github.com/RomanovCaesar/m-ui/wiki) sayfasınd
 * Güvenilen paneller arasında şifreli giriş eşitleme
 * Paneller arası abonelik birleştirme
 * İstemci cihazlar: [Clash Caesar](https://github.com/RomanovCaesar/clash-caesar) ağ dosyasını içe aktarır, panel yönetici hesabıyla bir kez oturum açar; ardından tüm panelleri görür ve erişebildiği herhangi bir panel üzerinden her panelin veya birleşik aboneliği alır
+
+## Ekran görüntüleri
+
+<table>
+  <tr><td width="50%"><img src="./media/screenshots/en/dashboard.png" alt="Genel bakış"><br><sub>Genel bakış</sub></td><td width="50%"><img src="./media/screenshots/en/client-edit.png" alt="İstemci: kota, bitiş tarihi, trafik sıfırlama ve otomatik yenileme"><br><sub>İstemci: kota, bitiş tarihi, trafik sıfırlama ve otomatik yenileme</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/outbounds.png" alt="Outbound'lar ve proxy grupları"><br><sub>Outbound'lar ve proxy grupları</sub></td><td width="50%"><img src="./media/screenshots/en/routing.png" alt="Yönlendirme kuralları"><br><sub>Yönlendirme kuralları</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/xray-import.png" alt="Xray / 3x-ui'den içe aktarma"><br><sub>Xray / 3x-ui'den içe aktarma</sub></td><td width="50%"><img src="./media/screenshots/en/theme-shadcn-dark.png" alt="shadcn teması, koyu"><br><sub>shadcn teması, koyu</sub></td></tr>
+  <tr><td width="50%"><img src="./media/screenshots/en/theme-md3.png" alt="Material Design 3 teması"><br><sub>Material Design 3 teması</sub></td><td width="50%"><img src="./media/screenshots/en/theme-liquid.png" alt="Liquid Glass teması"><br><sub>Liquid Glass teması</sub></td></tr>
+</table>
 
 ## Linux kurulumu
 

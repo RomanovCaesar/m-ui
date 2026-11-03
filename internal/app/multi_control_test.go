@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -431,5 +432,26 @@ func TestMultiControlBrowserFixture(t *testing.T) {
 	t.Logf("Mesh test panel http://%s", address)
 	if err = http.ListenAndServe(address, app.routes()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// $() returns one element and $$() a list; looping over $() threw "$ is not a
+// function or its return value is not iterable" and broke the Connected
+// Devices dialog. No page script may iterate over $().
+func TestFrontendNeverIteratesSingleElementLookup(t *testing.T) {
+	pattern := regexp.MustCompile(`\bof\s+\$\(|[^$]\$\([^()]*\)\.(forEach|map|filter)\(`)
+	files, err := filepath.Glob("web/*.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	files = append(files, "web/index.html", "web/login.html", "web/subscription.html")
+	for _, name := range files {
+		data, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if match := pattern.Find(data); match != nil {
+			t.Fatalf("%s iterates over a single-element $() lookup: %s", name, match)
+		}
 	}
 }

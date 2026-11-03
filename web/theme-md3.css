@@ -199,12 +199,12 @@ html[data-ui-theme="md3"] body :is(.primary-btn, .mihomo-primary, .login-button)
   background: color-mix(in srgb, var(--m3-primary) 92%, var(--m3-on-primary)) !important;
   box-shadow: var(--m3-elev-1) !important;
 }
-/* "Add inbound" is the screen's main action: a FAB-like tonal button. */
+/* "Add inbound" is the screen's main action: an elevated tonal button, pill-shaped like the buttons beside it. */
 html[data-ui-theme="md3"] body #add-inbound {
   background: var(--m3-primary-container) !important;
   color: var(--m3-on-primary-container) !important;
   border: 0 !important;
-  border-radius: 16px !important;
+  border-radius: 999px !important;
   box-shadow: var(--m3-elev-1) !important;
   padding-inline: 16px 20px !important;
   font-weight: 500;
@@ -669,3 +669,17 @@ html[data-ui-theme="md3"] body .login-card::after { display: none !important; }
 html[data-ui-theme="md3"] body :is(.primary-btn, .mihomo-primary, .danger-btn, #add-inbound, .login-button) .sf-symbol { color: inherit !important; }
 /* Segmented buttons share the full width of their row, as in M3. */
 html[data-ui-theme="md3"] body :is(.segmented, #security-extra-toggles) > button { flex: 1 1 auto !important; }
+/* Wrappers that group the sections of a settings pane are not cards of their own. */
+html[data-ui-theme="md3"] body .multi-control-sections { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+html[data-ui-theme="md3"] body .multi-control-sections details.setting-section { background: var(--m3-surface-container) !important; border: 0 !important; border-radius: 12px !important; }
+/* Tool buttons next to the main action (WARP, VPNGate) are outlined buttons. */
+html[data-ui-theme="md3"] body .mihomo-tool {
+  background: transparent !important;
+  color: var(--m3-primary) !important;
+  border: 1px solid var(--m3-outline) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  font-weight: 500;
+  transform: none !important;
+}
+html[data-ui-theme="md3"] body .mihomo-tool:hover:not(:disabled) { background: color-mix(in srgb, var(--m3-primary) 8%, transparent) !important; }

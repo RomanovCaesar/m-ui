@@ -516,3 +516,14 @@ html[data-ui-theme="shadcn"] body .inbound-form-section.inbound-clients > .inbou
 html[data-ui-theme="shadcn"] body .login-card::after { display: none !important; }
 /* Icons inside filled buttons take the button's text color (the base forces white, which vanishes on light fills). */
 html[data-ui-theme="shadcn"] body :is(.primary-btn, .mihomo-primary, .danger-btn, #add-inbound, .login-button) .sf-symbol { color: inherit !important; }
+/* Tool buttons next to the main action (WARP, VPNGate) are outline buttons. */
+html[data-ui-theme="shadcn"] body .mihomo-tool {
+  background: var(--sc-bg) !important;
+  color: var(--sc-fg) !important;
+  border: 1px solid var(--sc-input) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-btn) !important;
+  font-weight: 500;
+  transform: none !important;
+}
+html[data-ui-theme="shadcn"] body .mihomo-tool:hover:not(:disabled) { background: var(--sc-accent) !important; }

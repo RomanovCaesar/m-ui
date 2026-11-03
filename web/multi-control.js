@@ -37,7 +37,7 @@
   function millis(value){return value?new Date(value).toLocaleString():'—';}
   function renderDevices(){
     $('#mc-device-list').innerHTML=devices.length?`<div class="mc-table-wrap"><table class="mc-peer-table"><thead><tr><th>${muiT('mc.colDevice')}</th><th>${muiT('mc.colIssuer')}</th><th>${muiT('mc.colStatus')}</th><th>${muiT('mc.colLastSeen')}</th><th>${muiT('mc.colActions')}</th></tr></thead><tbody>${devices.map(device=>`<tr><td>${esc(device.name)}<small>${esc(device.id)}</small></td><td>${esc(nodeName(device.issuer))}</td><td><span class="mc-status ${device.revoked?'':'online'}">${device.revoked?muiT('mc.revoked'):muiT('mc.deviceActive')}</span></td><td>${esc(millis(device.lastSeen))}</td><td>${device.revoked?'':`<button type="button" class="danger-btn" data-mc-revoke="${esc(device.id)}">${muiT('mc.revoke')}</button>`}</td></tr>`).join('')}</tbody></table></div>`:`<div class="mc-empty">${muiT('mc.emptyDevices')}</div>`;
-    for(const button of $('[data-mc-revoke]',devicesModal))button.onclick=()=>revokeDevice(button.dataset.mcRevoke);
+    for(const button of $$('[data-mc-revoke]',devicesModal))button.onclick=()=>revokeDevice(button.dataset.mcRevoke);
   }
   async function loadDevices(){devices=await api('/api/client-mesh/devices');renderDevices();}
   async function revokeDevice(id){if(!await muiConfirm(muiT('mc.confirmRevoke'),{danger:true}))return;run(devicesModal,async()=>{devices=await api('/api/client-mesh/devices/revoke',{method:'POST',body:JSON.stringify({id})});renderDevices();});}

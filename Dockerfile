@@ -22,8 +22,8 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM debian:bookworm-slim AS mihomo-download
 
-ARG MIHOMO_VERSION=1.19.33
-ARG MIHOMO_SHA256=386508bfb1c72c43b6a0eda73708ecdce82546581b0ebcb16366c53757c622b6
+ARG MIHOMO_VERSION=1.19.34
+ARG MIHOMO_SHA256=2763f5b414527f7baf6dc57e3f82f3ab561eedf34bfd7c2f2cde1f7e592efe06
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl gzip \

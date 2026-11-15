@@ -214,9 +214,10 @@ func (m *CoreManager) applyTrafficSnapshot(snapshot any) {
 			}
 			addTraffic(&inbound.Traffic, uploadDelta, downloadDelta)
 			m.recordExternalInboundDeltaLocked(inbound.ID, inbound.Name, uploadDelta, downloadDelta)
+			soleClient := sample.InboundUser == "" && len(inbound.Clients) == 1 && soleClientOwnsTraffic(*inbound)
 			for clientIndex := range inbound.Clients {
 				client := &inbound.Clients[clientIndex]
-				if sample.InboundUser == "" || !clientMatchesUser(*client, sample.InboundUser) {
+				if !soleClient && (sample.InboundUser == "" || !clientMatchesUser(*client, sample.InboundUser)) {
 					continue
 				}
 				addTraffic(&client.Traffic, uploadDelta, downloadDelta)
@@ -455,6 +456,7 @@ func (m *CoreManager) saveClient(inboundID string, client Client) error {
 	if err := validateClientSchedule(client); err != nil {
 		return err
 	}
+	coreVersion := m.coreVersion()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	for inboundIndex := range m.state.Inbounds {
@@ -484,6 +486,9 @@ func (m *CoreManager) saveClient(inboundID string, client Client) error {
 		}
 		if (inbound.Type == "vmess" || inbound.Type == "vless" || inbound.Type == "tuic") && client.UUID == "" {
 			return fmt.Errorf("此协议的客户端必须填写 UUID")
+		}
+		if inbound.Type == "shadowsocks" {
+			return m.saveShadowsocksClientLocked(inbound, client, coreVersion)
 		}
 		for clientIndex := range inbound.Clients {
 			if inbound.Clients[clientIndex].ID == client.ID {
@@ -525,7 +530,7 @@ func (m *CoreManager) deleteClient(inboundID, clientID string) error {
 		if inbound.ID != inboundID {
 			continue
 		}
-		if singleSecretType(inbound.Type) && len(inbound.Clients) == 1 {
+		if (singleSecretType(inbound.Type) || inbound.Type == "shadowsocks") && len(inbound.Clients) == 1 {
 			return fmt.Errorf("%s 必须保留一个 %s 客户端，请停用或修改它", inbound.Type, singleSecretLabel(inbound.Type))
 		}
 		for clientIndex := range inbound.Clients {
@@ -595,4 +600,54 @@ func (a *App) handleTrafficReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, apiResponse{OK: true, Message: a.tr("流量统计已重置")})
+}
+
+// soleClientOwnsTraffic reports whether connections of this inbound that carry
+// no InUser belong to its only client: listeners with one shared secret
+// (Snell, Sudoku, single-user Shadowsocks) never report a user.
+func soleClientOwnsTraffic(inbound Inbound) bool {
+	return singleSecretType(inbound.Type) || (inbound.Type == "shadowsocks" && !shadowsocksUsersMode(inbound))
+}
+
+// saveShadowsocksClientLocked adds or replaces a client of a shadowsocks
+// inbound. A second client turns the inbound into a multi-user listener: a
+// 2022 inbound gets a server PSK then, which changes the links of the existing
+// client too (they become "iPSK:uPSK").
+func (m *CoreManager) saveShadowsocksClientLocked(inbound *Inbound, client Client, coreVersion string) error {
+	updated := *inbound
+	updated.Clients = append([]Client(nil), inbound.Clients...)
+	replaced := false
+	for index := range updated.Clients {
+		if updated.Clients[index].ID == client.ID {
+			stored := updated.Clients[index]
+			client.Traffic = stored.Traffic
+			carryClientSchedule(stored, &client, time.Now())
+			client.LastOnline = stored.LastOnline
+			client.FirstOnline = stored.FirstOnline
+			updated.Clients[index] = client
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		updated.Clients = append(updated.Clients, client)
+	}
+	if err := normalizeShadowsocksInbound(&updated); err != nil {
+		return err
+	}
+	if err := validateClientIdentities(updated); err != nil {
+		return err
+	}
+	if err := validateShadowsocksClients(updated); err != nil {
+		return err
+	}
+	if err := checkShadowsocksUsersCore([]Inbound{updated}, coreVersion); err != nil {
+		return err
+	}
+	*inbound = updated
+	if err := m.ensureSubscriptionTokensLocked([]Client{client}); err != nil {
+		return err
+	}
+	m.pruneSubscriptionTokensLocked(m.state.Inbounds)
+	return m.saveLocked()
 }

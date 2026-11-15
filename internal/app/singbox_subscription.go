@@ -99,7 +99,7 @@ func singboxOutbound(inbound Inbound, client Client, server string) map[string]a
 	case "shadowsocks":
 		out["type"] = "shadowsocks"
 		out["method"] = valueOr(inbound.Cipher, "2022-blake3-aes-256-gcm")
-		out["password"] = client.Password
+		out["password"] = shadowsocksClientPassword(inbound, client)
 		if inbound.SimpleObfs.Enabled {
 			opts := "obfs=" + valueOr(inbound.SimpleObfs.Mode, "http")
 			if inbound.Host != "" {

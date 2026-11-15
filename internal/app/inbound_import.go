@@ -202,6 +202,11 @@ func inboundFromYAMLMap(mapping map[string]any) (Inbound, error) {
 		inbound.CertificateMode = "file"
 	}
 	inbound.Clients = inboundClientsFromYAML(inbound.Type, native["users"], native)
+	if users, ok := native["users"].(map[string]any); inbound.Type == "shadowsocks" && ok && len(users) > 0 {
+		// A multi-user listener: the top-level password is the server PSK of a
+		// 2022 cipher (and must be empty for legacy AEAD).
+		inbound.Password = inboundString(native["password"])
+	}
 	if containsString([]string{"mixed", "http", "socks"}, inbound.Type) {
 		_, inbound.SimpleAuthConfigured = native["users"]
 		inbound.SimpleAuthEnabled = len(inbound.Clients) > 0
@@ -235,7 +240,7 @@ func inboundClientsFromYAML(inboundType string, users any, listener map[string]a
 		}
 		return Client{Name: name, Username: username, Password: password, UUID: uuid, Flow: flow, AlterID: alterID, Enabled: true}
 	}
-	if inboundType == "shadowsocks" {
+	if entries, ok := users.(map[string]any); inboundType == "shadowsocks" && (!ok || len(entries) == 0) {
 		return []Client{makeClient(0, "default", "", inboundString(listener["password"]), "", "", 0)}
 	}
 	if inboundType == "snell" {

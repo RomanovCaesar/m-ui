@@ -276,7 +276,12 @@ func selectSyncInbounds(inbounds []Inbound, selections []inboundSyncSelection) (
 		}
 		clearSyncCounters(&in)
 		// Legacy fallback credentials must not reintroduce an unselected client.
-		in.Username, in.Password, in.UUID = "", "", ""
+		// A shadowsocks password is the server PSK of a multi-user 2022 inbound,
+		// which the selected clients' links depend on.
+		in.Username, in.UUID = "", ""
+		if in.Type != "shadowsocks" {
+			in.Password = ""
+		}
 		in.SyncOrigin = nil
 		result = append(result, in)
 	}
@@ -369,6 +374,7 @@ func (a *App) runInboundSyncJob(id string, nodes []PeerNode, items []Inbound) {
 }
 
 func (m *CoreManager) receiveSyncedInbounds(sender string, items []Inbound) []inboundSyncResult {
+	coreVersion := m.coreVersion()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	next := cloneSyncState(m.state)
@@ -378,6 +384,9 @@ func (m *CoreManager) receiveSyncedInbounds(sender string, items []Inbound) []in
 		result := inboundSyncResult{ID: in.ID, Name: in.Name, Status: "failed", Clients: len(in.Clients)}
 		candidate := cloneSyncState(next)
 		status, err := mergeSyncedInbound(&candidate, sender, in)
+		if err == nil {
+			err = checkShadowsocksUsersCore(candidate.Inbounds, coreVersion)
+		}
 		if err == nil {
 			_, err = renderStateConfig(candidate)
 		}
@@ -548,6 +557,11 @@ func mergeSyncedInbound(state *State, sender string, in Inbound) (string, error)
 		return "", err
 	}
 	if err := normalizeInboundSecrets(&in); err != nil {
+		return "", err
+	}
+	// Merged clients can turn a shadowsocks inbound into a multi-user one, which
+	// needs a server PSK on 2022 ciphers.
+	if err := normalizeShadowsocksInbound(&in); err != nil {
 		return "", err
 	}
 	if err := validateInbound(in); err != nil {

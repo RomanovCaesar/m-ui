@@ -768,7 +768,7 @@ func subscriptionShareURL(inbound Inbound, client Client, server string) string 
 	password, uuid := client.Password, client.UUID
 	switch inbound.Type {
 	case "shadowsocks":
-		credential := base64.StdEncoding.EncodeToString([]byte(valueOr(inbound.Cipher, "2022-blake3-aes-256-gcm") + ":" + password))
+		credential := base64.StdEncoding.EncodeToString([]byte(valueOr(inbound.Cipher, "2022-blake3-aes-256-gcm") + ":" + shadowsocksClientPassword(inbound, client)))
 		return fmt.Sprintf("ss://%s@%s:%d#%s", credential, server, port, name)
 	case "vless":
 		values := url.Values{"type": {valueOr(inbound.Network, "tcp")}, "encryption": {valueOr(inbound.Encryption, "none")}}
@@ -928,7 +928,7 @@ func subscriptionProxy(inbound Inbound, client Client, server string) map[string
 	proxy := map[string]any{"name": subscriptionNodeName(inbound, client), "server": server, "port": inbound.Port}
 	switch inbound.Type {
 	case "shadowsocks":
-		proxy["type"], proxy["cipher"], proxy["password"], proxy["udp"] = "ss", valueOr(inbound.Cipher, "2022-blake3-aes-256-gcm"), client.Password, inbound.UDP
+		proxy["type"], proxy["cipher"], proxy["password"], proxy["udp"] = "ss", valueOr(inbound.Cipher, "2022-blake3-aes-256-gcm"), shadowsocksClientPassword(inbound, client), inbound.UDP
 		if inbound.SimpleObfs.Enabled {
 			proxy["plugin"] = "obfs"
 			proxy["plugin-opts"] = map[string]any{"mode": valueOr(inbound.SimpleObfs.Mode, "http"), "host": inbound.Host}

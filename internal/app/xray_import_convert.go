@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net"
 	"os"
 	"sort"
@@ -75,21 +76,44 @@ func xrayListener(in xrayImportInbound, log *xrayImportLog) (map[string]any, xra
 		method := strings.ToLower(outboundStringValue(settings["method"]))
 		password := outboundStringValue(settings["password"])
 		clients := in.Clients
-		if strings.HasPrefix(method, "2022-") {
-			if len(clients) > 0 {
-				return nil, xt("Shadowsocks 2022 with per-client keys (multi-user) is not supported by Mihomo listeners")
+		// Mihomo v1.19.34 reads `users` on shadowsocks listeners: with a 2022
+		// cipher the top-level password is the server PSK and each client keeps
+		// its user PSK; legacy AEAD clients keep their own passwords and the
+		// top-level password stays empty.
+		var users map[string]any
+		switch {
+		case strings.HasPrefix(method, "2022-") && len(clients) > 0:
+			if !shadowsocksIs2022EIH(method) {
+				return nil, xt("Shadowsocks %s cannot tell clients apart; use a 2022-blake3-aes-* method for several clients", method)
 			}
-		} else {
-			switch len(clients) {
-			case 0:
-			case 1:
-				password = valueOr(clients[0].Password, password)
-				method = valueOr(strings.ToLower(clients[0].Method), method)
-			default:
-				return nil, xt("Shadowsocks with several clients on one port is not supported by Mihomo listeners")
+			users = map[string]any{}
+		case len(clients) == 1:
+			password = valueOr(clients[0].Password, password)
+			method = valueOr(strings.ToLower(clients[0].Method), method)
+		case len(clients) > 1:
+			for _, client := range clients {
+				if clientMethod := strings.ToLower(client.Method); clientMethod != "" && clientMethod != method {
+					if method != "" {
+						return nil, xt("Shadowsocks clients with different methods cannot share one Mihomo listener")
+					}
+					method = clientMethod
+				}
 			}
+			if !containsString(shadowsocksLegacyAEADCiphers, method) {
+				return nil, xt("Shadowsocks %s cannot tell clients apart; use a 2022-blake3-aes-* method for several clients", method)
+			}
+			users, password = map[string]any{}, ""
 		}
-		if method == "" || password == "" {
+		if users != nil {
+			for index, client := range clients {
+				if client.Password == "" {
+					return nil, xt("Shadowsocks without a method or password")
+				}
+				users[valueOr(client.Email, fmt.Sprintf("client-%d", index+1))] = client.Password
+			}
+			listener["users"] = users
+		}
+		if method == "" || (password == "" && (users == nil || strings.HasPrefix(method, "2022-"))) {
 			return nil, xt("Shadowsocks without a method or password")
 		}
 		listener["cipher"], listener["password"] = method, password

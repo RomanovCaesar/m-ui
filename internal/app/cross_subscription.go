@@ -403,7 +403,13 @@ func crossSubscriptionInbound(in Inbound) Inbound {
 	for _, client := range in.Clients {
 		clients = append(clients, Client{Name: client.Name, Username: client.Username, Password: client.Password, UUID: client.UUID, Flow: client.Flow, AlterID: client.AlterID, Enabled: client.Enabled, Total: client.Total, ExpiryTime: client.ExpiryTime, Traffic: client.Traffic, LastOnline: client.LastOnline, FirstOnline: client.FirstOnline, ExpireAfterDays: client.ExpireAfterDays})
 	}
-	return Inbound{ID: in.ID, Name: in.Name, Type: in.Type, Port: in.Port, Enabled: in.Enabled, UDP: in.UDP, Cipher: in.Cipher, Network: in.Network, WSPath: in.WSPath, Host: in.Host, TLS: in.TLS, Notes: in.Notes, Clients: clients, Traffic: in.Traffic, Total: in.Total, ExpiryTime: in.ExpiryTime, GRPCServiceName: in.GRPCServiceName, Encryption: in.Encryption, TLSServerName: in.TLSServerName, AllowInsecure: in.AllowInsecure,
+	// The server PSK of a multi-user Shadowsocks 2022 inbound is part of every
+	// client's password ("iPSK:uPSK"); other inbound passwords are not needed.
+	serverPSK := ""
+	if shadowsocksUsersMode(in) {
+		serverPSK = in.Password
+	}
+	return Inbound{ID: in.ID, Name: in.Name, Type: in.Type, Port: in.Port, Enabled: in.Enabled, UDP: in.UDP, Cipher: in.Cipher, Password: serverPSK, Network: in.Network, WSPath: in.WSPath, Host: in.Host, TLS: in.TLS, Notes: in.Notes, Clients: clients, Traffic: in.Traffic, Total: in.Total, ExpiryTime: in.ExpiryTime, GRPCServiceName: in.GRPCServiceName, Encryption: in.Encryption, TLSServerName: in.TLSServerName, AllowInsecure: in.AllowInsecure,
 		Reality:   RealitySettings{Enabled: in.Reality.Enabled, PublicKey: in.Reality.PublicKey, ShortIDs: in.Reality.ShortIDs, ServerNames: in.Reality.ServerNames, Fingerprint: in.Reality.Fingerprint},
 		ShadowTLS: ShadowTLSSettings{Enabled: in.ShadowTLS.Enabled}, RestTLS: RestTLSSettings{Enabled: in.RestTLS.Enabled}, JLS: JLSSettings{Enabled: in.JLS.Enabled}, TrojanSS: TrojanSSSettings{Enabled: in.TrojanSS.Enabled}, TLSMirror: TLSMirrorSettings{Enabled: in.TLSMirror.Enabled},
 		XHTTP: XHTTPSettings{Enabled: in.XHTTP.Enabled, Path: in.XHTTP.Path, Host: in.XHTTP.Host, Mode: in.XHTTP.Mode, XPaddingBytes: in.XHTTP.XPaddingBytes}, Hysteria: HysteriaSettings{Obfs: in.Hysteria.Obfs, ObfsPassword: in.Hysteria.ObfsPassword, Up: in.Hysteria.Up, Down: in.Hysteria.Down}, TUIC: TUICSettings{CongestionController: in.TUIC.CongestionController}, Mieru: MieruSettings{Transport: in.Mieru.Transport}, SimpleObfs: in.SimpleObfs, KcpTun: KcpTunSettings{Enabled: in.KcpTun.Enabled}, MKCP: in.MKCP, Mekya: MekyaSettings{Enabled: in.Mekya.Enabled, URL: in.Mekya.URL, H2PoolSize: in.Mekya.H2PoolSize, MaxWriteDelay: in.Mekya.MaxWriteDelay, MaxRequestSize: in.Mekya.MaxRequestSize, PollingIntervalInitial: in.Mekya.PollingIntervalInitial}}

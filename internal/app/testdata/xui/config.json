@@ -45,7 +45,7 @@
      "settings": {"method": "aes-256-gcm", "password": "", "network": "tcp", "clients": [{"email": "judy", "method": "aes-256-gcm", "password": "judy-ss"}]}},
     {"tag": "inbound-8390", "port": 8390, "protocol": "shadowsocks",
      "settings": {"method": "2022-blake3-aes-256-gcm", "password": "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=", "network": "tcp,udp",
-                  "clients": [{"email": "k1", "password": "a2V5MWtleTFrZXkxa2V5MQ=="}, {"email": "k2", "password": "a2V5MmtleTJrZXkya2V5Mg=="}]}},
+                  "clients": [{"email": "k1", "password": "a2V5MWtleTFrZXkxa2V5MWtleTFrZXkxa2V5MWtleTE="}, {"email": "k2", "password": "a2V5MmtleTJrZXkya2V5MmtleTJrZXkya2V5MmtleTI="}]}},
     {"tag": "inbound-1080", "port": 1080, "protocol": "mixed",
      "settings": {"auth": "password", "accounts": [{"user": "mixeduser", "pass": "mixedpass"}], "udp": true}},
     {"tag": "inbound-3128", "port": 3128, "protocol": "http", "settings": {"accounts": [{"user": "h", "pass": "p"}]}},

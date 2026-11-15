@@ -2261,6 +2261,9 @@ func (m *CoreManager) saveInbound(input Inbound) error {
 		input.TrafficReset = "never"
 	}
 	normalizeSingleSecretInbound(&input)
+	if err := normalizeShadowsocksInbound(&input); err != nil {
+		return err
+	}
 	normalizeMuxBrutal(&input)
 	if err := normalizeInboundSecrets(&input); err != nil {
 		return err
@@ -2276,6 +2279,9 @@ func (m *CoreManager) saveInbound(input Inbound) error {
 		return fmt.Errorf("不支持的类型 %q", input.Type)
 	}
 	if err := validateInbound(input); err != nil {
+		return err
+	}
+	if err := checkShadowsocksUsersCore([]Inbound{input}, m.coreVersion()); err != nil {
 		return err
 	}
 	if input.ID == "" {
@@ -2364,12 +2370,8 @@ func validateInbound(inbound Inbound) error {
 		if !containsString([]string{"aes-128-gcm", "aes-256-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305", "xchacha20-ietf-poly1305", "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305"}, cipher) {
 			return fmt.Errorf("Shadowsocks 加密方式不受 Mihomo 支持: %s", inbound.Cipher)
 		}
-		if len(inbound.Clients) != 1 {
-			return fmt.Errorf("Shadowsocks 仅支持一个客户端")
-		}
-		client := inbound.Clients[0]
-		if !client.Enabled || strings.TrimSpace(client.Password) == "" {
-			return fmt.Errorf("Shadowsocks 至少需要一个启用且有密码的客户端")
+		if err := validateShadowsocksClients(inbound); err != nil {
+			return err
 		}
 	}
 	if err := validateKcpTun(inbound); err != nil {
@@ -2679,8 +2681,12 @@ func (m *CoreManager) deleteInbound(id string) error {
 }
 
 func (m *CoreManager) renderConfig() ([]byte, error) {
+	version := m.coreVersion()
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if err := checkShadowsocksUsersCore(m.state.Inbounds, version); err != nil {
+		return nil, err
+	}
 	return renderStateConfig(m.state)
 }
 
@@ -2724,7 +2730,9 @@ func renderStateConfig(state State) ([]byte, error) {
 		if inboundDepleted(inbound, now) {
 			continue
 		}
-		if singleSecretType(inbound.Type) && len(enabledClients(inbound)) == 0 {
+		if (singleSecretType(inbound.Type) || inbound.Type == "shadowsocks") && len(enabledClients(inbound)) == 0 {
+			// A multi-user shadowsocks listener with no user left would fall back
+			// to the bare server PSK, which every user's link contains.
 			continue
 		}
 		listener, err := inboundConfig(inbound)
@@ -2840,14 +2848,28 @@ func managedInboundConfig(i Inbound) (map[string]any, error) {
 			result["users"] = []map[string]any{}
 		}
 	case "shadowsocks":
-		if len(i.Clients) > 1 {
-			return nil, fmt.Errorf("Shadowsocks 仅支持一个客户端")
+		if shadowsocksUsersMode(i) {
+			// Every enabled client becomes a user, keyed by the name that comes back
+			// as InUser. The 2022 ciphers keep the server PSK on top; legacy AEAD
+			// must leave the top-level password empty.
+			users := map[string]any{}
+			for _, client := range clients {
+				users[valueOr(client.Username, client.Name)] = strings.TrimSpace(client.Password)
+			}
+			result["users"] = users
+			if shadowsocksIs2022EIH(shadowsocksCipher(i)) {
+				result["password"] = strings.TrimSpace(i.Password)
+			}
+		} else {
+			if len(i.Clients) > 1 {
+				return nil, fmt.Errorf("Shadowsocks 加密方式 %s 只支持一个客户端", shadowsocksCipher(i))
+			}
+			password := ""
+			if len(clients) == 1 {
+				password = strings.TrimSpace(clients[0].Password)
+			}
+			result["password"] = password
 		}
-		password := ""
-		if len(clients) == 1 {
-			password = strings.TrimSpace(clients[0].Password)
-		}
-		result["password"] = password
 		result["cipher"] = valueOr(i.Cipher, "2022-blake3-aes-256-gcm")
 		if i.SimpleObfs.Enabled {
 			result["simple-obfs"] = map[string]any{"enable": true, "mode": valueOr(i.SimpleObfs.Mode, "http")}
@@ -4402,6 +4424,14 @@ func (m *CoreManager) migrateStateLocked() bool {
 				changed = true
 			}
 		}
+		if inbound.Type == "shadowsocks" {
+			before := *inbound
+			beforeClients := len(inbound.Clients)
+			_ = normalizeShadowsocksInbound(inbound)
+			if beforeClients != len(inbound.Clients) || before.Password != inbound.Password || before.Username != inbound.Username || before.UUID != inbound.UUID {
+				changed = true
+			}
+		}
 		if normalizeMuxBrutal(inbound) {
 			changed = true
 		}
@@ -4437,8 +4467,10 @@ func (m *CoreManager) migrateStateLocked() bool {
 // singleSecretType reports whether the Mihomo listener for this protocol holds
 // exactly one shared secret and has no users list. Sudoku belongs here too: its
 // `key` is a single PSK (or an ED25519 public key) shared by every client.
+// Shadowsocks left this list when Mihomo v1.19.34 added `users` to its listener;
+// see shadowsocks_users.go.
 func singleSecretType(inboundType string) bool {
-	return inboundType == "shadowsocks" || inboundType == "snell" || inboundType == "sudoku"
+	return inboundType == "snell" || inboundType == "sudoku"
 }
 
 // singleSecretLabel names the shared secret each single-secret listener uses, so
@@ -4454,9 +4486,9 @@ func singleSecretLabel(inboundType string) string {
 	}
 }
 
-// Mihomo's Shadowsocks, Snell and Sudoku listeners carry one secret and no users
-// list. Keep that secret in the sole managed client so the UI's client model
-// remains useful without emitting unsupported listener configuration.
+// Mihomo's Snell and Sudoku listeners carry one secret and no users list. Keep
+// that secret in the sole managed client so the UI's client model remains useful
+// without emitting unsupported listener configuration.
 func normalizeSingleSecretInbound(inbound *Inbound) {
 	if inbound == nil || !singleSecretType(inbound.Type) {
 		return

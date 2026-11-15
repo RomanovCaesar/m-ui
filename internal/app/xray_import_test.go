@@ -109,7 +109,7 @@ func TestXrayConfigImport(t *testing.T) {
 	expectImported := map[string]string{
 		"inbound-443": "vless", "inbound-8443-xray": "vless", "inbound-2053": "vless", "inbound-2083": "vless",
 		"inbound-10086": "vmess", "inbound-10088": "vmess", "inbound-2096": "trojan", "inbound-8388": "shadowsocks",
-		"inbound-8389": "shadowsocks", "inbound-1080": "mixed", "inbound-3128": "http", "inbound-4443": "hysteria2",
+		"inbound-8389": "shadowsocks", "inbound-8390": "shadowsocks", "inbound-1080": "mixed", "inbound-3128": "http", "inbound-4443": "hysteria2",
 	}
 	for name, typ := range expectImported {
 		inbound := findInbound(m, name)
@@ -117,13 +117,23 @@ func TestXrayConfigImport(t *testing.T) {
 			t.Fatalf("inbound %s (%s) missing: %+v", name, typ, inbound)
 		}
 	}
-	for _, skipped := range []string{"api", "inbound-10087", "inbound-8390", "inbound-9000", "inbound-51820", "inbound-7000", "panel-egress"} {
+	for _, skipped := range []string{"api", "inbound-10087", "inbound-9000", "inbound-51820", "inbound-7000", "panel-egress"} {
 		if findInbound(m, skipped) != nil {
 			t.Fatalf("inbound %s should have been skipped", skipped)
 		}
 	}
 	if result.Inbounds != len(expectImported) {
 		t.Fatalf("imported %d inbounds, want %d", result.Inbounds, len(expectImported))
+	}
+
+	// A 3x-ui Shadowsocks 2022 inbound with per-client keys becomes a multi-user
+	// listener: the inbound keeps the server PSK and each client its user PSK.
+	ss2022 := findInbound(m, "inbound-8390")
+	if ss2022.Password != "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=" || len(ss2022.Clients) != 2 || !shadowsocksUsersMode(*ss2022) {
+		t.Fatalf("multi-user Shadowsocks 2022 import: %+v", ss2022)
+	}
+	if got := shadowsocksClientPassword(*ss2022, ss2022.Clients[0]); !strings.HasPrefix(got, ss2022.Password+":") {
+		t.Fatalf("client password = %q, want iPSK:uPSK", got)
 	}
 
 	reality := findInbound(m, "inbound-443")
@@ -188,7 +198,7 @@ func TestXrayConfigImport(t *testing.T) {
 			t.Fatalf("rule %s should have been skipped", key)
 		}
 	}
-	for _, needle := range []string{"bittorrent", "TCP with HTTP header", "Shadowsocks 2022 with per-client keys", "HTTPUpgrade", "WireGuard server", "port 7000 is already used", "renamed", "DNS outbounds", "fallbacks"} {
+	for _, needle := range []string{"bittorrent", "TCP with HTTP header", "HTTPUpgrade", "WireGuard server", "port 7000 is already used", "renamed", "DNS outbounds", "fallbacks"} {
 		if !strings.Contains(result.Log, needle) {
 			t.Fatalf("log does not mention %q", needle)
 		}

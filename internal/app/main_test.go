@@ -304,21 +304,33 @@ func TestAdvancedInboundFieldsRenderToYAML(t *testing.T) {
 	}
 }
 
-func TestShadowsocksRejectsMultipleClients(t *testing.T) {
-	err := validateInbound(Inbound{Type: "shadowsocks", Cipher: "2022-blake3-aes-256-gcm", Clients: []Client{{Name: "one", Password: "client-one", Enabled: true}, {Name: "two", Password: "client-two", Enabled: true}}})
-	if err == nil {
-		t.Fatal("SS listener should reject multiple clients")
+func TestShadowsocksMultipleClientsNeedAUsersCipher(t *testing.T) {
+	two := []Client{{Name: "one", Password: "client-one", Enabled: true}, {Name: "two", Password: "client-two", Enabled: true}}
+	if err := validateInbound(Inbound{Type: "shadowsocks", Cipher: "2022-blake3-chacha20-poly1305", Clients: two}); err == nil {
+		t.Fatal("2022-blake3-chacha20-poly1305 cannot tell users apart and must keep one client")
+	}
+	if err := validateInbound(Inbound{Type: "shadowsocks", Cipher: "2022-blake3-aes-256-gcm", Clients: two}); err == nil {
+		t.Fatal("a multi-user 2022 inbound without a server PSK was accepted")
+	}
+	if err := validateInbound(Inbound{Type: "shadowsocks", Cipher: "aes-256-gcm", Clients: two}); err != nil {
+		t.Fatalf("legacy AEAD with two clients: %v", err)
 	}
 }
 
 func TestShadowsocksUsesClientPasswordFor2022(t *testing.T) {
 	inbound := Inbound{Type: "shadowsocks", Cipher: "2022-blake3-aes-256-gcm", Password: "legacy-inbound-password", Clients: []Client{{Name: "one", Password: "client-one", Enabled: true}}}
+	if err := normalizeShadowsocksInbound(&inbound); err != nil {
+		t.Fatal(err)
+	}
 	config, err := inboundConfig(inbound)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got := config["password"]; got != "client-one" {
 		t.Fatalf("SS 2022 password = %v, want client password", got)
+	}
+	if _, ok := config["users"]; ok {
+		t.Fatal("a single-client inbound must keep the single-user listener form")
 	}
 }
 
@@ -1018,7 +1030,7 @@ func TestSubscriptionPageSettingsMenuWiring(t *testing.T) {
 	}
 }
 
-func TestSaveInboundNormalizesShadowsocksToSingleClient(t *testing.T) {
+func TestSaveInboundDropsLegacyShadowsocksCredentials(t *testing.T) {
 	m := &CoreManager{dataDir: t.TempDir(), state: State{Settings: Settings{Username: "admin", Password: "hash"}}}
 	err := m.saveInbound(Inbound{
 		ID:       "ss",
@@ -1028,24 +1040,16 @@ func TestSaveInboundNormalizesShadowsocksToSingleClient(t *testing.T) {
 		Port:     19081,
 		Enabled:  true,
 		Cipher:   "2022-blake3-aes-256-gcm",
+		Username: "legacy-user",
 		Password: "legacy-inbound-password",
-		Clients: []Client{
-			{Name: "one", Password: "client-one", Enabled: true},
-			{Name: "two", Password: "client-two", Enabled: true},
-		},
+		Clients:  []Client{{Name: "one", Password: "client-one", Enabled: true}},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(m.state.Inbounds) != 1 {
-		t.Fatalf("saved inbounds = %d, want 1", len(m.state.Inbounds))
-	}
 	saved := m.state.Inbounds[0]
 	if saved.Password != "" || saved.Username != "" || saved.UUID != "" {
 		t.Fatalf("legacy inbound credentials were retained: %#v", saved)
-	}
-	if len(saved.Clients) != 1 || saved.Clients[0].Password != "client-one" {
-		t.Fatalf("saved SS clients = %#v, want one client with client-one", saved.Clients)
 	}
 	config, err := inboundConfig(saved)
 	if err != nil {

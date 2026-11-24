@@ -2730,9 +2730,7 @@ func renderStateConfig(state State) ([]byte, error) {
 		if inboundDepleted(inbound, now) {
 			continue
 		}
-		if (singleSecretType(inbound.Type) || inbound.Type == "shadowsocks") && len(enabledClients(inbound)) == 0 {
-			// A multi-user shadowsocks listener with no user left would fall back
-			// to the bare server PSK, which every user's link contains.
+		if inboundLocksEveryoneOut(inbound) {
 			continue
 		}
 		listener, err := inboundConfig(inbound)
@@ -2800,6 +2798,9 @@ func inboundConfig(i Inbound) (map[string]any, error) {
 		}
 		var native map[string]any
 		if err = json.Unmarshal(data, &native); err != nil {
+			return nil, err
+		}
+		if err = applyInboundCredentials(native, i); err != nil {
 			return nil, err
 		}
 		return native, nil
